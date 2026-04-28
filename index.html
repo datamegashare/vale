@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vale Digital</title>
+<meta name="description" content="Sistema de pedidos a almacén y pañol">
+<meta name="theme-color" content="#1A2B45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vale Digital">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Quill editor -->
+<link href="https://cdn.quilljs.com/2.0.3/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/2.0.3/quill.min.js" defer></script>
+
+<style>
+/* ═══════════════════════════════════════════════════
+   VARIABLES Y RESET
+═══════════════════════════════════════════════════ */
+:root {
+  --azul:        #1A2B45;
+  --azul-med:    #1E3A5F;
+  --azul-vivo:   #2E6DA4;
+  --azul-claro:  #4A90D9;
+  --acento:      #F0A500;
+  --acento-dark: #C07800;
+  --verde:       #2E7D52;
+  --rojo:        #C0392B;
+  --naranja:     #D4660A;
+  --gris-oscuro: #1C1C1E;
+  --gris-med:    #3A3A3C;
+  --gris:        #6C6C70;
+  --gris-claro:  #AEAEB2;
+  --gris-borde:  #D1D1D6;
+  --fondo:       #F4F6FA;
+  --fondo-card:  #FFFFFF;
+  --texto:       #1C1C1E;
+  --texto-sub:   #6C6C70;
+  --sombra:      0 2px 12px rgba(26,43,69,.10);
+  --sombra-lg:   0 8px 32px rgba(26,43,69,.18);
+  --radio:       14px;
+  --radio-sm:    8px;
+  --trans:       all .22s cubic-bezier(.4,0,.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* ═══════════════════════════════════════════════════
+   PANTALLAS
+═══════════════════════════════════════════════════ */
+.screen { display: none; min-height: 100dvh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ═══════════════════════════════════════════════════
+   PANTALLA LOGIN
+═══════════════════════════════════════════════════ */
+#screen-login {
+  background: var(--azul);
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  position: relative;
+  overflow: hidden;
+}
+#screen-login::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(74,144,217,.18) 0%, transparent 70%);
+  top: -100px; right: -100px;
+  pointer-events: none;
+}
+#screen-login::after {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(240,165,0,.10) 0%, transparent 70%);
+  bottom: 40px; left: -60px;
+  pointer-events: none;
+}
+.login-box {
+  width: 100%;
+  max-width: 360px;
+  z-index: 1;
+  animation: fadeUp .5s ease both;
+}
+.login-logo {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 28px;
+  box-shadow: 0 8px 24px rgba(74,144,217,.35);
+}
+.login-logo svg { width: 38px; height: 38px; fill: #fff; }
+.login-titulo {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.5px;
+  margin-bottom: 6px;
+}
+.login-sub {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 48px;
+}
+.login-btn-wrap {
+  display: flex;
+  justify-content: center;
+}
+.login-error {
+  margin-top: 20px;
+  background: rgba(192,57,43,.25);
+  border: 1px solid rgba(192,57,43,.5);
+  border-radius: var(--radio-sm);
+  padding: 12px 16px;
+  color: #FFB3AC;
+  font-size: 13px;
+  text-align: center;
+  display: none;
+}
+.login-error.visible { display: block; animation: fadeUp .3s ease both; }
+
+/* ═══════════════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════════════ */
+#screen-app {
+  padding-bottom: 32px;
+}
+
+/* HEADER */
+.header {
+  background: var(--azul-med);
+  color: #fff;
+  padding: 0 16px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06), var(--sombra);
+}
+.header-logo {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.header-logo svg { width: 18px; height: 18px; fill: #fff; }
+.header-titulo {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+  flex: 1;
+}
+.header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.header-usuario {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,.9);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.header-obra {
+  font-size: 10px;
+  color: rgba(255,255,255,.5);
+}
+
+/* BADGE ONLINE/OFFLINE */
+.badge-conexion {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: var(--trans);
+  flex-shrink: 0;
+}
+.badge-conexion.online  { background: rgba(46,125,82,.3);  color: #6EE7A0; }
+.badge-conexion.offline { background: rgba(192,57,43,.3);  color: #FFB3AC; }
+.badge-conexion-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.badge-conexion.online  .badge-conexion-dot { background: #6EE7A0; }
+.badge-conexion.offline .badge-conexion-dot { background: #FFB3AC; animation: pulse 1.5s infinite; }
+
+/* BTN LOGOUT */
+.btn-logout {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.08);
+  transition: var(--trans);
+  flex-shrink: 0;
+}
+.btn-logout:hover { background: rgba(255,255,255,.16); }
+.btn-logout svg { width: 16px; height: 16px; stroke: rgba(255,255,255,.7); fill: none; }
+
+/* ═══════════════════════════════════════════════════
+   CONTENIDO PRINCIPAL
+═══════════════════════════════════════════════════ */
+.main {
+  padding: 20px 16px 100px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* MINI DASHBOARD */
+.dashboard-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 12px;
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.dash-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  transition: var(--trans);
+}
+.dash-card:active { transform: scale(.97); }
+.dash-card-num {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+  color: var(--azul-med);
+}
+.dash-card-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.dash-card.borrador  .dash-card-num { color: var(--gris); }
+.dash-card.enviado   .dash-card-num { color: var(--azul-vivo); }
+.dash-card.aprobado  .dash-card-num { color: var(--verde); }
+.dash-card.entregado .dash-card-num { color: var(--azul-claro); }
+
+/* SPINNER */
+.spinner {
+  width: 22px; height: 22px;
+  border: 3px solid rgba(30,58,95,.12);
+  border-top-color: var(--azul-vivo);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto;
+}
+.spinner-inline {
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px 0; gap: 10px;
+  color: var(--texto-sub); font-size: 13px;
+}
+
+/* LISTA VALES */
+.lista-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 12px;
+}
+.lista-vales { display: flex; flex-direction: column; gap: 10px; }
+.vale-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .3s ease both;
+}
+.vale-card:active { transform: scale(.98); }
+.vale-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.vale-card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+  line-height: 1.3;
+}
+.vale-card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vale-card-fecha {
+  font-size: 12px;
+  color: var(--texto-sub);
+}
+.vale-card-destino {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+  background: rgba(46,109,164,.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.vale-card-sync {
+  font-size: 11px;
+  color: var(--naranja);
+  display: flex; align-items: center; gap: 3px;
+}
+.vale-card-sync.ok { color: var(--verde); }
+
+/* BADGES ESTADO */
+.badge-estado {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge-BORRADOR         { background: rgba(174,174,178,.2); color: var(--gris); }
+.badge-ENVIADO          { background: rgba(46,109,164,.15); color: var(--azul-vivo); }
+.badge-APROBADO         { background: rgba(46,125,82,.15);  color: var(--verde); }
+.badge-PENDIENTE        { background: rgba(74,144,217,.15); color: var(--azul-claro); }
+.badge-ENTREGADO        { background: rgba(46,125,82,.12);  color: var(--verde); }
+.badge-ENTREGA_PARCIAL  { background: rgba(212,102,10,.15); color: var(--naranja); }
+.badge-CANCELADO        { background: rgba(192,57,43,.12);  color: var(--rojo); }
+.badge-ELIMINADO        { background: rgba(174,174,178,.15); color: var(--gris-claro); }
+
+.lista-vacia {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--texto-sub);
+  font-size: 14px;
+}
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: 28px;
+  right: 20px;
+  width: 58px; height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  color: #fff;
+  font-size: 28px;
+  font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 20px rgba(46,109,164,.45);
+  transition: var(--trans);
+  z-index: 90;
+  line-height: 1;
+}
+.fab:active { transform: scale(.93); box-shadow: 0 3px 10px rgba(46,109,164,.35); }
+
+/* ═══════════════════════════════════════════════════
+   MODAL BASE
+═══════════════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; animation: fadeIn .2s ease both; }
+.modal {
+  background: var(--fondo-card);
+  border-radius: 22px 22px 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp .3s cubic-bezier(.4,0,.2,1) both;
+  overflow: hidden;
+}
+.modal-header {
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--gris-borde);
+  flex-shrink: 0;
+}
+.modal-titulo {
+  font-size: 17px;
+  font-weight: 700;
+  flex: 1;
+  color: var(--texto);
+}
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--fondo);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  color: var(--gris);
+  transition: var(--trans);
+}
+.modal-close:hover { background: var(--gris-borde); }
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-footer {
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--gris-borde);
+  flex-shrink: 0;
+  background: var(--fondo-card);
+}
+
+/* ═══════════════════════════════════════════════════
+   FORMULARIO VALE
+═══════════════════════════════════════════════════ */
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.form-readonly {
+  font-size: 14px;
+  color: var(--texto);
+  background: var(--fondo);
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 10px 12px;
+  width: 100%;
+}
+.form-input, .form-select {
+  width: 100%;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 10px 12px;
+  transition: var(--trans);
+  outline: none;
+  appearance: none;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--azul-vivo);
+  background: var(--fondo-card);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236C6C70' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+/* Quill customization */
+.quill-wrapper {
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  overflow: hidden;
+  transition: var(--trans);
+}
+.quill-wrapper:focus-within {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.quill-wrapper .ql-toolbar {
+  border: none;
+  border-bottom: 1px solid var(--gris-borde);
+  background: var(--fondo);
+  padding: 8px 10px;
+}
+.quill-wrapper .ql-container {
+  border: none;
+  font-size: 15px;
+  min-height: 140px;
+}
+.quill-wrapper .ql-editor { min-height: 140px; padding: 12px; }
+
+/* BOTONES */
+.btn {
+  flex: 1;
+  padding: 13px 16px;
+  border-radius: var(--radio-sm);
+  font-size: 15px;
+  font-weight: 600;
+  transition: var(--trans);
+  text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(46,109,164,.3);
+}
+.btn-primary:hover { opacity: .92; }
+.btn-secondary {
+  background: var(--fondo);
+  color: var(--azul-vivo);
+  border: 1.5px solid var(--gris-borde);
+}
+.btn-secondary:hover { background: rgba(46,109,164,.06); }
+.btn-danger {
+  background: rgba(192,57,43,.08);
+  color: var(--rojo);
+  border: 1.5px solid rgba(192,57,43,.2);
+}
+.btn-danger:hover { background: rgba(192,57,43,.14); }
+.btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* MODAL DETALLE */
+.detalle-campo {
+  margin-bottom: 14px;
+}
+.detalle-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--texto-sub);
+  margin-bottom: 3px;
+}
+.detalle-valor {
+  font-size: 14px;
+  color: var(--texto);
+}
+.detalle-contenido {
+  font-size: 14px;
+  color: var(--texto);
+  line-height: 1.6;
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 12px;
+  background: var(--fondo);
+}
+.detalle-contenido p { margin-bottom: 4px; }
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--gris-oscuro);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: 30px;
+  box-shadow: var(--sombra-lg);
+  opacity: 0;
+  transition: all .25s ease;
+  z-index: 999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--verde); }
+.toast.error   { background: var(--rojo); }
+
+/* CONFIRM DIALOG */
+.confirm-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+.confirm-overlay.open { display: flex; animation: fadeIn .2s ease both; }
+.confirm-box {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  animation: scaleIn .25s cubic-bezier(.4,0,.2,1) both;
+}
+.confirm-titulo { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.confirm-texto  { font-size: 14px; color: var(--texto-sub); margin-bottom: 24px; line-height: 1.5; }
+.confirm-btns   { display: flex; gap: 10px; }
+
+/* ANIMACIONES */
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes pulse   { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* RESPONSIVE */
+@media (min-width: 600px) {
+  .dashboard-grid { grid-template-columns: repeat(4, 1fr); }
+  .modal { border-radius: var(--radio) var(--radio) 0 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ PANTALLA LOGIN ═══════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    </div>
+    <div class="login-titulo">Vale Digital</div>
+    <div class="login-sub">Sistema de pedidos a almacén y pañol</div>
+    <div class="login-btn-wrap">
+      <div id="google-btn"></div>
+    </div>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════════ PANTALLA APP ═══════════ -->
+<div id="screen-app" class="screen">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    </div>
+    <div class="header-titulo">Vale Digital</div>
+    <div id="badge-conexion" class="badge-conexion online">
+      <span class="badge-conexion-dot"></span>
+      <span id="badge-conexion-txt">Online</span>
+    </div>
+    <div class="header-info">
+      <div id="hdr-usuario" class="header-usuario">—</div>
+      <div id="hdr-obra" class="header-obra">—</div>
+    </div>
+    <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    </button>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-titulo">Mis pedidos</div>
+    <div class="dashboard-grid" id="dashboard-grid">
+      <div class="dash-card borrador">
+        <div class="dash-card-num" id="cnt-borrador">—</div>
+        <div class="dash-card-label">Borrador</div>
+      </div>
+      <div class="dash-card enviado">
+        <div class="dash-card-num" id="cnt-enviado">—</div>
+        <div class="dash-card-label">Enviado</div>
+      </div>
+      <div class="dash-card aprobado">
+        <div class="dash-card-num" id="cnt-aprobado">—</div>
+        <div class="dash-card-label">Aprobado</div>
+      </div>
+      <div class="dash-card entregado">
+        <div class="dash-card-num" id="cnt-entregado">—</div>
+        <div class="dash-card-label">Entregado</div>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="lista-titulo">Últimos 30 días</div>
+    <div id="lista-vales" class="lista-vales">
+      <div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>
+    </div>
+
+  </main>
+
+  <!-- FAB -->
+  <button class="fab" id="fab-nuevo" title="Nuevo vale">+</button>
+
+</div>
+
+<!-- ═══════════ MODAL: NUEVO / EDITAR VALE ═══════════ -->
+<div id="modal-vale" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-vale-titulo">Nuevo Vale</div>
+      <button class="modal-close" id="modal-vale-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Readonly -->
+      <div class="form-group">
+        <label class="form-label">Fecha y Hora</label>
+        <div class="form-readonly" id="form-fecha-hora">—</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Usuario</label>
+        <div class="form-readonly" id="form-usuario">—</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Obra</label>
+        <div class="form-readonly" id="form-obra">—</div>
+      </div>
+      <!-- Editables -->
+      <div class="form-group">
+        <label class="form-label">Destino <span style="color:var(--rojo)">*</span></label>
+        <select id="form-destino" class="form-select">
+          <option value="">Seleccioná el destino…</option>
+          <option value="ALMACEN">Almacén</option>
+          <option value="PAÑOL">Pañol</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título <span style="color:var(--gris-claro);font-weight:400">(opcional)</span></label>
+        <input id="form-titulo" class="form-input" type="text" placeholder="Ej: Materiales eléctricos tablero T3" maxlength="120">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Detalle del pedido <span style="color:var(--rojo)">*</span></label>
+        <div class="quill-wrapper">
+          <div id="quill-editor"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="btn-eliminar-vale" style="display:none">🗑 Eliminar</button>
+      <button class="btn btn-secondary" id="btn-guardar-borrador">Guardar</button>
+      <button class="btn btn-primary" id="btn-enviar-vale">Enviar ↗</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: DETALLE VALE ═══════════ -->
+<div id="modal-detalle" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">Detalle del Vale</div>
+      <button class="modal-close" id="modal-detalle-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-detalle-body">
+      <!-- Se llena dinámicamente -->
+    </div>
+    <div class="modal-footer" id="modal-detalle-footer">
+      <!-- Se llena dinámicamente según estado -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CONFIRM DIALOG ═══════════ -->
+<div id="confirm-overlay" class="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-titulo" id="confirm-titulo">¿Confirmar acción?</div>
+    <div class="confirm-texto"  id="confirm-texto">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="btn btn-secondary" id="confirm-cancelar" style="flex:1">Cancelar</button>
+      <button class="btn btn-danger"    id="confirm-ok"       style="flex:1">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// Vale Digital — UI v1.0
+// ═══════════════════════════════════════════════════════════════
+
+// ── CONFIGURACIÓN ───────────────────────────────────────────────
+const CONFIG = {
+  CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
+  GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec', // ← URL /exec del deploy GAS
+  VERSION_UI : 'v1.0'
+};
+
+// ── ESTADO GLOBAL ───────────────────────────────────────────────
+const APP = {
+  perfil   : null,   // { email, nombre, rol, obra_codigo, obra_desc }
+  vales    : [],     // lista en memoria
+  valeEdit : null,   // vale actualmente en edición
+  quill    : null,   // instancia Quill
+  online   : navigator.onLine
+};
+
+// ── HELPERS ─────────────────────────────────────────────────────
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function formatFecha(isoStr) {
+  if (!isoStr) return '—';
+  const d = new Date(isoStr);
+  return d.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' })
+       + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+}
+function toast(msg, tipo = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + tipo;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'toast'; }, 2800);
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function confirm(titulo, texto) {
+  return new Promise(res => {
+    document.getElementById('confirm-titulo').textContent = titulo;
+    document.getElementById('confirm-texto').textContent  = texto;
+    openModal('confirm-overlay');
+    const ok  = document.getElementById('confirm-ok');
+    const can = document.getElementById('confirm-cancelar');
+    const cleanup = r => { closeModal('confirm-overlay'); ok.onclick = null; can.onclick = null; res(r); };
+    ok.onclick  = () => cleanup(true);
+    can.onclick = () => cleanup(false);
+  });
+}
+
+// ── LOCAL STORAGE ───────────────────────────────────────────────
+const LS = {
+  KEY: 'vale_digital_vales',
+  get()        { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { return []; } },
+  set(vales)   { localStorage.setItem(this.KEY, JSON.stringify(vales)); },
+  upsert(vale) {
+    const lista = this.get();
+    const idx   = lista.findIndex(v => v.id_vale === vale.id_vale);
+    if (idx >= 0) lista[idx] = vale; else lista.unshift(vale);
+    this.set(lista);
+  },
+  remove(id)   {
+    const lista = this.get().filter(v => v.id_vale !== id);
+    this.set(lista);
+  }
+};
+
+// ── API GAS ─────────────────────────────────────────────────────
+async function gasGet(params) {
+  const url = new URL(CONFIG.GAS_URL);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const r = await fetch(url.toString());
+  return r.json();
+}
+async function gasPost(body) {
+  const r = await fetch(CONFIG.GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' }, // evita preflight CORS
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+// ── CONECTIVIDAD ────────────────────────────────────────────────
+function actualizarBadge(online) {
+  APP.online = online;
+  const badge = document.getElementById('badge-conexion');
+  const txt   = document.getElementById('badge-conexion-txt');
+  badge.className = 'badge-conexion ' + (online ? 'online' : 'offline');
+  txt.textContent  = online ? 'Online' : 'Offline';
+}
+window.addEventListener('online',  () => { actualizarBadge(true);  sincronizarPendientes(); });
+window.addEventListener('offline', () => actualizarBadge(false));
+
+// ── SINCRONIZACIÓN ──────────────────────────────────────────────
+async function sincronizarPendientes() {
+  const pendientes = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
+  for (const v of pendientes) {
+    try {
+      const res = await gasPost({ accion: 'guardarVale', ...v });
+      if (res.ok) { v._sync = true; LS.upsert(v); }
+    } catch (_) { /* sin red */ }
+  }
+  // Eliminar pendientes
+  const porEliminar = LS.get().filter(v => !v._sync && v.estado === 'ELIMINADO');
+  for (const v of porEliminar) {
+    try {
+      const res = await gasPost({ accion: 'eliminarVale', id_vale: v.id_vale, usuario_email: APP.perfil.email });
+      if (res.ok) LS.remove(v.id_vale);
+    } catch (_) { }
+  }
+}
+
+// ── LOGIN ────────────────────────────────────────────────────────
+function inicializarGoogle() {
+  google.accounts.id.initialize({
+    client_id: CONFIG.CLIENT_ID,
+    callback : handleCredential,
+    auto_select: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-btn'),
+    { theme:'filled_blue', size:'large', shape:'pill', text:'signin_with', locale:'es_AR' }
+  );
+}
+
+async function handleCredential(response) {
+  const payload = parseJwt(response.credential);
+  const email   = payload.email;
+  mostrarLoginError('');
+  try {
+    const res = await gasGet({ accion: 'login', email });
+    if (!res.ok) { mostrarLoginError(res.error || 'Acceso denegado.'); return; }
+    APP.perfil = res.data;
+    iniciarApp();
+  } catch (e) {
+    mostrarLoginError('Sin conexión. Intentá de nuevo.');
+  }
+}
+
+function parseJwt(token) {
+  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(atob(base64));
+}
+
+function mostrarLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.className = 'login-error' + (msg ? ' visible' : '');
+}
+
+// ── INICIO APP ──────────────────────────────────────────────────
+function iniciarApp() {
+  showScreen('screen-app');
+  document.getElementById('hdr-usuario').textContent = APP.perfil.nombre;
+  document.getElementById('hdr-obra').textContent    = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
+  actualizarBadge(navigator.onLine);
+  cargarVales();
+}
+
+// ── CARGAR VALES ────────────────────────────────────────────────
+async function cargarVales() {
+  const lista = document.getElementById('lista-vales');
+  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>';
+
+  let vales = [];
+  if (APP.online) {
+    try {
+      const res = await gasGet({ accion: 'getMisVales', email: APP.perfil.email });
+      if (res.ok) {
+        vales = res.data;
+        // Merge con borradores locales no sincronizados
+        const locales = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
+        locales.forEach(lv => {
+          if (!vales.find(rv => rv.id_vale === lv.id_vale)) vales.unshift(lv);
+        });
+        // Guardar en LS como caché
+        vales.forEach(v => { if (!LS.get().find(lv => lv.id_vale === v.id_vale)) LS.upsert({ ...v, _sync: true }); });
+      }
+    } catch (_) {
+      vales = obtenerValesLocales();
+      toast('Modo offline — mostrando datos locales', 'error');
+    }
+  } else {
+    vales = obtenerValesLocales();
+  }
+
+  APP.vales = vales.filter(v => v.estado !== 'ELIMINADO');
+  actualizarDashboard(APP.vales);
+  renderizarLista(APP.vales);
+}
+
+function obtenerValesLocales() {
+  const hace30 = new Date();
+  hace30.setDate(hace30.getDate() - 30);
+  return LS.get().filter(v => {
+    if (v.estado === 'ELIMINADO') return false;
+    return new Date(v.fecha_hora) >= hace30;
+  });
+}
+
+function actualizarDashboard(vales) {
+  const cnt = { BORRADOR:0, ENVIADO:0, APROBADO:0, PENDIENTE:0, ENTREGADO:0, ENTREGA_PARCIAL:0, CANCELADO:0 };
+  vales.forEach(v => { if (cnt[v.estado] !== undefined) cnt[v.estado]++; });
+  document.getElementById('cnt-borrador').textContent  = cnt.BORRADOR;
+  document.getElementById('cnt-enviado').textContent   = cnt.ENVIADO;
+  document.getElementById('cnt-aprobado').textContent  = cnt.APROBADO + cnt.PENDIENTE;
+  document.getElementById('cnt-entregado').textContent = cnt.ENTREGADO + cnt.ENTREGA_PARCIAL;
+}
+
+function renderizarLista(vales) {
+  const lista = document.getElementById('lista-vales');
+  if (!vales.length) {
+    lista.innerHTML = '<div class="lista-vacia">No tenés vales en los últimos 30 días.<br>Usá el botón + para crear uno.</div>';
+    return;
+  }
+  lista.innerHTML = vales.map(v => `
+    <div class="vale-card" data-id="${v.id_vale}">
+      <div class="vale-card-top">
+        <div class="vale-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
+      </div>
+      <div class="vale-card-bottom">
+        <span class="vale-card-fecha">${formatFecha(v.fecha_hora)}</span>
+        <span class="vale-card-destino">${v.destino}</span>
+        ${!v._sync ? '<span class="vale-card-sync">⬆ Pendiente</span>' : '<span class="vale-card-sync ok">✓ Sync</span>'}
+      </div>
+    </div>
+  `).join('');
+  lista.querySelectorAll('.vale-card').forEach(el =>
+    el.addEventListener('click', () => abrirDetalle(el.dataset.id))
+  );
+}
+
+// ── MODAL NUEVO VALE ─────────────────────────────────────────────
+document.getElementById('fab-nuevo').addEventListener('click', abrirNuevoVale);
+
+function abrirNuevoVale() {
+  APP.valeEdit = null;
+  document.getElementById('modal-vale-titulo').textContent = 'Nuevo Vale';
+  document.getElementById('form-fecha-hora').textContent   = formatFecha(new Date().toISOString());
+  document.getElementById('form-usuario').textContent      = APP.perfil.nombre;
+  document.getElementById('form-obra').textContent         = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
+  document.getElementById('form-destino').value            = '';
+  document.getElementById('form-titulo').value             = '';
+  if (APP.quill) APP.quill.setContents([]);
+  document.getElementById('btn-eliminar-vale').style.display = 'none';
+  openModal('modal-vale');
+  setTimeout(() => initQuill(), 100); // esperar animación
+}
+
+function abrirEditarVale(vale) {
+  APP.valeEdit = vale;
+  document.getElementById('modal-vale-titulo').textContent = 'Editar Borrador';
+  document.getElementById('form-fecha-hora').textContent   = formatFecha(vale.fecha_hora);
+  document.getElementById('form-usuario').textContent      = vale.usuario_nombre;
+  document.getElementById('form-obra').textContent         = vale.obra_codigo;
+  document.getElementById('form-destino').value            = vale.destino || '';
+  document.getElementById('form-titulo').value             = vale.titulo || '';
+  document.getElementById('btn-eliminar-vale').style.display = 'flex';
+  openModal('modal-vale');
+  setTimeout(() => {
+    initQuill();
+    if (vale.contenido_html && APP.quill) {
+      APP.quill.clipboard.dangerouslyPasteHTML(vale.contenido_html);
+    }
+  }, 100);
+}
+
+function initQuill() {
+  if (APP.quill) return; // ya inicializado
+  APP.quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    modules: { toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['clean']
+    ]},
+    placeholder: 'Describí el pedido: materiales, cantidades, referencia…'
+  });
+}
+
+document.getElementById('modal-vale-close').addEventListener('click', () => closeModal('modal-vale'));
+
+// GUARDAR BORRADOR
+document.getElementById('btn-guardar-borrador').addEventListener('click', () => guardarVale('BORRADOR'));
+
+// ENVIAR
+document.getElementById('btn-enviar-vale').addEventListener('click', () => guardarVale('ENVIADO'));
+
+async function guardarVale(estado) {
+  const destino = document.getElementById('form-destino').value;
+  const contenido = APP.quill ? APP.quill.root.innerHTML.trim() : '';
+  const contenidoTexto = APP.quill ? APP.quill.getText().trim() : '';
+
+  if (!destino)       { toast('Seleccioná un destino (Almacén o Pañol)', 'error'); return; }
+  if (!contenidoTexto){ toast('Escribí el detalle del pedido', 'error'); return; }
+
+  const ahora = new Date().toISOString();
+  const vale  = {
+    id_vale        : APP.valeEdit?.id_vale || uuid(),
+    fecha_hora     : APP.valeEdit?.fecha_hora || ahora,
+    usuario_email  : APP.perfil.email,
+    usuario_nombre : APP.perfil.nombre,
+    obra_codigo    : APP.perfil.obra_codigo,
+    destino,
+    titulo         : document.getElementById('form-titulo').value.trim(),
+    contenido_html : contenido,
+    estado,
+    eliminado      : false,
+    _sync          : false
+  };
+
+  // Guardar localmente primero
+  LS.upsert(vale);
+  closeModal('modal-vale');
+  toast(estado === 'ENVIADO' ? 'Vale enviado ↗' : 'Borrador guardado', 'success');
+
+  // Intentar subir al GAS
+  if (APP.online) {
+    try {
+      const res = await gasPost({ accion: 'guardarVale', ...vale });
+      if (res.ok) { vale._sync = true; LS.upsert(vale); }
+      else toast('Error al sincronizar: ' + res.error, 'error');
+    } catch (_) {
+      toast('Sin conexión — se sincronizará al reconectar', '');
+    }
+  }
+
+  cargarVales();
+}
+
+// ELIMINAR BORRADOR
+document.getElementById('btn-eliminar-vale').addEventListener('click', async () => {
+  const ok = await confirm('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
+  if (!ok) return;
+  const vale = APP.valeEdit;
+  closeModal('modal-vale');
+
+  if (vale._sync && APP.online) {
+    // Ya estaba en el servidor → borrado lógico
+    try {
+      const res = await gasPost({ accion: 'eliminarVale', id_vale: vale.id_vale, usuario_email: APP.perfil.email });
+      if (res.ok) { LS.remove(vale.id_vale); toast('Vale eliminado', 'success'); }
+      else toast('Error al eliminar: ' + res.error, 'error');
+    } catch (_) {
+      // Sin red: marcar para eliminar al reconectar
+      LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
+      toast('Se eliminará al reconectar', '');
+    }
+  } else if (vale._sync && !APP.online) {
+    LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
+    toast('Se eliminará al reconectar', '');
+  } else {
+    // Nunca subió → borrar solo local
+    LS.remove(vale.id_vale);
+    toast('Vale eliminado', 'success');
+  }
+  cargarVales();
+});
+
+// ── MODAL DETALLE ────────────────────────────────────────────────
+document.getElementById('modal-detalle-close').addEventListener('click', () => closeModal('modal-detalle'));
+
+function abrirDetalle(id) {
+  const vale = APP.vales.find(v => v.id_vale === id);
+  if (!vale) return;
+
+  const body   = document.getElementById('modal-detalle-body');
+  const footer = document.getElementById('modal-detalle-footer');
+
+  body.innerHTML = `
+    <div class="detalle-campo">
+      <div class="detalle-label">Estado</div>
+      <div><span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
+      ${!vale._sync ? ' &nbsp;<span style="font-size:12px;color:var(--naranja)">⬆ Pendiente sync</span>' : ''}
+      </div>
+    </div>
+    <div class="detalle-campo">
+      <div class="detalle-label">Fecha y Hora</div>
+      <div class="detalle-valor">${formatFecha(vale.fecha_hora)}</div>
+    </div>
+    <div class="detalle-campo">
+      <div class="detalle-label">Usuario</div>
+      <div class="detalle-valor">${vale.usuario_nombre}</div>
+    </div>
+    <div class="detalle-campo">
+      <div class="detalle-label">Obra</div>
+      <div class="detalle-valor">${vale.obra_codigo}</div>
+    </div>
+    <div class="detalle-campo">
+      <div class="detalle-label">Destino</div>
+      <div class="detalle-valor">${vale.destino}</div>
+    </div>
+    ${vale.titulo ? `
+    <div class="detalle-campo">
+      <div class="detalle-label">Título</div>
+      <div class="detalle-valor">${vale.titulo}</div>
+    </div>` : ''}
+    <div class="detalle-campo">
+      <div class="detalle-label">Detalle</div>
+      <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
+    </div>
+  `;
+
+  // Footer según estado
+  footer.innerHTML = '';
+  if (vale.estado === 'BORRADOR') {
+    footer.innerHTML = `
+      <button class="btn btn-danger"    id="det-btn-eliminar">🗑 Eliminar</button>
+      <button class="btn btn-primary"   id="det-btn-editar"  >✏ Editar</button>
+    `;
+    footer.querySelector('#det-btn-editar').addEventListener('click', () => {
+      closeModal('modal-detalle');
+      abrirEditarVale(vale);
+    });
+    footer.querySelector('#det-btn-eliminar').addEventListener('click', async () => {
+      const ok = await confirm('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
+      if (!ok) return;
+      closeModal('modal-detalle');
+      await eliminarValeById(vale);
+    });
+  }
+
+  openModal('modal-detalle');
+}
+
+async function eliminarValeById(vale) {
+  if (vale._sync && APP.online) {
+    try {
+      const res = await gasPost({ accion: 'eliminarVale', id_vale: vale.id_vale, usuario_email: APP.perfil.email });
+      if (res.ok) { LS.remove(vale.id_vale); toast('Vale eliminado', 'success'); }
+      else toast('Error: ' + res.error, 'error');
+    } catch (_) {
+      LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
+      toast('Se eliminará al reconectar', '');
+    }
+  } else if (vale._sync && !APP.online) {
+    LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
+    toast('Se eliminará al reconectar', '');
+  } else {
+    LS.remove(vale.id_vale);
+    toast('Vale eliminado', 'success');
+  }
+  cargarVales();
+}
+
+// ── LOGOUT ───────────────────────────────────────────────────────
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  const ok = await confirm('¿Cerrar sesión?', 'Vas a salir de Vale Digital.');
+  if (!ok) return;
+  google.accounts.id.disableAutoSelect();
+  APP.perfil = null;
+  APP.vales  = [];
+  APP.quill  = null;
+  showScreen('screen-login');
+  toast('Sesión cerrada', '');
+});
+
+// ── SERVICE WORKER ───────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .catch(err => console.warn('SW no registrado:', err));
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  if (typeof google !== 'undefined') {
+    inicializarGoogle();
+  } else {
+    // Esperar a que cargue el script de GIS
+    const interval = setInterval(() => {
+      if (typeof google !== 'undefined') {
+        clearInterval(interval);
+        inicializarGoogle();
+      }
+    }, 200);
+  }
+});
+</script>
+</body>
+</html>
