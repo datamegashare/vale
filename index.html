@@ -120,8 +120,16 @@ input, textarea, select { font-family: inherit; }
   text-align: center;
   font-size: 13px;
   color: rgba(255,255,255,.55);
-  margin-bottom: 48px;
+  margin-bottom: 12px;
 }
+.login-version {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,.28);
+  letter-spacing: .5px;
+  margin-bottom: 36px;
+}
+
 .login-btn-wrap {
   display: flex;
   justify-content: center;
@@ -192,6 +200,11 @@ input, textarea, select { font-family: inherit; }
 .header-obra {
   font-size: 10px;
   color: rgba(255,255,255,.5);
+}
+.header-version {
+  font-size: 9px;
+  color: rgba(255,255,255,.28);
+  letter-spacing: .3px;
 }
 
 /* BADGE ONLINE/OFFLINE */
@@ -665,6 +678,7 @@ input, textarea, select { font-family: inherit; }
     </div>
     <div class="login-titulo">Vale Digital</div>
     <div class="login-sub">Sistema de pedidos a almacén y pañol</div>
+    <div class="login-version" id="login-version"></div>
     <div class="login-btn-wrap">
       <div id="google-btn"></div>
     </div>
@@ -688,6 +702,7 @@ input, textarea, select { font-family: inherit; }
     <div class="header-info">
       <div id="hdr-usuario" class="header-usuario">—</div>
       <div id="hdr-obra" class="header-obra">—</div>
+      <div id="hdr-version" class="header-version"></div>
     </div>
     <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
       <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -1288,6 +1303,10 @@ if ('serviceWorker' in navigator) {
 
 // ── INIT ────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
+  // Mostrar versión en login y header
+  document.getElementById('login-version').textContent = CONFIG.VERSION_UI;
+  document.getElementById('hdr-version').textContent   = CONFIG.VERSION_UI;
+
   if (typeof google !== 'undefined') {
     inicializarGoogle();
   } else {
