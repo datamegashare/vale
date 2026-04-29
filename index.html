@@ -197,6 +197,7 @@ input, textarea, select { font-family: inherit; }
   white-space: nowrap;
 }
 .header-obra    { font-size: 10px; color: rgba(255,255,255,.5); }
+.header-rol     { font-size: 10px; font-weight: 700; color: var(--acento); letter-spacing: .3px; }
 .header-version { font-size: 9px; color: rgba(255,255,255,.28); letter-spacing: .3px; }
 
 /* BADGE ONLINE/OFFLINE */
@@ -232,6 +233,22 @@ input, textarea, select { font-family: inherit; }
 }
 .btn-logout:hover { background: rgba(255,255,255,.16); }
 .btn-logout svg { width: 16px; height: 16px; stroke: rgba(255,255,255,.7); fill: none; }
+.btn-hdr-action {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: var(--trans);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.btn-hdr-action:hover { background: rgba(255,255,255,.18); }
+.btn-hdr-action:active { transform: scale(.95); }
 
 /* ═══════════════════════════════════════════════════
    TABS
@@ -815,16 +832,78 @@ input, textarea, select { font-family: inherit; }
 /* ═══════════════════════════════════════════════════
    MODAL DETALLE (Mis Vales)
 ═══════════════════════════════════════════════════ */
-.detalle-campo { margin-bottom: 14px; }
-.detalle-label {
-  font-size: 11px;
+/* Meta strip — igual que en formulario crear */
+.detalle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 16px;
+  background: var(--fondo);
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  overflow: hidden;
+}
+.detalle-meta-item {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 8px 12px;
+  min-width: 80px;
+}
+.detalle-meta-item:not(:last-child) { border-right: 1px solid var(--gris-borde); }
+.detalle-meta-lbl {
+  font-size: 10px;
   font-weight: 600;
+  color: var(--gris);
   text-transform: uppercase;
-  letter-spacing: .5px;
-  color: var(--texto-sub);
+  letter-spacing: .4px;
   margin-bottom: 3px;
 }
-.detalle-valor { font-size: 14px; color: var(--texto); }
+.detalle-meta-val {
+  font-size: 13px;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Estado + destino row */
+.detalle-estado-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.detalle-destino-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  background: rgba(46,109,164,.1);
+  color: var(--azul-vivo);
+  font-size: 12px;
+  font-weight: 700;
+}
+.detalle-aprobacion-info { font-size: 12px; color: var(--texto-sub); }
+/* Título del vale en detalle */
+.detalle-titulo-val {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 14px;
+  line-height: 1.3;
+}
+/* Etiqueta de sección */
+.detalle-section-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+/* Contenido HTML */
 .detalle-contenido {
   font-size: 14px;
   color: var(--texto);
@@ -835,14 +914,13 @@ input, textarea, select { font-family: inherit; }
   background: var(--fondo);
 }
 .detalle-contenido p { margin-bottom: 4px; }
-
-/* Nota de rechazo visible en detalle */
+/* Nota de rechazo */
 .detalle-rechazo {
   background: rgba(192,57,43,.06);
   border: 1px solid rgba(192,57,43,.2);
   border-radius: var(--radio-sm);
   padding: 12px 14px;
-  margin-top: 4px;
+  margin-top: 12px;
 }
 .detalle-rechazo-label {
   font-size: 11px;
@@ -987,20 +1065,20 @@ input, textarea, select { font-family: inherit; }
     <div class="header-info">
       <div id="hdr-usuario" class="header-usuario">—</div>
       <div id="hdr-obra" class="header-obra">—</div>
+      <div id="hdr-rol" class="header-rol"></div>
       <div id="hdr-version" class="header-version"></div>
     </div>
-    <button id="btn-instalar-pwa" title="Instalar app" style="display:none; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.25); border-radius:8px; color:#fff; font-size:12px; padding:5px 10px; cursor:pointer; margin-right:6px;">
-      📲 Instalar
-    </button>
+    <button id="btn-actualizar" class="btn-hdr-action" title="Actualizar datos">🔄 Actualizar</button>
+    <button id="btn-instalar-pwa" class="btn-hdr-action" style="display:none" title="Instalar app">📲 Instalar</button>
     <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
       <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
     </button>
   </header>
 
-  <!-- TABS (solo para SUPERVISOR y JEFE_OBRA) -->
-  <div id="tabs-bar" class="tabs-bar" style="display:none">
+  <!-- TABS (siempre visibles; "Por Aprobar" solo para SUPERVISOR y JEFE_OBRA) -->
+  <div id="tabs-bar" class="tabs-bar">
     <button class="tab-btn active" data-tab="mis-vales">Mis Vales</button>
-    <button class="tab-btn" data-tab="por-aprobar">
+    <button class="tab-btn" id="tab-btn-aprobar" data-tab="por-aprobar" style="display:none">
       Por Aprobar
       <span class="tab-badge" id="tab-badge-pendientes" style="display:none">0</span>
     </button>
@@ -1190,7 +1268,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v4.0'
+  VERSION_UI : 'v5.0'
 };
 
 // Roles que pueden aprobar vales
@@ -1330,9 +1408,9 @@ async function sincronizarPendientes() {
 
 // ── TABS ────────────────────────────────────────────────────────
 function inicializarTabs() {
-  const tabsBar = document.getElementById('tabs-bar');
+  // Tab "Por Aprobar" solo visible para roles aprobadores
   if (puedeAprobar()) {
-    tabsBar.style.display = 'flex';
+    document.getElementById('tab-btn-aprobar').style.display = 'flex';
   }
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => cambiarTab(btn.dataset.tab));
@@ -1397,6 +1475,7 @@ function iniciarApp() {
   showScreen('screen-app');
   document.getElementById('hdr-usuario').textContent = APP.perfil.nombre;
   document.getElementById('hdr-obra').textContent    = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
+  document.getElementById('hdr-rol').textContent     = APP.perfil.rol;
   actualizarBadge(navigator.onLine);
   inicializarTabs();
   cargarVales();
@@ -1837,59 +1916,66 @@ document.getElementById('modal-detalle-close').addEventListener('click', () => c
 document.getElementById('modal-aprob-close').addEventListener('click',   () => closeModal('modal-aprob-detalle'));
 
 function abrirDetalle(id) {
-  const vale   = APP.vales.find(v => v.id_vale === id);
+  const vale = APP.vales.find(v => v.id_vale === id);
   if (!vale) return;
 
   const body   = document.getElementById('modal-detalle-body');
   const footer = document.getElementById('modal-detalle-footer');
 
-  // Nota de rechazo (si aplica)
-  const notaRechazo = (vale.estado === 'RECHAZADO' && vale.nota_cierre)
-    ? `<div class="detalle-campo">
-        <div class="detalle-label">Motivo de rechazo</div>
-        <div class="detalle-rechazo">
-          <div class="detalle-rechazo-label">⚠ Rechazado</div>
-          <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
-        </div>
+  // Destino icon
+  const destinoIcon = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
+
+  // Info aprobación / rechazo
+  const infoAprobacion = (vale.aprobado_por && ['APROBADO','RECHAZADO'].includes(vale.estado))
+    ? `<div class="detalle-aprobacion-info">
+        ${vale.estado === 'APROBADO' ? '✓ Aprobado' : '✕ Rechazado'} por
+        <strong>${vale.aprobado_por}</strong> — ${formatFecha(vale.fecha_aprobacion)}
        </div>`
     : '';
 
-  // Info de aprobación
-  const infoAprobacion = (vale.aprobado_por && ['APROBADO','RECHAZADO'].includes(vale.estado))
-    ? `<div class="detalle-campo">
-        <div class="detalle-label">${vale.estado === 'APROBADO' ? 'Aprobado por' : 'Rechazado por'}</div>
-        <div class="detalle-valor">${vale.aprobado_por} — ${formatFecha(vale.fecha_aprobacion)}</div>
+  // Nota de rechazo
+  const notaRechazo = (vale.estado === 'RECHAZADO' && vale.nota_cierre)
+    ? `<div class="detalle-rechazo">
+        <div class="detalle-rechazo-label">⚠ Motivo de rechazo</div>
+        <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
        </div>`
     : '';
 
   body.innerHTML = `
-    <div class="detalle-campo">
-      <div class="detalle-label">Estado</div>
-      <div><span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
-      ${!vale._sync ? ' &nbsp;<span style="font-size:12px;color:var(--naranja)">⬆ Pendiente sync</span>' : ''}
+    <!-- Estado + destino -->
+    <div class="detalle-estado-row">
+      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
+      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
+      ${!vale._sync ? '<span style="font-size:12px;color:var(--naranja)">⬆ Pendiente sync</span>' : ''}
+    </div>
+
+    <!-- Meta strip: fecha / usuario / obra -->
+    <div class="detalle-meta">
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Fecha</span>
+        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Usuario</span>
+        <span class="detalle-meta-val">${vale.usuario_nombre}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Obra</span>
+        <span class="detalle-meta-val">${vale.obra_codigo}</span>
       </div>
     </div>
-    <div class="detalle-campo">
-      <div class="detalle-label">Fecha y Hora</div>
-      <div class="detalle-valor">${formatFecha(vale.fecha_hora)}</div>
-    </div>
-    <div class="detalle-campo">
-      <div class="detalle-label">Usuario</div>
-      <div class="detalle-valor">${vale.usuario_nombre}</div>
-    </div>
-    <div class="detalle-campo">
-      <div class="detalle-label">Obra</div>
-      <div class="detalle-valor">${vale.obra_codigo}</div>
-    </div>
-    <div class="detalle-campo">
-      <div class="detalle-label">Destino</div>
-      <div class="detalle-valor">${vale.destino}</div>
-    </div>
-    ${vale.titulo ? `<div class="detalle-campo"><div class="detalle-label">Título</div><div class="detalle-valor">${vale.titulo}</div></div>` : ''}
-    <div class="detalle-campo">
-      <div class="detalle-label">Detalle</div>
-      <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
-    </div>
+
+    <!-- Título -->
+    ${vale.titulo
+      ? `<div class="detalle-titulo-val">${vale.titulo}</div>`
+      : `<div class="detalle-titulo-val" style="color:var(--gris-claro);font-style:italic;font-weight:400">Sin título</div>`}
+
+    <!-- Detalle del pedido -->
+    <div class="detalle-section-lbl">Detalle del pedido</div>
+    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
+
+    <!-- Info aprobación + nota rechazo -->
     ${infoAprobacion}
     ${notaRechazo}
   `;
@@ -1959,6 +2045,16 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('load', () => {
   document.getElementById('login-version').textContent = CONFIG.VERSION_UI;
   document.getElementById('hdr-version').textContent   = CONFIG.VERSION_UI;
+
+  // Botón Actualizar — refresca datos sin recargar página
+  document.getElementById('btn-actualizar').addEventListener('click', () => {
+    if (APP.tabActual === 'por-aprobar') {
+      cargarPendientes();
+    } else {
+      cargarVales();
+    }
+    toast('Actualizando…', '');
+  });
 
   document.getElementById('btn-instalar-pwa').addEventListener('click', async () => {
     if (!deferredInstallPrompt) return;
