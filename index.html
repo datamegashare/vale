@@ -838,7 +838,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec', // ← URL /exec del deploy GAS
-  VERSION_UI : 'v2.0'
+  VERSION_UI : 'v3.0'
 };
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
@@ -933,11 +933,13 @@ async function gasGet(params) {
   return r.json();
 }
 async function gasPost(body) {
-  const r = await fetch(CONFIG.GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' }, // evita preflight CORS
-    body: JSON.stringify(body)
+  // GAS hace redirect 302 y pierde el body del POST.
+  // Solución: enviar todo como GET con parámetros en la URL.
+  const url = new URL(CONFIG.GAS_URL);
+  Object.entries(body).forEach(([k, v]) => {
+    if (v !== null && v !== undefined) url.searchParams.set(k, String(v));
   });
+  const r = await fetch(url.toString());
   return r.json();
 }
 
