@@ -681,9 +681,7 @@ input, textarea, select { font-family: inherit; }
     <div class="login-version" id="login-version"></div>
     <div class="login-btn-wrap">
       <div id="google-btn"></div>
-      <button id="btn-instalar-pwa" style="display:none; margin-top:16px; width:100%; padding:12px; background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.25); border-radius:12px; color:#fff; font-size:14px; cursor:pointer;">
-        📲 Instalar en pantalla de inicio
-      </button>
+
     </div>
     <div id="login-error" class="login-error"></div>
   </div>
@@ -707,6 +705,9 @@ input, textarea, select { font-family: inherit; }
       <div id="hdr-obra" class="header-obra">—</div>
       <div id="hdr-version" class="header-version"></div>
     </div>
+    <button id="btn-instalar-pwa" title="Instalar app" style="display:none; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.25); border-radius:8px; color:#fff; font-size:12px; padding:5px 10px; cursor:pointer; margin-right:6px;">
+      📲 Instalar
+    </button>
     <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
       <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
     </button>
@@ -838,7 +839,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec', // ← URL /exec del deploy GAS
-  VERSION_UI : 'v3.0'
+  VERSION_UI : 'v3.1'
 };
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
