@@ -480,15 +480,15 @@ input, textarea, select { font-family: inherit; }
 /* ═══════════════════════════════════════════════════
    FORMULARIO VALE
 ═══════════════════════════════════════════════════ */
-.form-group { margin-bottom: 16px; }
+.form-group { margin-bottom: 14px; }
 .form-label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--texto-sub);
   text-transform: uppercase;
   letter-spacing: .5px;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 .form-readonly {
   font-size: 14px;
@@ -498,6 +498,71 @@ input, textarea, select { font-family: inherit; }
   border-radius: var(--radio-sm);
   padding: 10px 12px;
   width: 100%;
+}
+/* Meta-info strip: fecha + usuario + obra en una sola línea compacta */
+.form-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  background: var(--fondo);
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 8px 12px;
+}
+.form-meta-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.form-meta-item:not(:last-child) {
+  border-right: 1px solid var(--gris-borde);
+  padding-right: 10px;
+  margin-right: 4px;
+}
+.form-meta-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 2px;
+}
+.form-meta-value {
+  font-size: 13px;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Destino toggle buttons */
+.destino-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.destino-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border: 2px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  background: var(--fondo);
+  color: var(--texto-sub);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--trans);
+  text-align: center;
+}
+.destino-btn.active {
+  border-color: var(--azul-vivo);
+  background: rgba(46,109,164,.08);
+  color: var(--azul-vivo);
+}
+.destino-btn:hover:not(.active) {
+  border-color: var(--gris);
+  background: var(--fondo-card);
 }
 .form-input, .form-select {
   width: 100%;
@@ -538,9 +603,9 @@ input, textarea, select { font-family: inherit; }
 .quill-wrapper .ql-container {
   border: none;
   font-size: 15px;
-  min-height: 140px;
+  min-height: 200px;
 }
-.quill-wrapper .ql-editor { min-height: 140px; padding: 12px; }
+.quill-wrapper .ql-editor { min-height: 200px; padding: 12px; }
 
 /* BOTONES */
 .btn {
@@ -758,27 +823,29 @@ input, textarea, select { font-family: inherit; }
       <button class="modal-close" id="modal-vale-close">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Readonly -->
-      <div class="form-group">
-        <label class="form-label">Fecha y Hora</label>
-        <div class="form-readonly" id="form-fecha-hora">—</div>
+      <!-- Meta info compacta (readonly) -->
+      <div class="form-meta">
+        <div class="form-meta-item">
+          <span class="form-meta-label">Fecha</span>
+          <span class="form-meta-value" id="form-fecha-hora">—</span>
+        </div>
+        <div class="form-meta-item">
+          <span class="form-meta-label">Usuario</span>
+          <span class="form-meta-value" id="form-usuario">—</span>
+        </div>
+        <div class="form-meta-item">
+          <span class="form-meta-label">Obra</span>
+          <span class="form-meta-value" id="form-obra">—</span>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Usuario</label>
-        <div class="form-readonly" id="form-usuario">—</div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Obra</label>
-        <div class="form-readonly" id="form-obra">—</div>
-      </div>
-      <!-- Editables -->
+      <!-- Destino toggle -->
       <div class="form-group">
         <label class="form-label">Destino <span style="color:var(--rojo)">*</span></label>
-        <select id="form-destino" class="form-select">
-          <option value="">Seleccioná el destino…</option>
-          <option value="ALMACEN">Almacén</option>
-          <option value="PAÑOL">Pañol</option>
-        </select>
+        <div class="destino-toggle">
+          <button type="button" class="destino-btn" id="destino-almacen" data-value="ALMACEN">🏭 Almacén</button>
+          <button type="button" class="destino-btn" id="destino-pañol"   data-value="PAÑOL">🔧 Pañol</button>
+        </div>
+        <input type="hidden" id="form-destino" value="">
       </div>
       <div class="form-group">
         <label class="form-label">Título <span style="color:var(--gris-claro);font-weight:400">(opcional)</span></label>
@@ -839,7 +906,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec', // ← URL /exec del deploy GAS
-  VERSION_UI : 'v3.1'
+  VERSION_UI : 'v3.2'
 };
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
@@ -1111,7 +1178,8 @@ function abrirNuevoVale() {
   document.getElementById('form-fecha-hora').textContent   = formatFecha(new Date().toISOString());
   document.getElementById('form-usuario').textContent      = APP.perfil.nombre;
   document.getElementById('form-obra').textContent         = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
-  document.getElementById('form-destino').value            = '';
+  document.getElementById('form-destino').value = '';
+  document.querySelectorAll('.destino-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('form-titulo').value             = '';
   if (APP.quill) APP.quill.setContents([]);
   document.getElementById('btn-eliminar-vale').style.display = 'none';
@@ -1125,7 +1193,10 @@ function abrirEditarVale(vale) {
   document.getElementById('form-fecha-hora').textContent   = formatFecha(vale.fecha_hora);
   document.getElementById('form-usuario').textContent      = vale.usuario_nombre;
   document.getElementById('form-obra').textContent         = vale.obra_codigo;
-  document.getElementById('form-destino').value            = vale.destino || '';
+  document.getElementById('form-destino').value = vale.destino || '';
+  document.querySelectorAll('.destino-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.value === vale.destino);
+  });
   document.getElementById('form-titulo').value             = vale.titulo || '';
   document.getElementById('btn-eliminar-vale').style.display = 'flex';
   openModal('modal-vale');
@@ -1153,6 +1224,15 @@ function initQuill() {
 document.getElementById('modal-vale-close').addEventListener('click', () => closeModal('modal-vale'));
 
 // GUARDAR BORRADOR
+// Destino toggle
+document.querySelectorAll('.destino-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.destino-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('form-destino').value = btn.dataset.value;
+  });
+});
+
 document.getElementById('btn-guardar-borrador').addEventListener('click', () => guardarVale('BORRADOR'));
 
 // ENVIAR
