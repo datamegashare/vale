@@ -1,9 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
-// Vale Digital — Service Worker v1.0
+// Vale Digital — Service Worker v2.0
 // Estrategia: cache-first para assets, network-first para GAS
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'vale-digital-v1.0';
+const CACHE_NAME = 'vale-digital-v2.0';
 
 // Assets que se cachean en la instalación
 const ASSETS_ESTATICOS = [
