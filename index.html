@@ -302,6 +302,12 @@ input, textarea, select { font-family: inherit; }
   margin-top: 2px;
   letter-spacing: .3px;
 }
+.menu-dropdown-version {
+  font-size: 10px;
+  color: var(--gris-claro);
+  margin-top: 4px;
+  letter-spacing: .3px;
+}
 .menu-item {
   display: flex;
   align-items: center;
@@ -1196,6 +1202,7 @@ input, textarea, select { font-family: inherit; }
       <div class="menu-dropdown-nombre" id="menu-nombre">—</div>
       <div class="menu-dropdown-obra"   id="menu-obra">—</div>
       <div class="menu-dropdown-rol"    id="menu-rol">—</div>
+      <div class="menu-dropdown-version" id="menu-version">—</div>
     </div>
     <button class="menu-item" id="menu-actualizar">
       <span class="menu-item-icon">🔄</span> Actualizar
@@ -1401,7 +1408,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v7.0'
+  VERSION_UI : 'v8.0'
 };
 
 // Roles que pueden aprobar vales
@@ -1611,9 +1618,10 @@ function actualizarHeaderPerfil() {
   document.getElementById('hdr-obra').textContent    = p.obra_codigo + ' — ' + p.obra_desc;
   document.getElementById('hdr-rol').textContent     = p.rol;
   // Dropdown mobile
-  document.getElementById('menu-nombre').textContent = p.nombre;
-  document.getElementById('menu-obra').textContent   = p.obra_codigo + ' — ' + p.obra_desc;
-  document.getElementById('menu-rol').textContent    = p.rol;
+  document.getElementById('menu-nombre').textContent  = p.nombre;
+  document.getElementById('menu-obra').textContent    = p.obra_codigo + ' — ' + p.obra_desc;
+  document.getElementById('menu-rol').textContent     = p.rol;
+  document.getElementById('menu-version').textContent = CONFIG.VERSION_UI;
 }
 
 function iniciarApp() {
@@ -1622,6 +1630,17 @@ function iniciarApp() {
   actualizarBadge(navigator.onLine);
   inicializarTabs();
   cargarVales();
+  // Precargar badge de pendientes en background (solo para roles aprobadores)
+  if (puedeAprobar() && APP.online) {
+    gasGet({ accion: 'getPendientesAprobacion', email: APP.perfil.email })
+      .then(res => {
+        if (res.ok) {
+          APP.pendientes = res.data || [];
+          actualizarBadgePendientes(APP.pendientes.length);
+        }
+      })
+      .catch(() => { /* sin red, no pasa nada */ });
+  }
 }
 
 // ── CARGAR MIS VALES ────────────────────────────────────────────
