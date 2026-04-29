@@ -454,7 +454,7 @@ input, textarea, select { font-family: inherit; }
 }
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-bottom: 28px;
 }
@@ -1401,7 +1401,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v6.0'
+  VERSION_UI : 'v7.0'
 };
 
 // Roles que pueden aprobar vales
@@ -1828,7 +1828,10 @@ function mostrarDetalleDesktop(vale) {
       <button class="btn btn-success"  id="desk-btn-aprobar">✓ Aprobar</button>
     </div>
   `;
-  inner.querySelector('#desk-btn-aprobar').addEventListener('click',  () => confirmarAprobacion(vale));
+  inner.querySelector('#desk-btn-aprobar').addEventListener('click', () => {
+    setBotonesAprobacion(true);
+    confirmarAprobacion(vale).finally(() => setBotonesAprobacion(false));
+  });
   inner.querySelector('#desk-btn-rechazar').addEventListener('click', () => abrirModalRechazo(vale));
 }
 
@@ -1851,6 +1854,14 @@ function mostrarDetalleModalMobile(vale) {
     abrirModalRechazo(vale);
   });
   openModal('modal-aprob-detalle');
+}
+
+// Habilita/deshabilita los botones del panel aprobación (desktop)
+function setBotonesAprobacion(disabled) {
+  ['desk-btn-aprobar', 'desk-btn-rechazar'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  });
 }
 
 // ── APROBAR VALE ─────────────────────────────────────────────────
@@ -1898,8 +1909,14 @@ document.getElementById('modal-rechazo-confirm').addEventListener('click', async
     toast('La nota de rechazo debe tener al menos 5 caracteres', 'error');
     return;
   }
-  const vale = _rechazarValeCallback;
-  closeModal('modal-rechazo');
+  const vale    = _rechazarValeCallback;
+  const btnConf = document.getElementById('modal-rechazo-confirm');
+  const btnCan  = document.getElementById('modal-rechazo-cancel');
+
+  // Deshabilitar botones mientras procesa
+  btnConf.disabled = true;
+  btnCan.disabled  = true;
+  btnConf.textContent = 'Procesando…';
 
   try {
     const res = await gasGet({
@@ -1908,6 +1925,7 @@ document.getElementById('modal-rechazo-confirm').addEventListener('click', async
       rechazado_por : APP.perfil.email,
       nota_rechazo  : nota
     });
+    closeModal('modal-rechazo');
     if (res.ok) {
       toast('Vale rechazado', '');
       quitarPendiente(vale.id_vale);
@@ -1916,6 +1934,10 @@ document.getElementById('modal-rechazo-confirm').addEventListener('click', async
     }
   } catch (_) {
     toast('Sin conexión. Intentá de nuevo.', 'error');
+  } finally {
+    btnConf.disabled = false;
+    btnCan.disabled  = false;
+    btnConf.textContent = '✕ Confirmar rechazo';
   }
 });
 
