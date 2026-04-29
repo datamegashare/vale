@@ -681,6 +681,9 @@ input, textarea, select { font-family: inherit; }
     <div class="login-version" id="login-version"></div>
     <div class="login-btn-wrap">
       <div id="google-btn"></div>
+      <button id="btn-instalar-pwa" style="display:none; margin-top:16px; width:100%; padding:12px; background:rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.25); border-radius:12px; color:#fff; font-size:14px; cursor:pointer;">
+        📲 Instalar en pantalla de inicio
+      </button>
     </div>
     <div id="login-error" class="login-error"></div>
   </div>
@@ -835,7 +838,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec', // ← URL /exec del deploy GAS
-  VERSION_UI : 'v1.0'
+  VERSION_UI : 'v2.0'
 };
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
@@ -889,6 +892,7 @@ function confirm(titulo, texto) {
 // ── LOCAL STORAGE ───────────────────────────────────────────────
 const LS = {
   KEY: 'vale_digital_vales',
+  KEY_PERFIL: 'vale_digital_perfil',
   get()        { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { return []; } },
   set(vales)   { localStorage.setItem(this.KEY, JSON.stringify(vales)); },
   upsert(vale) {
@@ -900,8 +904,26 @@ const LS = {
   remove(id)   {
     const lista = this.get().filter(v => v.id_vale !== id);
     this.set(lista);
-  }
+  },
+  getPerfil()  { try { return JSON.parse(localStorage.getItem(this.KEY_PERFIL) || 'null'); } catch { return null; } },
+  setPerfil(p) { localStorage.setItem(this.KEY_PERFIL, JSON.stringify(p)); },
+  clearPerfil(){ localStorage.removeItem(this.KEY_PERFIL); }
 };
+
+// ── PWA INSTALL ─────────────────────────────────────────────────
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('btn-instalar-pwa');
+  if (btn) btn.style.display = 'block';
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('btn-instalar-pwa');
+  if (btn) btn.style.display = 'none';
+  toast('¡App instalada!', '');
+});
 
 // ── API GAS ─────────────────────────────────────────────────────
 async function gasGet(params) {
@@ -947,6 +969,8 @@ async function sincronizarPendientes() {
       if (res.ok) LS.remove(v.id_vale);
     } catch (_) { }
   }
+  // Recargar lista desde GAS para reflejar estado real
+  if (APP.perfil) cargarVales();
 }
 
 // ── LOGIN ────────────────────────────────────────────────────────
@@ -970,6 +994,7 @@ async function handleCredential(response) {
     const res = await gasGet({ accion: 'login', email });
     if (!res.ok) { mostrarLoginError(res.error || 'Acceso denegado.'); return; }
     APP.perfil = res.data;
+    LS.setPerfil(res.data);
     iniciarApp();
   } catch (e) {
     mostrarLoginError('Sin conexión. Intentá de nuevo.');
@@ -1291,6 +1316,7 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   APP.perfil = null;
   APP.vales  = [];
   APP.quill  = null;
+  LS.clearPerfil();
   showScreen('screen-login');
   toast('Sesión cerrada', '');
 });
@@ -1306,6 +1332,30 @@ window.addEventListener('load', () => {
   // Mostrar versión en login y header
   document.getElementById('login-version').textContent = CONFIG.VERSION_UI;
   document.getElementById('hdr-version').textContent   = CONFIG.VERSION_UI;
+
+  // Botón instalar PWA
+  document.getElementById('btn-instalar-pwa').addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') deferredInstallPrompt = null;
+  });
+
+  // Restaurar sesión previa sin re-login
+  const perfilGuardado = LS.getPerfil();
+  if (perfilGuardado) {
+    APP.perfil = perfilGuardado;
+    iniciarApp();
+    // Inicializar Google igual (para poder hacer logout correctamente)
+    if (typeof google !== 'undefined') {
+      inicializarGoogle();
+    } else {
+      const interval = setInterval(() => {
+        if (typeof google !== 'undefined') { clearInterval(interval); inicializarGoogle(); }
+      }, 200);
+    }
+    return;
+  }
 
   if (typeof google !== 'undefined') {
     inicializarGoogle();
