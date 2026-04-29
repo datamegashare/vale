@@ -157,11 +157,11 @@ input, textarea, select { font-family: inherit; }
 .header {
   background: var(--azul-med);
   color: #fff;
-  padding: 0 16px;
+  padding: 0 12px;
   height: 56px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -180,27 +180,10 @@ input, textarea, select { font-family: inherit; }
   font-weight: 700;
   letter-spacing: -.3px;
   flex: 1;
-}
-.header-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-}
-.header-usuario {
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255,255,255,.9);
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.header-obra    { font-size: 10px; color: rgba(255,255,255,.5); }
-.header-rol     { font-size: 10px; font-weight: 700; color: var(--acento); letter-spacing: .3px; }
-.header-version { font-size: 9px; color: rgba(255,255,255,.28); letter-spacing: .3px; }
 
-/* BADGE ONLINE/OFFLINE */
+/* Badge online/offline — solo punto en mobile, texto en desktop */
 .badge-conexion {
   display: flex;
   align-items: center;
@@ -221,20 +204,33 @@ input, textarea, select { font-family: inherit; }
 }
 .badge-conexion.online  .badge-conexion-dot { background: #6EE7A0; }
 .badge-conexion.offline .badge-conexion-dot { background: #FFB3AC; animation: pulse 1.5s infinite; }
+/* Ocultar texto en mobile, mostrar solo el punto */
+.badge-conexion-txt { display: none; }
 
-/* BTN LOGOUT */
-.btn-logout {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,.08);
-  transition: var(--trans);
-  flex-shrink: 0;
+/* Info usuario — solo desktop */
+.header-info {
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
 }
-.btn-logout:hover { background: rgba(255,255,255,.16); }
-.btn-logout svg { width: 16px; height: 16px; stroke: rgba(255,255,255,.7); fill: none; }
+.header-usuario {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,.9);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.header-obra    { font-size: 10px; color: rgba(255,255,255,.5); }
+.header-rol     { font-size: 10px; font-weight: 700; color: var(--acento); letter-spacing: .3px; }
+.header-version { font-size: 9px; color: rgba(255,255,255,.28); letter-spacing: .3px; }
+
+/* Botones header — solo desktop */
 .btn-hdr-action {
-  display: flex; align-items: center; gap: 5px;
+  display: none;
+  align-items: center; gap: 5px;
   background: rgba(255,255,255,.10);
   border: 1px solid rgba(255,255,255,.2);
   border-radius: 8px;
@@ -247,8 +243,115 @@ input, textarea, select { font-family: inherit; }
   flex-shrink: 0;
   white-space: nowrap;
 }
-.btn-hdr-action:hover { background: rgba(255,255,255,.18); }
+.btn-hdr-action:hover  { background: rgba(255,255,255,.18); }
 .btn-hdr-action:active { transform: scale(.95); }
+
+/* Botón 3 puntos — solo mobile */
+.btn-menu {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  transition: var(--trans);
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.btn-menu:active { background: rgba(255,255,255,.18); }
+
+/* Dropdown menú */
+.menu-dropdown {
+  position: absolute;
+  top: 52px;
+  right: 12px;
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-lg);
+  border: 1px solid var(--gris-borde);
+  min-width: 220px;
+  z-index: 200;
+  overflow: hidden;
+  display: none;
+  animation: scaleIn .18s cubic-bezier(.4,0,.2,1) both;
+  transform-origin: top right;
+}
+.menu-dropdown.open { display: block; }
+.menu-dropdown-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--gris-borde);
+  background: var(--fondo);
+}
+.menu-dropdown-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.menu-dropdown-obra {
+  font-size: 12px;
+  color: var(--texto-sub);
+  margin-top: 1px;
+}
+.menu-dropdown-rol {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--azul-vivo);
+  margin-top: 2px;
+  letter-spacing: .3px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--texto);
+  cursor: pointer;
+  transition: var(--trans);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.menu-item:hover  { background: var(--fondo); }
+.menu-item:active { background: var(--gris-borde); }
+.menu-item-icon   { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.menu-item.danger { color: var(--rojo); }
+.menu-item + .menu-item { border-top: 1px solid var(--gris-borde); }
+
+/* Overlay invisible para cerrar menú al tocar afuera */
+.menu-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 199;
+}
+.menu-backdrop.open { display: block; }
+
+/* BTN LOGOUT — solo desktop */
+.btn-logout {
+  display: none;
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  align-items: center; justify-content: center;
+  background: rgba(255,255,255,.08);
+  transition: var(--trans);
+  flex-shrink: 0;
+}
+.btn-logout:hover { background: rgba(255,255,255,.16); }
+.btn-logout svg { width: 16px; height: 16px; stroke: rgba(255,255,255,.7); fill: none; }
+
+/* ── DESKTOP: mostrar info completa, ocultar menú ── */
+@media (min-width: 640px) {
+  .badge-conexion-txt { display: inline; }
+  .header-info        { display: flex; }
+  .btn-hdr-action     { display: flex; }
+  .btn-menu           { display: none; }
+  .btn-logout         { display: flex; }
+}
 
 /* ═══════════════════════════════════════════════════
    TABS
@@ -1058,22 +1161,52 @@ input, textarea, select { font-family: inherit; }
       <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
     </div>
     <div class="header-titulo">Vale Digital</div>
+
+    <!-- Badge conexión -->
     <div id="badge-conexion" class="badge-conexion online">
       <span class="badge-conexion-dot"></span>
-      <span id="badge-conexion-txt">Online</span>
+      <span id="badge-conexion-txt" class="badge-conexion-txt">Online</span>
     </div>
+
+    <!-- Info usuario (solo desktop) -->
     <div class="header-info">
       <div id="hdr-usuario" class="header-usuario">—</div>
       <div id="hdr-obra" class="header-obra">—</div>
       <div id="hdr-rol" class="header-rol"></div>
       <div id="hdr-version" class="header-version"></div>
     </div>
+
+    <!-- Botones desktop -->
     <button id="btn-actualizar" class="btn-hdr-action" title="Actualizar datos">🔄 Actualizar</button>
     <button id="btn-instalar-pwa" class="btn-hdr-action" style="display:none" title="Instalar app">📲 Instalar</button>
     <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
       <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
     </button>
+
+    <!-- Botón 3 puntos (solo mobile) -->
+    <button class="btn-menu" id="btn-menu" title="Menú">⋮</button>
   </header>
+
+  <!-- Backdrop para cerrar menú -->
+  <div class="menu-backdrop" id="menu-backdrop"></div>
+
+  <!-- Dropdown menú mobile -->
+  <div class="menu-dropdown" id="menu-dropdown">
+    <div class="menu-dropdown-header">
+      <div class="menu-dropdown-nombre" id="menu-nombre">—</div>
+      <div class="menu-dropdown-obra"   id="menu-obra">—</div>
+      <div class="menu-dropdown-rol"    id="menu-rol">—</div>
+    </div>
+    <button class="menu-item" id="menu-actualizar">
+      <span class="menu-item-icon">🔄</span> Actualizar
+    </button>
+    <button class="menu-item" id="menu-instalar" style="display:none">
+      <span class="menu-item-icon">📲</span> Instalar app
+    </button>
+    <button class="menu-item danger" id="menu-logout">
+      <span class="menu-item-icon">↩</span> Cerrar sesión
+    </button>
+  </div>
 
   <!-- TABS (siempre visibles; "Por Aprobar" solo para SUPERVISOR y JEFE_OBRA) -->
   <div id="tabs-bar" class="tabs-bar">
@@ -1268,7 +1401,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v5.0'
+  VERSION_UI : 'v6.0'
 };
 
 // Roles que pueden aprobar vales
@@ -1352,13 +1485,13 @@ let deferredInstallPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  const btn = document.getElementById('btn-instalar-pwa');
-  if (btn) btn.style.display = 'block';
+  document.getElementById('btn-instalar-pwa').style.display = 'flex';
+  document.getElementById('menu-instalar').style.display    = 'flex';
 });
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
-  const btn = document.getElementById('btn-instalar-pwa');
-  if (btn) btn.style.display = 'none';
+  document.getElementById('btn-instalar-pwa').style.display = 'none';
+  document.getElementById('menu-instalar').style.display    = 'none';
   toast('¡App instalada!', '');
 });
 
@@ -1471,11 +1604,21 @@ function mostrarLoginError(msg) {
 }
 
 // ── INICIO APP ──────────────────────────────────────────────────
+function actualizarHeaderPerfil() {
+  const p = APP.perfil;
+  // Desktop
+  document.getElementById('hdr-usuario').textContent = p.nombre;
+  document.getElementById('hdr-obra').textContent    = p.obra_codigo + ' — ' + p.obra_desc;
+  document.getElementById('hdr-rol').textContent     = p.rol;
+  // Dropdown mobile
+  document.getElementById('menu-nombre').textContent = p.nombre;
+  document.getElementById('menu-obra').textContent   = p.obra_codigo + ' — ' + p.obra_desc;
+  document.getElementById('menu-rol').textContent    = p.rol;
+}
+
 function iniciarApp() {
   showScreen('screen-app');
-  document.getElementById('hdr-usuario').textContent = APP.perfil.nombre;
-  document.getElementById('hdr-obra').textContent    = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
-  document.getElementById('hdr-rol').textContent     = APP.perfil.rol;
+  actualizarHeaderPerfil();
   actualizarBadge(navigator.onLine);
   inicializarTabs();
   cargarVales();
@@ -2021,8 +2164,8 @@ async function eliminarValeById(vale) {
   cargarVales();
 }
 
-// ── LOGOUT ───────────────────────────────────────────────────────
-document.getElementById('btn-logout').addEventListener('click', async () => {
+// ── LOGOUT (función compartida) ──────────────────────────────────
+async function doLogout() {
   const ok = await confirmar('¿Cerrar sesión?', 'Vas a salir de Vale Digital.');
   if (!ok) return;
   google.accounts.id.disableAutoSelect();
@@ -2033,7 +2176,59 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
   LS.clearPerfil();
   showScreen('screen-login');
   toast('Sesión cerrada', '');
+}
+
+// ── ACTUALIZAR (función compartida) ─────────────────────────────
+async function doActualizar() {
+  cerrarMenu();
+  toast('Actualizando…', '');
+  // Re-leer perfil desde GAS para refrescar rol/obra si cambió en el Sheet
+  if (APP.online && APP.perfil) {
+    try {
+      const res = await gasGet({ accion: 'login', email: APP.perfil.email });
+      if (res.ok) {
+        APP.perfil = res.data;
+        LS.setPerfil(res.data);
+        actualizarHeaderPerfil();
+        // Reinicializar tabs por si cambió el rol
+        inicializarTabs();
+      }
+    } catch (_) { /* sin red, continúa con perfil local */ }
+  }
+  if (APP.tabActual === 'por-aprobar') {
+    cargarPendientes();
+  } else {
+    cargarVales();
+  }
+}
+
+// ── MENÚ MOBILE ──────────────────────────────────────────────────
+function abrirMenu() {
+  document.getElementById('menu-dropdown').classList.add('open');
+  document.getElementById('menu-backdrop').classList.add('open');
+}
+function cerrarMenu() {
+  document.getElementById('menu-dropdown').classList.remove('open');
+  document.getElementById('menu-backdrop').classList.remove('open');
+}
+
+document.getElementById('btn-menu').addEventListener('click', abrirMenu);
+document.getElementById('menu-backdrop').addEventListener('click', cerrarMenu);
+document.getElementById('menu-actualizar').addEventListener('click', doActualizar);
+document.getElementById('menu-instalar').addEventListener('click', async () => {
+  cerrarMenu();
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') deferredInstallPrompt = null;
 });
+document.getElementById('menu-logout').addEventListener('click', () => {
+  cerrarMenu();
+  doLogout();
+});
+
+// Desktop
+document.getElementById('btn-logout').addEventListener('click', doLogout);
 
 // ── SERVICE WORKER ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -2046,16 +2241,10 @@ window.addEventListener('load', () => {
   document.getElementById('login-version').textContent = CONFIG.VERSION_UI;
   document.getElementById('hdr-version').textContent   = CONFIG.VERSION_UI;
 
-  // Botón Actualizar — refresca datos sin recargar página
-  document.getElementById('btn-actualizar').addEventListener('click', () => {
-    if (APP.tabActual === 'por-aprobar') {
-      cargarPendientes();
-    } else {
-      cargarVales();
-    }
-    toast('Actualizando…', '');
-  });
+  // Botón Actualizar desktop
+  document.getElementById('btn-actualizar').addEventListener('click', doActualizar);
 
+  // Botón Instalar desktop
   document.getElementById('btn-instalar-pwa').addEventListener('click', async () => {
     if (!deferredInstallPrompt) return;
     deferredInstallPrompt.prompt();
