@@ -4,7 +4,7 @@
 // GAS: siempre red directa, sin intercepción del SW
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'vale-digital-v3.10';
+const CACHE_NAME = 'vale-digital-v3.20';
 
 const ASSETS_ESTATICOS = [
   '/vale/',
