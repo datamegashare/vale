@@ -41,7 +41,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // GAS (script.google.com) → network-first
+  // GAS (script.google.com) → network-first (sin cachear POSTs)
   if (url.hostname === 'script.google.com') {
     event.respondWith(networkFirst(event.request));
     return;
@@ -89,15 +89,25 @@ async function cacheFirst(request) {
 }
 
 // Network-first: intenta la red, si falla usa caché
+// IMPORTANTE: los requests POST no se cachean (Cache API no lo soporta)
 async function networkFirst(request) {
+  const esPost = request.method === 'POST';
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    // Solo cachear GETs — nunca POSTs
+    if (response.ok && !esPost) {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, response.clone());
     }
     return response;
   } catch (_) {
+    if (esPost) {
+      // Sin red en POST → error JSON directo, sin intentar caché
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Sin conexión' }),
+        { status: 503, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
     const cached = await caches.match(request);
     if (cached) return cached;
     return new Response(
