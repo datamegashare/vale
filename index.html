@@ -30,7 +30,9 @@
   --acento:      #F0A500;
   --acento-dark: #C07800;
   --verde:       #2E7D52;
+  --verde-dark:  #1B5E3A;
   --rojo:        #C0392B;
+  --rojo-dark:   #922B21;
   --naranja:     #D4660A;
   --gris-oscuro: #1C1C1E;
   --gris-med:    #3A3A3C;
@@ -129,7 +131,6 @@ input, textarea, select { font-family: inherit; }
   letter-spacing: .5px;
   margin-bottom: 36px;
 }
-
 .login-btn-wrap {
   display: flex;
   justify-content: center;
@@ -150,9 +151,7 @@ input, textarea, select { font-family: inherit; }
 /* ═══════════════════════════════════════════════════
    APP SHELL
 ═══════════════════════════════════════════════════ */
-#screen-app {
-  padding-bottom: 32px;
-}
+#screen-app { padding-bottom: 32px; }
 
 /* HEADER */
 .header {
@@ -197,15 +196,8 @@ input, textarea, select { font-family: inherit; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.header-obra {
-  font-size: 10px;
-  color: rgba(255,255,255,.5);
-}
-.header-version {
-  font-size: 9px;
-  color: rgba(255,255,255,.28);
-  letter-spacing: .3px;
-}
+.header-obra    { font-size: 10px; color: rgba(255,255,255,.5); }
+.header-version { font-size: 9px; color: rgba(255,255,255,.28); letter-spacing: .3px; }
 
 /* BADGE ONLINE/OFFLINE */
 .badge-conexion {
@@ -242,8 +234,63 @@ input, textarea, select { font-family: inherit; }
 .btn-logout svg { width: 16px; height: 16px; stroke: rgba(255,255,255,.7); fill: none; }
 
 /* ═══════════════════════════════════════════════════
-   CONTENIDO PRINCIPAL
+   TABS
 ═══════════════════════════════════════════════════ */
+.tabs-bar {
+  display: flex;
+  background: var(--azul);
+  padding: 0 16px;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.tab-btn {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,.5);
+  border-bottom: 2px solid transparent;
+  transition: var(--trans);
+  text-align: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-btn.active {
+  color: #fff;
+  border-bottom-color: var(--acento);
+}
+.tab-badge {
+  background: var(--rojo);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT PRINCIPAL — mobile / desktop
+═══════════════════════════════════════════════════ */
+.app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Panel activo mobile */
+.tab-panel { display: none; flex: 1; flex-direction: column; }
+.tab-panel.active { display: flex; }
+
+/* MAIN INTERIOR */
 .main {
   padding: 20px 16px 100px;
   max-width: 600px;
@@ -251,7 +298,32 @@ input, textarea, select { font-family: inherit; }
   width: 100%;
 }
 
-/* MINI DASHBOARD */
+/* Layout aprobación desktop */
+@media (min-width: 768px) {
+  #panel-aprobacion.active {
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    max-width: 100%;
+  }
+  .aprob-lista-col {
+    width: 360px;
+    min-width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gris-borde);
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .aprob-detalle-col {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   MINI DASHBOARD
+═══════════════════════════════════════════════════ */
 .dashboard-titulo {
   font-size: 13px;
   font-weight: 600;
@@ -295,7 +367,9 @@ input, textarea, select { font-family: inherit; }
 .dash-card.aprobado  .dash-card-num { color: var(--verde); }
 .dash-card.entregado .dash-card-num { color: var(--azul-claro); }
 
-/* SPINNER */
+/* ═══════════════════════════════════════════════════
+   SPINNER
+═══════════════════════════════════════════════════ */
 .spinner {
   width: 22px; height: 22px;
   border: 3px solid rgba(30,58,95,.12);
@@ -310,7 +384,9 @@ input, textarea, select { font-family: inherit; }
   color: var(--texto-sub); font-size: 13px;
 }
 
-/* LISTA VALES */
+/* ═══════════════════════════════════════════════════
+   LISTA VALES (Mis Vales)
+═══════════════════════════════════════════════════ */
 .lista-titulo {
   font-size: 13px;
   font-weight: 600;
@@ -351,10 +427,7 @@ input, textarea, select { font-family: inherit; }
   gap: 8px;
   flex-wrap: wrap;
 }
-.vale-card-fecha {
-  font-size: 12px;
-  color: var(--texto-sub);
-}
+.vale-card-fecha   { font-size: 12px; color: var(--texto-sub); }
 .vale-card-destino {
   font-size: 11px;
   font-weight: 600;
@@ -363,14 +436,12 @@ input, textarea, select { font-family: inherit; }
   padding: 2px 8px;
   border-radius: 20px;
 }
-.vale-card-sync {
-  font-size: 11px;
-  color: var(--naranja);
-  display: flex; align-items: center; gap: 3px;
-}
+.vale-card-sync { font-size: 11px; color: var(--naranja); display: flex; align-items: center; gap: 3px; }
 .vale-card-sync.ok { color: var(--verde); }
 
-/* BADGES ESTADO */
+/* ═══════════════════════════════════════════════════
+   BADGES ESTADO
+═══════════════════════════════════════════════════ */
 .badge-estado {
   font-size: 11px;
   font-weight: 700;
@@ -380,14 +451,15 @@ input, textarea, select { font-family: inherit; }
   white-space: nowrap;
   flex-shrink: 0;
 }
-.badge-BORRADOR         { background: rgba(174,174,178,.2); color: var(--gris); }
-.badge-ENVIADO          { background: rgba(46,109,164,.15); color: var(--azul-vivo); }
-.badge-APROBADO         { background: rgba(46,125,82,.15);  color: var(--verde); }
-.badge-PENDIENTE        { background: rgba(74,144,217,.15); color: var(--azul-claro); }
-.badge-ENTREGADO        { background: rgba(46,125,82,.12);  color: var(--verde); }
-.badge-ENTREGA_PARCIAL  { background: rgba(212,102,10,.15); color: var(--naranja); }
-.badge-CANCELADO        { background: rgba(192,57,43,.12);  color: var(--rojo); }
-.badge-ELIMINADO        { background: rgba(174,174,178,.15); color: var(--gris-claro); }
+.badge-BORRADOR        { background: rgba(174,174,178,.2); color: var(--gris); }
+.badge-ENVIADO         { background: rgba(46,109,164,.15); color: var(--azul-vivo); }
+.badge-APROBADO        { background: rgba(46,125,82,.15);  color: var(--verde); }
+.badge-RECHAZADO       { background: rgba(192,57,43,.12);  color: var(--rojo); }
+.badge-PENDIENTE       { background: rgba(74,144,217,.15); color: var(--azul-claro); }
+.badge-ENTREGADO       { background: rgba(46,125,82,.12);  color: var(--verde); }
+.badge-ENTREGA_PARCIAL { background: rgba(212,102,10,.15); color: var(--naranja); }
+.badge-CANCELADO       { background: rgba(192,57,43,.12);  color: var(--rojo); }
+.badge-ELIMINADO       { background: rgba(174,174,178,.15); color: var(--gris-claro); }
 
 .lista-vacia {
   text-align: center;
@@ -396,7 +468,9 @@ input, textarea, select { font-family: inherit; }
   font-size: 14px;
 }
 
-/* FAB */
+/* ═══════════════════════════════════════════════════
+   FAB
+═══════════════════════════════════════════════════ */
 .fab {
   position: fixed;
   bottom: 28px;
@@ -414,6 +488,111 @@ input, textarea, select { font-family: inherit; }
   line-height: 1;
 }
 .fab:active { transform: scale(.93); box-shadow: 0 3px 10px rgba(46,109,164,.35); }
+
+/* ═══════════════════════════════════════════════════
+   PANEL APROBACIÓN
+═══════════════════════════════════════════════════ */
+#panel-aprobacion {
+  padding: 20px 16px 40px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Card pendiente de aprobación */
+.aprob-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .3s ease both;
+  margin-bottom: 10px;
+}
+.aprob-card:active { transform: scale(.98); }
+.aprob-card.selected {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 2px rgba(46,109,164,.2), var(--sombra);
+}
+.aprob-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.aprob-card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+  line-height: 1.3;
+}
+.aprob-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.aprob-card-solicitante {
+  font-size: 12px;
+  color: var(--texto-sub);
+  font-weight: 500;
+}
+.aprob-card-fecha { font-size: 12px; color: var(--texto-sub); }
+.aprob-card-destino {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+  background: rgba(46,109,164,.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* Detalle aprobación (desktop: columna derecha / mobile: en modal) */
+.aprob-detalle-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  color: var(--texto-sub);
+  font-size: 14px;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.aprob-detalle-placeholder span { font-size: 32px; }
+
+.aprob-detalle-inner { padding: 0; }
+.aprob-detalle-campo { margin-bottom: 14px; }
+.aprob-detalle-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--texto-sub);
+  margin-bottom: 3px;
+}
+.aprob-detalle-valor { font-size: 14px; color: var(--texto); }
+.aprob-detalle-contenido {
+  font-size: 14px;
+  color: var(--texto);
+  line-height: 1.6;
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 12px;
+  background: var(--fondo);
+}
+.aprob-detalle-contenido p { margin-bottom: 4px; }
+.aprob-detalle-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
 
 /* ═══════════════════════════════════════════════════
    MODAL BASE
@@ -490,16 +669,6 @@ input, textarea, select { font-family: inherit; }
   letter-spacing: .5px;
   margin-bottom: 5px;
 }
-.form-readonly {
-  font-size: 14px;
-  color: var(--texto);
-  background: var(--fondo);
-  border: 1px solid var(--gris-borde);
-  border-radius: var(--radio-sm);
-  padding: 10px 12px;
-  width: 100%;
-}
-/* Meta-info strip: fecha + usuario + obra en una sola línea compacta */
 .form-meta {
   display: flex;
   flex-wrap: wrap;
@@ -536,12 +705,7 @@ input, textarea, select { font-family: inherit; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Destino toggle buttons */
-.destino-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
+.destino-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
 .destino-btn {
   flex: 1;
   padding: 12px 8px;
@@ -564,7 +728,7 @@ input, textarea, select { font-family: inherit; }
   border-color: var(--gris);
   background: var(--fondo-card);
 }
-.form-input, .form-select {
+.form-input, .form-select, .form-textarea {
   width: 100%;
   font-size: 15px;
   color: var(--texto);
@@ -576,14 +740,19 @@ input, textarea, select { font-family: inherit; }
   outline: none;
   appearance: none;
 }
-.form-input:focus, .form-select:focus {
+.form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: var(--azul-vivo);
   background: var(--fondo-card);
   box-shadow: 0 0 0 3px rgba(46,109,164,.12);
 }
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
 .form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236C6C70' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
 
-/* Quill customization */
+/* Quill */
 .quill-wrapper {
   border: 1.5px solid var(--gris-borde);
   border-radius: var(--radio-sm);
@@ -600,14 +769,12 @@ input, textarea, select { font-family: inherit; }
   background: var(--fondo);
   padding: 8px 10px;
 }
-.quill-wrapper .ql-container {
-  border: none;
-  font-size: 15px;
-  min-height: 200px;
-}
+.quill-wrapper .ql-container { border: none; font-size: 15px; min-height: 200px; }
 .quill-wrapper .ql-editor { min-height: 200px; padding: 12px; }
 
-/* BOTONES */
+/* ═══════════════════════════════════════════════════
+   BOTONES
+═══════════════════════════════════════════════════ */
 .btn {
   flex: 1;
   padding: 13px 16px;
@@ -637,16 +804,18 @@ input, textarea, select { font-family: inherit; }
   border: 1.5px solid rgba(192,57,43,.2);
 }
 .btn-danger:hover { background: rgba(192,57,43,.14); }
-.btn:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-  transform: none !important;
+.btn-success {
+  background: linear-gradient(135deg, var(--verde), #3DA068);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(46,125,82,.3);
 }
+.btn-success:hover { opacity: .92; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
 
-/* MODAL DETALLE */
-.detalle-campo {
-  margin-bottom: 14px;
-}
+/* ═══════════════════════════════════════════════════
+   MODAL DETALLE (Mis Vales)
+═══════════════════════════════════════════════════ */
+.detalle-campo { margin-bottom: 14px; }
 .detalle-label {
   font-size: 11px;
   font-weight: 600;
@@ -655,10 +824,7 @@ input, textarea, select { font-family: inherit; }
   color: var(--texto-sub);
   margin-bottom: 3px;
 }
-.detalle-valor {
-  font-size: 14px;
-  color: var(--texto);
-}
+.detalle-valor { font-size: 14px; color: var(--texto); }
 .detalle-contenido {
   font-size: 14px;
   color: var(--texto);
@@ -670,7 +836,27 @@ input, textarea, select { font-family: inherit; }
 }
 .detalle-contenido p { margin-bottom: 4px; }
 
-/* TOAST */
+/* Nota de rechazo visible en detalle */
+.detalle-rechazo {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.2);
+  border-radius: var(--radio-sm);
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+.detalle-rechazo-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rojo);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 4px;
+}
+.detalle-rechazo-texto { font-size: 13px; color: var(--texto); line-height: 1.5; }
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
 .toast {
   position: fixed;
   bottom: 100px;
@@ -693,7 +879,9 @@ input, textarea, select { font-family: inherit; }
 .toast.success { background: var(--verde); }
 .toast.error   { background: var(--rojo); }
 
-/* CONFIRM DIALOG */
+/* ═══════════════════════════════════════════════════
+   CONFIRM DIALOG
+═══════════════════════════════════════════════════ */
 .confirm-overlay {
   display: none;
   position: fixed; inset: 0;
@@ -718,7 +906,9 @@ input, textarea, select { font-family: inherit; }
 .confirm-texto  { font-size: 14px; color: var(--texto-sub); margin-bottom: 24px; line-height: 1.5; }
 .confirm-btns   { display: flex; gap: 10px; }
 
-/* ANIMACIONES */
+/* ═══════════════════════════════════════════════════
+   ANIMACIONES
+═══════════════════════════════════════════════════ */
 @keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -726,10 +916,40 @@ input, textarea, select { font-family: inherit; }
 @keyframes spin    { to { transform: rotate(360deg); } }
 @keyframes pulse   { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 
-/* RESPONSIVE */
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE DESKTOP
+═══════════════════════════════════════════════════ */
 @media (min-width: 600px) {
   .dashboard-grid { grid-template-columns: repeat(4, 1fr); }
   .modal { border-radius: var(--radio) var(--radio) 0 0; }
+}
+@media (min-width: 768px) {
+  /* Panel aprobación desktop: dos columnas */
+  #panel-aprobacion {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    max-width: 100%;
+    flex: 1;
+    height: calc(100dvh - 56px - 42px); /* restar header + tabs */
+    overflow: hidden;
+  }
+  .aprob-lista-col {
+    width: 340px;
+    min-width: 260px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gris-borde);
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .aprob-detalle-col {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+  /* En desktop el modal de aprobación no se usa — se muestra inline */
+  .desktop-hide { display: none !important; }
 }
 </style>
 </head>
@@ -746,7 +966,6 @@ input, textarea, select { font-family: inherit; }
     <div class="login-version" id="login-version"></div>
     <div class="login-btn-wrap">
       <div id="google-btn"></div>
-
     </div>
     <div id="login-error" class="login-error"></div>
   </div>
@@ -778,42 +997,75 @@ input, textarea, select { font-family: inherit; }
     </button>
   </header>
 
-  <!-- MAIN -->
-  <main class="main">
+  <!-- TABS (solo para SUPERVISOR y JEFE_OBRA) -->
+  <div id="tabs-bar" class="tabs-bar" style="display:none">
+    <button class="tab-btn active" data-tab="mis-vales">Mis Vales</button>
+    <button class="tab-btn" data-tab="por-aprobar">
+      Por Aprobar
+      <span class="tab-badge" id="tab-badge-pendientes" style="display:none">0</span>
+    </button>
+  </div>
 
-    <!-- DASHBOARD -->
-    <div class="dashboard-titulo">Mis pedidos</div>
-    <div class="dashboard-grid" id="dashboard-grid">
-      <div class="dash-card borrador">
-        <div class="dash-card-num" id="cnt-borrador">—</div>
-        <div class="dash-card-label">Borrador</div>
-      </div>
-      <div class="dash-card enviado">
-        <div class="dash-card-num" id="cnt-enviado">—</div>
-        <div class="dash-card-label">Enviado</div>
-      </div>
-      <div class="dash-card aprobado">
-        <div class="dash-card-num" id="cnt-aprobado">—</div>
-        <div class="dash-card-label">Aprobado</div>
-      </div>
-      <div class="dash-card entregado">
-        <div class="dash-card-num" id="cnt-entregado">—</div>
-        <div class="dash-card-label">Entregado</div>
+  <!-- BODY DE LA APP -->
+  <div class="app-body">
+
+    <!-- TAB: MIS VALES -->
+    <div id="tab-mis-vales" class="tab-panel active">
+      <main class="main">
+        <div class="dashboard-titulo">Mis pedidos</div>
+        <div class="dashboard-grid" id="dashboard-grid">
+          <div class="dash-card borrador">
+            <div class="dash-card-num" id="cnt-borrador">—</div>
+            <div class="dash-card-label">Borrador</div>
+          </div>
+          <div class="dash-card enviado">
+            <div class="dash-card-num" id="cnt-enviado">—</div>
+            <div class="dash-card-label">Enviado</div>
+          </div>
+          <div class="dash-card aprobado">
+            <div class="dash-card-num" id="cnt-aprobado">—</div>
+            <div class="dash-card-label">Aprobado</div>
+          </div>
+          <div class="dash-card entregado">
+            <div class="dash-card-num" id="cnt-entregado">—</div>
+            <div class="dash-card-label">Entregado</div>
+          </div>
+        </div>
+
+        <div class="lista-titulo">Últimos 30 días</div>
+        <div id="lista-vales" class="lista-vales">
+          <div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>
+        </div>
+      </main>
+    </div>
+
+    <!-- TAB: POR APROBAR -->
+    <div id="tab-por-aprobar" class="tab-panel">
+      <div id="panel-aprobacion">
+        <!-- Columna lista (mobile: full width / desktop: izquierda) -->
+        <div class="aprob-lista-col" id="aprob-lista-col">
+          <div class="lista-titulo">Pendientes de aprobación</div>
+          <div id="lista-pendientes">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+          </div>
+        </div>
+        <!-- Columna detalle (solo desktop; mobile usa modal) -->
+        <div class="aprob-detalle-col" id="aprob-detalle-col">
+          <div class="aprob-detalle-placeholder" id="aprob-detalle-placeholder">
+            <span>📋</span>
+            Seleccioná un vale para ver el detalle
+          </div>
+          <div id="aprob-detalle-inner" class="aprob-detalle-inner" style="display:none"></div>
+        </div>
       </div>
     </div>
 
-    <!-- LISTA -->
-    <div class="lista-titulo">Últimos 30 días</div>
-    <div id="lista-vales" class="lista-vales">
-      <div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>
-    </div>
-
-  </main>
+  </div><!-- /app-body -->
 
   <!-- FAB -->
   <button class="fab" id="fab-nuevo" title="Nuevo vale">+</button>
 
-</div>
+</div><!-- /screen-app -->
 
 <!-- ═══════════ MODAL: NUEVO / EDITAR VALE ═══════════ -->
 <div id="modal-vale" class="modal-overlay">
@@ -823,7 +1075,6 @@ input, textarea, select { font-family: inherit; }
       <button class="modal-close" id="modal-vale-close">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Meta info compacta (readonly) -->
       <div class="form-meta">
         <div class="form-meta-item">
           <span class="form-meta-label">Fecha</span>
@@ -838,7 +1089,6 @@ input, textarea, select { font-family: inherit; }
           <span class="form-meta-value" id="form-obra">—</span>
         </div>
       </div>
-      <!-- Destino toggle -->
       <div class="form-group">
         <label class="form-label">Destino <span style="color:var(--rojo)">*</span></label>
         <div class="destino-toggle">
@@ -861,23 +1111,57 @@ input, textarea, select { font-family: inherit; }
     <div class="modal-footer">
       <button class="btn btn-danger" id="btn-eliminar-vale" style="display:none">🗑 Eliminar</button>
       <button class="btn btn-secondary" id="btn-guardar-borrador">Guardar</button>
-      <button class="btn btn-primary" id="btn-enviar-vale">Enviar ↗</button>
+      <button class="btn btn-primary"   id="btn-enviar-vale">Enviar ↗</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════ MODAL: DETALLE VALE ═══════════ -->
+<!-- ═══════════ MODAL: DETALLE VALE (Mis Vales) ═══════════ -->
 <div id="modal-detalle" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-titulo">Detalle del Vale</div>
       <button class="modal-close" id="modal-detalle-close">✕</button>
     </div>
-    <div class="modal-body" id="modal-detalle-body">
-      <!-- Se llena dinámicamente -->
+    <div class="modal-body" id="modal-detalle-body"></div>
+    <div class="modal-footer" id="modal-detalle-footer"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: DETALLE APROBACIÓN (solo mobile) ═══════════ -->
+<div id="modal-aprob-detalle" class="modal-overlay desktop-hide">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-aprob-titulo">Detalle del Vale</div>
+      <button class="modal-close" id="modal-aprob-close">✕</button>
     </div>
-    <div class="modal-footer" id="modal-detalle-footer">
-      <!-- Se llena dinámicamente según estado -->
+    <div class="modal-body" id="modal-aprob-body"></div>
+    <div class="modal-footer" id="modal-aprob-footer"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: NOTA DE RECHAZO ═══════════ -->
+<div id="modal-rechazo" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">Motivo de rechazo</div>
+      <button class="modal-close" id="modal-rechazo-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px; color:var(--texto-sub); margin-bottom:14px; line-height:1.5">
+        Ingresá el motivo del rechazo. Esta nota quedará registrada en el vale.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Nota de rechazo <span style="color:var(--rojo)">*</span></label>
+        <textarea id="rechazo-nota" class="form-textarea" placeholder="Ej: Falta especificación de materiales. Completar con referencia de catálogo." maxlength="500"></textarea>
+        <div style="font-size:11px; color:var(--gris); margin-top:4px; text-align:right">
+          <span id="rechazo-chars">0</span>/500 — mínimo 5 caracteres
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-rechazo-cancel">Cancelar</button>
+      <button class="btn btn-danger"    id="modal-rechazo-confirm">✕ Confirmar rechazo</button>
     </div>
   </div>
 </div>
@@ -899,23 +1183,30 @@ input, textarea, select { font-family: inherit; }
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// Vale Digital — UI v1.0
+// Vale Digital — UI v4.0  (Etapa 2: Panel de Aprobación)
 // ═══════════════════════════════════════════════════════════════
 
 // ── CONFIGURACIÓN ───────────────────────────────────────────────
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
-  GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec', // ← URL /exec del deploy GAS
-  VERSION_UI : 'v3.2'
+  GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
+  VERSION_UI : 'v4.0'
 };
+
+// Roles que pueden aprobar vales
+const ROLES_APROBADOR = ['SUPERVISOR', 'JEFE_OBRA'];
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
 const APP = {
-  perfil   : null,   // { email, nombre, rol, obra_codigo, obra_desc }
-  vales    : [],     // lista en memoria
-  valeEdit : null,   // vale actualmente en edición
-  quill    : null,   // instancia Quill
-  online   : navigator.onLine
+  perfil      : null,
+  vales       : [],
+  pendientes  : [],      // vales pendientes de aprobación
+  valeEdit    : null,
+  valeAprob   : null,    // vale seleccionado en panel aprobación
+  quill       : null,
+  online      : navigator.onLine,
+  tabActual   : 'mis-vales',
+  isDesktop   : () => window.innerWidth >= 768
 };
 
 // ── HELPERS ─────────────────────────────────────────────────────
@@ -944,7 +1235,7 @@ function showScreen(id) {
 }
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function confirm(titulo, texto) {
+function confirmar(titulo, texto) {
   return new Promise(res => {
     document.getElementById('confirm-titulo').textContent = titulo;
     document.getElementById('confirm-texto').textContent  = texto;
@@ -955,6 +1246,9 @@ function confirm(titulo, texto) {
     ok.onclick  = () => cleanup(true);
     can.onclick = () => cleanup(false);
   });
+}
+function puedeAprobar() {
+  return APP.perfil && ROLES_APROBADOR.includes(APP.perfil.rol);
 }
 
 // ── LOCAL STORAGE ───────────────────────────────────────────────
@@ -969,10 +1263,7 @@ const LS = {
     if (idx >= 0) lista[idx] = vale; else lista.unshift(vale);
     this.set(lista);
   },
-  remove(id)   {
-    const lista = this.get().filter(v => v.id_vale !== id);
-    this.set(lista);
-  },
+  remove(id)   { this.set(this.get().filter(v => v.id_vale !== id)); },
   getPerfil()  { try { return JSON.parse(localStorage.getItem(this.KEY_PERFIL) || 'null'); } catch { return null; } },
   setPerfil(p) { localStorage.setItem(this.KEY_PERFIL, JSON.stringify(p)); },
   clearPerfil(){ localStorage.removeItem(this.KEY_PERFIL); }
@@ -996,19 +1287,15 @@ window.addEventListener('appinstalled', () => {
 // ── API GAS ─────────────────────────────────────────────────────
 async function gasGet(params) {
   const url = new URL(CONFIG.GAS_URL);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const r = await fetch(url.toString());
-  return r.json();
-}
-async function gasPost(body) {
-  // GAS hace redirect 302 y pierde el body del POST.
-  // Solución: enviar todo como GET con parámetros en la URL.
-  const url = new URL(CONFIG.GAS_URL);
-  Object.entries(body).forEach(([k, v]) => {
+  Object.entries(params).forEach(([k, v]) => {
     if (v !== null && v !== undefined) url.searchParams.set(k, String(v));
   });
   const r = await fetch(url.toString());
   return r.json();
+}
+// GAS hace redirect 302 y pierde el body del POST → todo por GET
+async function gasPost(body) {
+  return gasGet(body);
 }
 
 // ── CONECTIVIDAD ────────────────────────────────────────────────
@@ -1019,7 +1306,7 @@ function actualizarBadge(online) {
   badge.className = 'badge-conexion ' + (online ? 'online' : 'offline');
   txt.textContent  = online ? 'Online' : 'Offline';
 }
-window.addEventListener('online',  () => { actualizarBadge(true);  sincronizarPendientes(); });
+window.addEventListener('online',  () => { actualizarBadge(true); sincronizarPendientes(); });
 window.addEventListener('offline', () => actualizarBadge(false));
 
 // ── SINCRONIZACIÓN ──────────────────────────────────────────────
@@ -1029,9 +1316,8 @@ async function sincronizarPendientes() {
     try {
       const res = await gasPost({ accion: 'guardarVale', ...v });
       if (res.ok) { v._sync = true; LS.upsert(v); }
-    } catch (_) { /* sin red */ }
+    } catch (_) { }
   }
-  // Eliminar pendientes
   const porEliminar = LS.get().filter(v => !v._sync && v.estado === 'ELIMINADO');
   for (const v of porEliminar) {
     try {
@@ -1039,8 +1325,33 @@ async function sincronizarPendientes() {
       if (res.ok) LS.remove(v.id_vale);
     } catch (_) { }
   }
-  // Recargar lista desde GAS para reflejar estado real
   if (APP.perfil) cargarVales();
+}
+
+// ── TABS ────────────────────────────────────────────────────────
+function inicializarTabs() {
+  const tabsBar = document.getElementById('tabs-bar');
+  if (puedeAprobar()) {
+    tabsBar.style.display = 'flex';
+  }
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => cambiarTab(btn.dataset.tab));
+  });
+}
+
+function cambiarTab(tabId) {
+  APP.tabActual = tabId;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+
+  if (tabId === 'por-aprobar') {
+    // Ocultar FAB en tab de aprobación
+    document.getElementById('fab-nuevo').style.display = 'none';
+    cargarPendientes();
+  } else {
+    document.getElementById('fab-nuevo').style.display = 'flex';
+  }
 }
 
 // ── LOGIN ────────────────────────────────────────────────────────
@@ -1075,7 +1386,6 @@ function parseJwt(token) {
   const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
   return JSON.parse(atob(base64));
 }
-
 function mostrarLoginError(msg) {
   const el = document.getElementById('login-error');
   el.textContent = msg;
@@ -1088,10 +1398,11 @@ function iniciarApp() {
   document.getElementById('hdr-usuario').textContent = APP.perfil.nombre;
   document.getElementById('hdr-obra').textContent    = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
   actualizarBadge(navigator.onLine);
+  inicializarTabs();
   cargarVales();
 }
 
-// ── CARGAR VALES ────────────────────────────────────────────────
+// ── CARGAR MIS VALES ────────────────────────────────────────────
 async function cargarVales() {
   const lista = document.getElementById('lista-vales');
   lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>';
@@ -1101,10 +1412,8 @@ async function cargarVales() {
     try {
       const res = await gasGet({ accion: 'getMisVales', email: APP.perfil.email });
       if (res.ok) {
-        // Marcar todos los vales remotos como sincronizados y guardar en LS
         vales = res.data.map(v => ({ ...v, _sync: true }));
         vales.forEach(v => LS.upsert(v));
-        // Agregar borradores locales pendientes que aún no llegaron al servidor
         const locales = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
         locales.forEach(lv => {
           if (!vales.find(rv => rv.id_vale === lv.id_vale)) vales.unshift(lv);
@@ -1118,7 +1427,6 @@ async function cargarVales() {
     vales = obtenerValesLocales();
   }
 
-  // Leer desde LS para asegurar que _sync esté actualizado
   const todosLS = LS.get();
   APP.vales = vales
     .filter(v => v.estado !== 'ELIMINADO')
@@ -1160,13 +1468,241 @@ function renderizarLista(vales) {
       <div class="vale-card-bottom">
         <span class="vale-card-fecha">${formatFecha(v.fecha_hora)}</span>
         <span class="vale-card-destino">${v.destino}</span>
-        ${!(LS.get().find(lv=>lv.id_vale===v.id_vale)||v)._sync ? '<span class="vale-card-sync">⬆ Pendiente</span>' : '<span class="vale-card-sync ok">✓ Sync</span>'}
+        ${!(LS.get().find(lv=>lv.id_vale===v.id_vale)||v)._sync
+          ? '<span class="vale-card-sync">⬆ Pendiente</span>'
+          : '<span class="vale-card-sync ok">✓ Sync</span>'}
       </div>
     </div>
   `).join('');
   lista.querySelectorAll('.vale-card').forEach(el =>
     el.addEventListener('click', () => abrirDetalle(el.dataset.id))
   );
+}
+
+// ── CARGAR PENDIENTES DE APROBACIÓN ─────────────────────────────
+async function cargarPendientes() {
+  const lista = document.getElementById('lista-pendientes');
+  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+
+  // Limpiar detalle
+  resetDetalleAprobacion();
+
+  if (!APP.online) {
+    lista.innerHTML = '<div class="lista-vacia">Sin conexión. Conectate para ver los pendientes.</div>';
+    return;
+  }
+
+  try {
+    const res = await gasGet({ accion: 'getPendientesAprobacion', email: APP.perfil.email });
+    if (!res.ok) {
+      lista.innerHTML = `<div class="lista-vacia">${res.error}</div>`;
+      return;
+    }
+    APP.pendientes = res.data || [];
+    renderizarPendientes();
+    actualizarBadgePendientes(APP.pendientes.length);
+  } catch (_) {
+    lista.innerHTML = '<div class="lista-vacia">Error al cargar. Intentá de nuevo.</div>';
+  }
+}
+
+function actualizarBadgePendientes(cant) {
+  const badge = document.getElementById('tab-badge-pendientes');
+  if (cant > 0) {
+    badge.textContent = cant;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderizarPendientes() {
+  const lista = document.getElementById('lista-pendientes');
+  if (!APP.pendientes.length) {
+    lista.innerHTML = '<div class="lista-vacia">No hay vales pendientes de aprobación.</div>';
+    return;
+  }
+  lista.innerHTML = APP.pendientes.map(v => `
+    <div class="aprob-card" data-id="${v.id_vale}">
+      <div class="aprob-card-top">
+        <div class="aprob-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <span class="badge-estado badge-ENVIADO">ENVIADO</span>
+      </div>
+      <div class="aprob-card-meta">
+        <span class="aprob-card-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
+        <span class="aprob-card-destino">${v.destino}</span>
+        <span class="aprob-card-fecha">${formatFecha(v.fecha_hora)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  lista.querySelectorAll('.aprob-card').forEach(el => {
+    el.addEventListener('click', () => seleccionarValeAprobacion(el.dataset.id));
+  });
+}
+
+// ── SELECCIONAR VALE EN PANEL APROBACIÓN ────────────────────────
+function seleccionarValeAprobacion(id) {
+  const vale = APP.pendientes.find(v => v.id_vale === id);
+  if (!vale) return;
+  APP.valeAprob = vale;
+
+  // Marcar card como seleccionada
+  document.querySelectorAll('.aprob-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`.aprob-card[data-id="${id}"]`);
+  if (card) card.classList.add('selected');
+
+  if (APP.isDesktop()) {
+    mostrarDetalleDesktop(vale);
+  } else {
+    mostrarDetalleModalMobile(vale);
+  }
+}
+
+function resetDetalleAprobacion() {
+  document.getElementById('aprob-detalle-placeholder').style.display = 'flex';
+  document.getElementById('aprob-detalle-inner').style.display = 'none';
+  APP.valeAprob = null;
+}
+
+function buildDetalleHTML(vale) {
+  return `
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Solicitante</div>
+      <div class="aprob-detalle-valor">${vale.solicitante_nombre || vale.usuario_email} <span style="color:var(--gris);font-size:12px">(${vale.solicitante_rol || ''})</span></div>
+    </div>
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Fecha</div>
+      <div class="aprob-detalle-valor">${formatFecha(vale.fecha_hora)}</div>
+    </div>
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Obra</div>
+      <div class="aprob-detalle-valor">${vale.obra_codigo}</div>
+    </div>
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Destino</div>
+      <div class="aprob-detalle-valor">${vale.destino}</div>
+    </div>
+    ${vale.titulo ? `
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Título</div>
+      <div class="aprob-detalle-valor">${vale.titulo}</div>
+    </div>` : ''}
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Detalle del pedido</div>
+      <div class="aprob-detalle-contenido">${vale.contenido_html || '—'}</div>
+    </div>
+  `;
+}
+
+// Desktop: muestra detalle en columna derecha
+function mostrarDetalleDesktop(vale) {
+  document.getElementById('aprob-detalle-placeholder').style.display = 'none';
+  const inner = document.getElementById('aprob-detalle-inner');
+  inner.style.display = 'block';
+  inner.innerHTML = buildDetalleHTML(vale) + `
+    <div class="aprob-detalle-btns">
+      <button class="btn btn-danger"   id="desk-btn-rechazar">✕ Rechazar</button>
+      <button class="btn btn-success"  id="desk-btn-aprobar">✓ Aprobar</button>
+    </div>
+  `;
+  inner.querySelector('#desk-btn-aprobar').addEventListener('click',  () => confirmarAprobacion(vale));
+  inner.querySelector('#desk-btn-rechazar').addEventListener('click', () => abrirModalRechazo(vale));
+}
+
+// Mobile: muestra detalle en modal
+function mostrarDetalleModalMobile(vale) {
+  document.getElementById('modal-aprob-titulo').textContent = vale.titulo || 'Detalle del Vale';
+  const body   = document.getElementById('modal-aprob-body');
+  const footer = document.getElementById('modal-aprob-footer');
+  body.innerHTML = buildDetalleHTML(vale);
+  footer.innerHTML = `
+    <button class="btn btn-danger"   id="mob-btn-rechazar">✕ Rechazar</button>
+    <button class="btn btn-success"  id="mob-btn-aprobar">✓ Aprobar</button>
+  `;
+  footer.querySelector('#mob-btn-aprobar').addEventListener('click', () => {
+    closeModal('modal-aprob-detalle');
+    confirmarAprobacion(vale);
+  });
+  footer.querySelector('#mob-btn-rechazar').addEventListener('click', () => {
+    closeModal('modal-aprob-detalle');
+    abrirModalRechazo(vale);
+  });
+  openModal('modal-aprob-detalle');
+}
+
+// ── APROBAR VALE ─────────────────────────────────────────────────
+async function confirmarAprobacion(vale) {
+  const ok = await confirmar('¿Aprobar este vale?', `"${vale.titulo || 'Sin título'}" de ${vale.solicitante_nombre || vale.usuario_email}`);
+  if (!ok) return;
+
+  try {
+    const res = await gasGet({
+      accion      : 'aprobarVale',
+      id_vale     : vale.id_vale,
+      aprobado_por: APP.perfil.email
+    });
+    if (res.ok) {
+      toast('Vale aprobado ✓', 'success');
+      quitarPendiente(vale.id_vale);
+    } else {
+      toast('Error: ' + res.error, 'error');
+    }
+  } catch (_) {
+    toast('Sin conexión. Intentá de nuevo.', 'error');
+  }
+}
+
+// ── RECHAZAR VALE ────────────────────────────────────────────────
+let _rechazarValeCallback = null;
+
+function abrirModalRechazo(vale) {
+  document.getElementById('rechazo-nota').value = '';
+  document.getElementById('rechazo-chars').textContent = '0';
+  openModal('modal-rechazo');
+  _rechazarValeCallback = vale;
+}
+
+document.getElementById('rechazo-nota').addEventListener('input', function() {
+  document.getElementById('rechazo-chars').textContent = this.value.length;
+});
+
+document.getElementById('modal-rechazo-close').addEventListener('click', () => closeModal('modal-rechazo'));
+document.getElementById('modal-rechazo-cancel').addEventListener('click', () => closeModal('modal-rechazo'));
+
+document.getElementById('modal-rechazo-confirm').addEventListener('click', async () => {
+  const nota = document.getElementById('rechazo-nota').value.trim();
+  if (nota.length < 5) {
+    toast('La nota de rechazo debe tener al menos 5 caracteres', 'error');
+    return;
+  }
+  const vale = _rechazarValeCallback;
+  closeModal('modal-rechazo');
+
+  try {
+    const res = await gasGet({
+      accion        : 'rechazarVale',
+      id_vale       : vale.id_vale,
+      rechazado_por : APP.perfil.email,
+      nota_rechazo  : nota
+    });
+    if (res.ok) {
+      toast('Vale rechazado', '');
+      quitarPendiente(vale.id_vale);
+    } else {
+      toast('Error: ' + res.error, 'error');
+    }
+  } catch (_) {
+    toast('Sin conexión. Intentá de nuevo.', 'error');
+  }
+});
+
+// Quita un vale de la lista de pendientes y actualiza la UI
+function quitarPendiente(id) {
+  APP.pendientes = APP.pendientes.filter(v => v.id_vale !== id);
+  actualizarBadgePendientes(APP.pendientes.length);
+  renderizarPendientes();
+  resetDetalleAprobacion();
 }
 
 // ── MODAL NUEVO VALE ─────────────────────────────────────────────
@@ -1180,11 +1716,11 @@ function abrirNuevoVale() {
   document.getElementById('form-obra').textContent         = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
   document.getElementById('form-destino').value = '';
   document.querySelectorAll('.destino-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('form-titulo').value             = '';
+  document.getElementById('form-titulo').value = '';
   if (APP.quill) APP.quill.setContents([]);
   document.getElementById('btn-eliminar-vale').style.display = 'none';
   openModal('modal-vale');
-  setTimeout(() => initQuill(), 100); // esperar animación
+  setTimeout(() => initQuill(), 100);
 }
 
 function abrirEditarVale(vale) {
@@ -1197,7 +1733,7 @@ function abrirEditarVale(vale) {
   document.querySelectorAll('.destino-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.value === vale.destino);
   });
-  document.getElementById('form-titulo').value             = vale.titulo || '';
+  document.getElementById('form-titulo').value = vale.titulo || '';
   document.getElementById('btn-eliminar-vale').style.display = 'flex';
   openModal('modal-vale');
   setTimeout(() => {
@@ -1209,7 +1745,7 @@ function abrirEditarVale(vale) {
 }
 
 function initQuill() {
-  if (APP.quill) return; // ya inicializado
+  if (APP.quill) return;
   APP.quill = new Quill('#quill-editor', {
     theme: 'snow',
     modules: { toolbar: [
@@ -1223,8 +1759,6 @@ function initQuill() {
 
 document.getElementById('modal-vale-close').addEventListener('click', () => closeModal('modal-vale'));
 
-// GUARDAR BORRADOR
-// Destino toggle
 document.querySelectorAll('.destino-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.destino-btn').forEach(b => b.classList.remove('active'));
@@ -1234,90 +1768,99 @@ document.querySelectorAll('.destino-btn').forEach(btn => {
 });
 
 document.getElementById('btn-guardar-borrador').addEventListener('click', () => guardarVale('BORRADOR'));
-
-// ENVIAR
-document.getElementById('btn-enviar-vale').addEventListener('click', () => guardarVale('ENVIADO'));
+document.getElementById('btn-enviar-vale').addEventListener('click',      () => guardarVale('ENVIADO'));
 
 async function guardarVale(estado) {
-  const destino = document.getElementById('form-destino').value;
-  const contenido = APP.quill ? APP.quill.root.innerHTML.trim() : '';
-  const contenidoTexto = APP.quill ? APP.quill.getText().trim() : '';
+  const destino  = document.getElementById('form-destino').value;
+  const contenido      = APP.quill ? APP.quill.root.innerHTML.trim() : '';
+  const contenidoTexto = APP.quill ? APP.quill.getText().trim()      : '';
 
-  if (!destino)       { toast('Seleccioná un destino (Almacén o Pañol)', 'error'); return; }
-  if (!contenidoTexto){ toast('Escribí el detalle del pedido', 'error'); return; }
+  if (!destino)        { toast('Seleccioná un destino (Almacén o Pañol)', 'error'); return; }
+  if (!contenidoTexto) { toast('Escribí el detalle del pedido', 'error'); return; }
 
   const ahora = new Date().toISOString();
   const vale  = {
-    id_vale        : APP.valeEdit?.id_vale || uuid(),
-    fecha_hora     : APP.valeEdit?.fecha_hora || ahora,
-    usuario_email  : APP.perfil.email,
-    usuario_nombre : APP.perfil.nombre,
-    obra_codigo    : APP.perfil.obra_codigo,
+    id_vale       : APP.valeEdit?.id_vale || uuid(),
+    fecha_hora    : APP.valeEdit?.fecha_hora || ahora,
+    usuario_email : APP.perfil.email,
+    usuario_nombre: APP.perfil.nombre,
+    obra_codigo   : APP.perfil.obra_codigo,
     destino,
-    titulo         : document.getElementById('form-titulo').value.trim(),
-    contenido_html : contenido,
+    titulo        : document.getElementById('form-titulo').value.trim(),
+    contenido_html: contenido,
     estado,
-    eliminado      : false,
-    _sync          : false
+    eliminado     : false,
+    _sync         : false
   };
 
-  // Guardar localmente primero
   LS.upsert(vale);
   closeModal('modal-vale');
-  toast(estado === 'ENVIADO' ? 'Vale enviado ↗' : 'Borrador guardado', 'success');
 
-  // Intentar subir al GAS
+  // Toast diferenciado: JEFE_OBRA envía → queda APROBADO automáticamente
+  if (estado === 'ENVIADO' && APP.perfil.rol === 'JEFE_OBRA') {
+    toast('Vale enviado y aprobado automáticamente ✓', 'success');
+  } else {
+    toast(estado === 'ENVIADO' ? 'Vale enviado ↗' : 'Borrador guardado', 'success');
+  }
+
   if (APP.online) {
     try {
       const res = await gasPost({ accion: 'guardarVale', ...vale });
-      if (res.ok) { vale._sync = true; LS.upsert(vale); }
-      else toast('Error al sincronizar: ' + res.error, 'error');
+      if (res.ok) {
+        vale._sync = true;
+        // Si GAS confirmó auto-aprobación, actualizar estado local
+        if (res.data && res.data.auto_aprobado) {
+          vale.estado = 'APROBADO';
+        }
+        LS.upsert(vale);
+      } else {
+        toast('Error al sincronizar: ' + res.error, 'error');
+      }
     } catch (_) {
       toast('Sin conexión — se sincronizará al reconectar', '');
     }
   }
-
   cargarVales();
 }
 
-// ELIMINAR BORRADOR
+// ELIMINAR BORRADOR (desde modal editar)
 document.getElementById('btn-eliminar-vale').addEventListener('click', async () => {
-  const ok = await confirm('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
+  const ok = await confirmar('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
   if (!ok) return;
   const vale = APP.valeEdit;
   closeModal('modal-vale');
-
-  if (vale._sync && APP.online) {
-    // Ya estaba en el servidor → borrado lógico
-    try {
-      const res = await gasPost({ accion: 'eliminarVale', id_vale: vale.id_vale, usuario_email: APP.perfil.email });
-      if (res.ok) { LS.remove(vale.id_vale); toast('Vale eliminado', 'success'); }
-      else toast('Error al eliminar: ' + res.error, 'error');
-    } catch (_) {
-      // Sin red: marcar para eliminar al reconectar
-      LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
-      toast('Se eliminará al reconectar', '');
-    }
-  } else if (vale._sync && !APP.online) {
-    LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
-    toast('Se eliminará al reconectar', '');
-  } else {
-    // Nunca subió → borrar solo local
-    LS.remove(vale.id_vale);
-    toast('Vale eliminado', 'success');
-  }
-  cargarVales();
+  await eliminarValeById(vale);
 });
 
-// ── MODAL DETALLE ────────────────────────────────────────────────
+// ── MODAL DETALLE (Mis Vales) ─────────────────────────────────────
 document.getElementById('modal-detalle-close').addEventListener('click', () => closeModal('modal-detalle'));
+document.getElementById('modal-aprob-close').addEventListener('click',   () => closeModal('modal-aprob-detalle'));
 
 function abrirDetalle(id) {
-  const vale = APP.vales.find(v => v.id_vale === id);
+  const vale   = APP.vales.find(v => v.id_vale === id);
   if (!vale) return;
 
   const body   = document.getElementById('modal-detalle-body');
   const footer = document.getElementById('modal-detalle-footer');
+
+  // Nota de rechazo (si aplica)
+  const notaRechazo = (vale.estado === 'RECHAZADO' && vale.nota_cierre)
+    ? `<div class="detalle-campo">
+        <div class="detalle-label">Motivo de rechazo</div>
+        <div class="detalle-rechazo">
+          <div class="detalle-rechazo-label">⚠ Rechazado</div>
+          <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
+        </div>
+       </div>`
+    : '';
+
+  // Info de aprobación
+  const infoAprobacion = (vale.aprobado_por && ['APROBADO','RECHAZADO'].includes(vale.estado))
+    ? `<div class="detalle-campo">
+        <div class="detalle-label">${vale.estado === 'APROBADO' ? 'Aprobado por' : 'Rechazado por'}</div>
+        <div class="detalle-valor">${vale.aprobado_por} — ${formatFecha(vale.fecha_aprobacion)}</div>
+       </div>`
+    : '';
 
   body.innerHTML = `
     <div class="detalle-campo">
@@ -1342,30 +1885,27 @@ function abrirDetalle(id) {
       <div class="detalle-label">Destino</div>
       <div class="detalle-valor">${vale.destino}</div>
     </div>
-    ${vale.titulo ? `
-    <div class="detalle-campo">
-      <div class="detalle-label">Título</div>
-      <div class="detalle-valor">${vale.titulo}</div>
-    </div>` : ''}
+    ${vale.titulo ? `<div class="detalle-campo"><div class="detalle-label">Título</div><div class="detalle-valor">${vale.titulo}</div></div>` : ''}
     <div class="detalle-campo">
       <div class="detalle-label">Detalle</div>
       <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
     </div>
+    ${infoAprobacion}
+    ${notaRechazo}
   `;
 
-  // Footer según estado
   footer.innerHTML = '';
   if (vale.estado === 'BORRADOR') {
     footer.innerHTML = `
-      <button class="btn btn-danger"    id="det-btn-eliminar">🗑 Eliminar</button>
-      <button class="btn btn-primary"   id="det-btn-editar"  >✏ Editar</button>
+      <button class="btn btn-danger"  id="det-btn-eliminar">🗑 Eliminar</button>
+      <button class="btn btn-primary" id="det-btn-editar"  >✏ Editar</button>
     `;
     footer.querySelector('#det-btn-editar').addEventListener('click', () => {
       closeModal('modal-detalle');
       abrirEditarVale(vale);
     });
     footer.querySelector('#det-btn-eliminar').addEventListener('click', async () => {
-      const ok = await confirm('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
+      const ok = await confirmar('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
       if (!ok) return;
       closeModal('modal-detalle');
       await eliminarValeById(vale);
@@ -1397,12 +1937,13 @@ async function eliminarValeById(vale) {
 
 // ── LOGOUT ───────────────────────────────────────────────────────
 document.getElementById('btn-logout').addEventListener('click', async () => {
-  const ok = await confirm('¿Cerrar sesión?', 'Vas a salir de Vale Digital.');
+  const ok = await confirmar('¿Cerrar sesión?', 'Vas a salir de Vale Digital.');
   if (!ok) return;
   google.accounts.id.disableAutoSelect();
-  APP.perfil = null;
-  APP.vales  = [];
-  APP.quill  = null;
+  APP.perfil     = null;
+  APP.vales      = [];
+  APP.pendientes = [];
+  APP.quill      = null;
   LS.clearPerfil();
   showScreen('screen-login');
   toast('Sesión cerrada', '');
@@ -1416,11 +1957,9 @@ if ('serviceWorker' in navigator) {
 
 // ── INIT ────────────────────────────────────────────────────────
 window.addEventListener('load', () => {
-  // Mostrar versión en login y header
   document.getElementById('login-version').textContent = CONFIG.VERSION_UI;
   document.getElementById('hdr-version').textContent   = CONFIG.VERSION_UI;
 
-  // Botón instalar PWA
   document.getElementById('btn-instalar-pwa').addEventListener('click', async () => {
     if (!deferredInstallPrompt) return;
     deferredInstallPrompt.prompt();
@@ -1428,12 +1967,11 @@ window.addEventListener('load', () => {
     if (outcome === 'accepted') deferredInstallPrompt = null;
   });
 
-  // Restaurar sesión previa sin re-login
+  // Restaurar sesión previa
   const perfilGuardado = LS.getPerfil();
   if (perfilGuardado) {
     APP.perfil = perfilGuardado;
     iniciarApp();
-    // Inicializar Google igual (para poder hacer logout correctamente)
     if (typeof google !== 'undefined') {
       inicializarGoogle();
     } else {
@@ -1447,12 +1985,8 @@ window.addEventListener('load', () => {
   if (typeof google !== 'undefined') {
     inicializarGoogle();
   } else {
-    // Esperar a que cargue el script de GIS
     const interval = setInterval(() => {
-      if (typeof google !== 'undefined') {
-        clearInterval(interval);
-        inicializarGoogle();
-      }
+      if (typeof google !== 'undefined') { clearInterval(interval); inicializarGoogle(); }
     }, 200);
   }
 });
