@@ -1033,14 +1033,14 @@ async function cargarVales() {
     try {
       const res = await gasGet({ accion: 'getMisVales', email: APP.perfil.email });
       if (res.ok) {
-        vales = res.data;
-        // Merge con borradores locales no sincronizados
+        // Marcar todos los vales remotos como sincronizados y guardar en LS
+        vales = res.data.map(v => ({ ...v, _sync: true }));
+        vales.forEach(v => LS.upsert(v));
+        // Agregar borradores locales pendientes que aún no llegaron al servidor
         const locales = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
         locales.forEach(lv => {
           if (!vales.find(rv => rv.id_vale === lv.id_vale)) vales.unshift(lv);
         });
-        // Guardar en LS como caché
-        vales.forEach(v => { if (!LS.get().find(lv => lv.id_vale === v.id_vale)) LS.upsert({ ...v, _sync: true }); });
       }
     } catch (_) {
       vales = obtenerValesLocales();
