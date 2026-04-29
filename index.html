@@ -1050,7 +1050,11 @@ async function cargarVales() {
     vales = obtenerValesLocales();
   }
 
-  APP.vales = vales.filter(v => v.estado !== 'ELIMINADO');
+  // Leer desde LS para asegurar que _sync esté actualizado
+  const todosLS = LS.get();
+  APP.vales = vales
+    .filter(v => v.estado !== 'ELIMINADO')
+    .map(v => ({ ...v, ...(todosLS.find(lv => lv.id_vale === v.id_vale) || {}) }));
   actualizarDashboard(APP.vales);
   renderizarLista(APP.vales);
 }
@@ -1088,7 +1092,7 @@ function renderizarLista(vales) {
       <div class="vale-card-bottom">
         <span class="vale-card-fecha">${formatFecha(v.fecha_hora)}</span>
         <span class="vale-card-destino">${v.destino}</span>
-        ${!v._sync ? '<span class="vale-card-sync">⬆ Pendiente</span>' : '<span class="vale-card-sync ok">✓ Sync</span>'}
+        ${!(LS.get().find(lv=>lv.id_vale===v.id_vale)||v)._sync ? '<span class="vale-card-sync">⬆ Pendiente</span>' : '<span class="vale-card-sync ok">✓ Sync</span>'}
       </div>
     </div>
   `).join('');
