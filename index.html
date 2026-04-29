@@ -1138,6 +1138,238 @@ input, textarea, select { font-family: inherit; }
   /* En desktop el modal de aprobación no se usa — se muestra inline */
   .desktop-hide { display: none !important; }
 }
+/* ═══════════════════════════════════════════════════
+   PANEL GESTIÓN (ALMACENERO / PAÑOLERO)
+═══════════════════════════════════════════════════ */
+#panel-gestion {
+  padding: 20px 16px 100px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Sub-dashboard gestión */
+.gestion-dash {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.gestion-dash-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 12px 8px;
+  text-align: center;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+}
+.gestion-dash-num {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.gestion-dash-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.gestion-dash-card.aprobado  .gestion-dash-num { color: var(--verde); }
+.gestion-dash-card.pendiente .gestion-dash-num { color: var(--azul-vivo); }
+.gestion-dash-card.entregado .gestion-dash-num { color: var(--azul-claro); }
+
+/* Card gestión */
+.gestion-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .3s ease both;
+  margin-bottom: 10px;
+}
+.gestion-card:active { transform: scale(.98); }
+.gestion-card.selected {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 2px rgba(46,109,164,.2), var(--sombra);
+}
+.gestion-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.gestion-card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+  line-height: 1.3;
+}
+.gestion-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gestion-card-solicitante {
+  font-size: 12px;
+  color: var(--texto-sub);
+  font-weight: 500;
+}
+.gestion-card-fecha { font-size: 12px; color: var(--texto-sub); }
+
+/* Separador sección en panel gestión */
+.gestion-section {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gestion-section-badge {
+  background: var(--azul-vivo);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+/* Desktop panel gestión: dos columnas */
+@media (min-width: 768px) {
+  #panel-gestion {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    max-width: 100%;
+    flex: 1;
+    height: calc(100dvh - 56px - 42px);
+    overflow: hidden;
+  }
+  .gestion-lista-col {
+    width: 360px;
+    min-width: 260px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gris-borde);
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .gestion-detalle-col {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+}
+
+/* Botones de acción gestión */
+.gestion-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.gestion-btns .btn { min-width: 120px; }
+
+/* ═══════════════════════════════════════════════════
+   PANEL TODOS LOS VALES (JEFE_OBRA)
+═══════════════════════════════════════════════════ */
+#panel-todos {
+  padding: 20px 16px 80px;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+.todos-buscador {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.todos-buscador input {
+  flex: 1;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo-card);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 10px 14px;
+  outline: none;
+  transition: var(--trans);
+}
+.todos-buscador input:focus {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.todos-buscador button {
+  padding: 10px 16px;
+  background: var(--azul-vivo);
+  color: #fff;
+  border-radius: var(--radio-sm);
+  font-size: 14px;
+  font-weight: 600;
+  transition: var(--trans);
+}
+.todos-buscador button:hover { opacity: .88; }
+.todos-filtro-activo {
+  font-size: 12px;
+  color: var(--azul-vivo);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.todos-filtro-activo button {
+  font-size: 11px;
+  color: var(--rojo);
+  font-weight: 600;
+  background: rgba(192,57,43,.08);
+  border: 1px solid rgba(192,57,43,.2);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+.todos-vale-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 13px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .25s ease both;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.todos-vale-card:active { transform: scale(.98); }
+.todos-vale-info { flex: 1; min-width: 0; }
+.todos-vale-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.todos-vale-sub {
+  font-size: 12px;
+  color: var(--texto-sub);
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.todos-vale-solicitante { font-weight: 600; color: var(--azul-vivo); }
 </style>
 </head>
 <body>
@@ -1222,6 +1454,13 @@ input, textarea, select { font-family: inherit; }
       Por Aprobar
       <span class="tab-badge" id="tab-badge-pendientes" style="display:none">0</span>
     </button>
+    <button class="tab-btn" id="tab-btn-gestionar" data-tab="por-gestionar" style="display:none">
+      Por Gestionar
+      <span class="tab-badge" id="tab-badge-gestionar" style="display:none">0</span>
+    </button>
+    <button class="tab-btn" id="tab-btn-todos" data-tab="todos-vales" style="display:none">
+      Todos
+    </button>
   </div>
 
   <!-- BODY DE LA APP -->
@@ -1278,12 +1517,118 @@ input, textarea, select { font-family: inherit; }
       </div>
     </div>
 
+    <!-- TAB: POR GESTIONAR (ALMACENERO / PAÑOLERO) -->
+    <div id="tab-por-gestionar" class="tab-panel">
+      <div id="panel-gestion">
+        <!-- Columna lista -->
+        <div class="gestion-lista-col" id="gestion-lista-col">
+          <!-- Sub-dashboard -->
+          <div class="gestion-dash" id="gestion-dash">
+            <div class="gestion-dash-card aprobado">
+              <div class="gestion-dash-num" id="gcnt-aprobado">—</div>
+              <div class="gestion-dash-lbl">Por iniciar</div>
+            </div>
+            <div class="gestion-dash-card pendiente">
+              <div class="gestion-dash-num" id="gcnt-pendiente">—</div>
+              <div class="gestion-dash-lbl">Preparando</div>
+            </div>
+            <div class="gestion-dash-card entregado">
+              <div class="gestion-dash-num" id="gcnt-entregado">—</div>
+              <div class="gestion-dash-lbl">Entregados hoy</div>
+            </div>
+          </div>
+          <!-- Cola APROBADO -->
+          <div class="gestion-section">
+            Cola de trabajo
+            <span class="gestion-section-badge" id="badge-cola">0</span>
+          </div>
+          <div id="lista-por-gestionar">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+          </div>
+          <!-- En preparación PENDIENTE -->
+          <div class="gestion-section" style="margin-top:24px">
+            En preparación
+            <span class="gestion-section-badge" id="badge-prep">0</span>
+          </div>
+          <div id="lista-en-preparacion">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+          </div>
+        </div>
+        <!-- Columna detalle (solo desktop) -->
+        <div class="gestion-detalle-col" id="gestion-detalle-col">
+          <div class="aprob-detalle-placeholder" id="gestion-detalle-placeholder">
+            <span>📦</span>
+            Seleccioná un vale para gestionar
+          </div>
+          <div id="gestion-detalle-inner" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TODOS LOS VALES (JEFE_OBRA) -->
+    <div id="tab-todos-vales" class="tab-panel">
+      <div id="panel-todos">
+        <div class="todos-buscador">
+          <input id="todos-buscar-input" type="text" placeholder="Buscar por solicitante…" maxlength="60">
+          <button id="todos-buscar-btn">Buscar</button>
+        </div>
+        <div id="todos-filtro-activo" class="todos-filtro-activo" style="display:none">
+          Filtrando por: <strong id="todos-filtro-txt"></strong>
+          <button id="todos-filtro-limpiar">✕ Limpiar</button>
+        </div>
+        <div id="lista-todos-vales">
+          <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /app-body -->
 
   <!-- FAB -->
   <button class="fab" id="fab-nuevo" title="Nuevo vale">+</button>
 
 </div><!-- /screen-app -->
+
+<!-- ═══════════ MODAL: DETALLE GESTIÓN (mobile) ═══════════ -->
+<div id="modal-gestion-detalle" class="modal-overlay desktop-hide">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-gestion-titulo">Detalle del Vale</div>
+      <button class="modal-close" id="modal-gestion-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-gestion-body"></div>
+    <div class="modal-footer" id="modal-gestion-footer"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: NOTA CIERRE (entrega parcial / cancelar) ═══════════ -->
+<div id="modal-nota-cierre" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-nota-titulo">Nota de cierre</div>
+      <button class="modal-close" id="modal-nota-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px; color:var(--texto-sub); margin-bottom:14px; line-height:1.5" id="modal-nota-desc">
+        Ingresá una nota para registrar el motivo.
+      </p>
+      <div class="form-group">
+        <label class="form-label">
+          Nota <span id="modal-nota-req" style="color:var(--rojo)">*</span>
+        </label>
+        <textarea id="nota-cierre-txt" class="form-textarea" maxlength="500"
+          placeholder="Ej: Se entregó parcialmente por falta de stock en ítem 3…"></textarea>
+        <div style="font-size:11px; color:var(--gris); margin-top:4px; text-align:right">
+          <span id="nota-cierre-chars">0</span>/500
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-nota-cancel">Cancelar</button>
+      <button class="btn btn-primary"   id="modal-nota-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════ MODAL: NUEVO / EDITAR VALE ═══════════ -->
 <div id="modal-vale" class="modal-overlay">
@@ -1408,23 +1753,31 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v8.0'
+  VERSION_UI : 'v9.0'
 };
 
 // Roles que pueden aprobar vales
 const ROLES_APROBADOR = ['SUPERVISOR', 'JEFE_OBRA'];
+// Roles que gestionan almacén/pañol
+const ROLES_GESTOR = ['ALMACENERO', 'PAÑOLERO'];
+// Roles que ven todos los vales de la obra
+const ROLES_VER_TODOS = ['JEFE_OBRA'];
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
 const APP = {
-  perfil      : null,
-  vales       : [],
-  pendientes  : [],      // vales pendientes de aprobación
-  valeEdit    : null,
-  valeAprob   : null,    // vale seleccionado en panel aprobación
-  quill       : null,
-  online      : navigator.onLine,
-  tabActual   : 'mis-vales',
-  isDesktop   : () => window.innerWidth >= 768
+  perfil         : null,
+  vales          : [],
+  pendientes     : [],
+  porGestionar   : [],   // vales APROBADO para almacenero/pañolero
+  enPreparacion  : [],   // vales PENDIENTE en preparación
+  todosVales     : [],   // vista JEFE_OBRA
+  valeEdit       : null,
+  valeAprob      : null,
+  valeGestion    : null, // vale seleccionado en panel gestión
+  quill          : null,
+  online         : navigator.onLine,
+  tabActual      : 'mis-vales',
+  isDesktop      : () => window.innerWidth >= 768
 };
 
 // ── HELPERS ─────────────────────────────────────────────────────
@@ -1465,9 +1818,9 @@ function confirmar(titulo, texto) {
     can.onclick = () => cleanup(false);
   });
 }
-function puedeAprobar() {
-  return APP.perfil && ROLES_APROBADOR.includes(APP.perfil.rol);
-}
+function puedeAprobar()   { return APP.perfil && ROLES_APROBADOR.includes(APP.perfil.rol); }
+function puedeGestionar() { return APP.perfil && ROLES_GESTOR.includes(APP.perfil.rol); }
+function puedeVerTodos()  { return APP.perfil && ROLES_VER_TODOS.includes(APP.perfil.rol); }
 
 // ── LOCAL STORAGE ───────────────────────────────────────────────
 const LS = {
@@ -1548,9 +1901,12 @@ async function sincronizarPendientes() {
 
 // ── TABS ────────────────────────────────────────────────────────
 function inicializarTabs() {
-  // Tab "Por Aprobar" solo visible para roles aprobadores
-  if (puedeAprobar()) {
-    document.getElementById('tab-btn-aprobar').style.display = 'flex';
+  if (puedeAprobar())   document.getElementById('tab-btn-aprobar').style.display   = 'flex';
+  if (puedeGestionar()) document.getElementById('tab-btn-gestionar').style.display = 'flex';
+  if (puedeVerTodos())  document.getElementById('tab-btn-todos').style.display     = 'flex';
+  // ALMACENERO/PAÑOLERO no crean vales — ocultar FAB
+  if (puedeGestionar() && !puedeAprobar()) {
+    document.getElementById('fab-nuevo').style.display = 'none';
   }
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => cambiarTab(btn.dataset.tab));
@@ -1563,12 +1919,19 @@ function cambiarTab(tabId) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tabId).classList.add('active');
 
+  const fab = document.getElementById('fab-nuevo');
   if (tabId === 'por-aprobar') {
-    // Ocultar FAB en tab de aprobación
-    document.getElementById('fab-nuevo').style.display = 'none';
+    fab.style.display = 'none';
     cargarPendientes();
+  } else if (tabId === 'por-gestionar') {
+    fab.style.display = 'none';
+    cargarGestion();
+  } else if (tabId === 'todos-vales') {
+    fab.style.display = 'none';
+    cargarTodosVales();
   } else {
-    document.getElementById('fab-nuevo').style.display = 'flex';
+    // mis-vales — FAB solo si no es gestor puro
+    if (!puedeGestionar() || puedeAprobar()) fab.style.display = 'flex';
   }
 }
 
@@ -1630,16 +1993,18 @@ function iniciarApp() {
   actualizarBadge(navigator.onLine);
   inicializarTabs();
   cargarVales();
-  // Precargar badge de pendientes en background (solo para roles aprobadores)
-  if (puedeAprobar() && APP.online) {
-    gasGet({ accion: 'getPendientesAprobacion', email: APP.perfil.email })
-      .then(res => {
-        if (res.ok) {
-          APP.pendientes = res.data || [];
-          actualizarBadgePendientes(APP.pendientes.length);
-        }
-      })
-      .catch(() => { /* sin red, no pasa nada */ });
+  // Precargar badges en background
+  if (APP.online) {
+    if (puedeAprobar()) {
+      gasGet({ accion: 'getPendientesAprobacion', email: APP.perfil.email })
+        .then(res => { if (res.ok) { APP.pendientes = res.data || []; actualizarBadgePendientes(APP.pendientes.length); } })
+        .catch(() => {});
+    }
+    if (puedeGestionar()) {
+      gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email })
+        .then(res => { if (res.ok) { APP.porGestionar = res.data || []; actualizarBadgeGestionar(APP.porGestionar.length); } })
+        .catch(() => {});
+    }
   }
 }
 
@@ -2205,6 +2570,418 @@ async function eliminarValeById(vale) {
   cargarVales();
 }
 
+// ════════════════════════════════════════════════════════════════
+// ETAPA 3 — PANEL GESTIÓN (ALMACENERO / PAÑOLERO)
+// ════════════════════════════════════════════════════════════════
+
+function actualizarBadgeGestionar(cant) {
+  const badge = document.getElementById('tab-badge-gestionar');
+  if (cant > 0) { badge.textContent = cant; badge.style.display = 'inline-flex'; }
+  else badge.style.display = 'none';
+}
+
+async function cargarGestion() {
+  document.getElementById('lista-por-gestionar').innerHTML  = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  document.getElementById('lista-en-preparacion').innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  resetDetalleGestion();
+
+  if (!APP.online) {
+    const msg = '<div class="lista-vacia">Sin conexión.</div>';
+    document.getElementById('lista-por-gestionar').innerHTML  = msg;
+    document.getElementById('lista-en-preparacion').innerHTML = msg;
+    return;
+  }
+  try {
+    const [rCola, rPrep] = await Promise.all([
+      gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email }),
+      gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email })
+    ]);
+    APP.porGestionar  = rCola.ok ? rCola.data : [];
+    APP.enPreparacion = rPrep.ok ? rPrep.data : [];
+    renderizarGestion();
+  } catch (_) {
+    document.getElementById('lista-por-gestionar').innerHTML  = '<div class="lista-vacia">Error al cargar.</div>';
+    document.getElementById('lista-en-preparacion').innerHTML = '';
+  }
+}
+
+function renderizarGestion() {
+  // Badge tab
+  actualizarBadgeGestionar(APP.porGestionar.length);
+
+  // Sub-dashboard
+  document.getElementById('gcnt-aprobado').textContent = APP.porGestionar.length;
+  document.getElementById('gcnt-pendiente').textContent = APP.enPreparacion.length;
+  document.getElementById('badge-cola').textContent = APP.porGestionar.length;
+  document.getElementById('badge-prep').textContent = APP.enPreparacion.length;
+
+  // Conteo entregados hoy (no lo tenemos en memoria, mostramos —)
+  document.getElementById('gcnt-entregado').textContent = '—';
+
+  // Cola APROBADO
+  const listaCola = document.getElementById('lista-por-gestionar');
+  if (!APP.porGestionar.length) {
+    listaCola.innerHTML = '<div class="lista-vacia">No hay vales en cola.</div>';
+  } else {
+    listaCola.innerHTML = APP.porGestionar.map(v => buildGestionCard(v, 'APROBADO')).join('');
+    listaCola.querySelectorAll('.gestion-card').forEach(el =>
+      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'cola'))
+    );
+  }
+
+  // En preparación PENDIENTE
+  const listaPrep = document.getElementById('lista-en-preparacion');
+  if (!APP.enPreparacion.length) {
+    listaPrep.innerHTML = '<div class="lista-vacia">No hay vales en preparación.</div>';
+  } else {
+    listaPrep.innerHTML = APP.enPreparacion.map(v => buildGestionCard(v, 'PENDIENTE')).join('');
+    listaPrep.querySelectorAll('.gestion-card').forEach(el =>
+      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'prep'))
+    );
+  }
+}
+
+function buildGestionCard(v, tipo) {
+  return `
+    <div class="gestion-card" data-id="${v.id_vale}" data-tipo="${tipo}">
+      <div class="gestion-card-top">
+        <div class="gestion-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
+      </div>
+      <div class="gestion-card-meta">
+        <span class="gestion-card-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
+        <span class="aprob-card-destino">${v.destino}</span>
+        <span class="gestion-card-fecha">${formatFecha(v.fecha_hora)}</span>
+      </div>
+    </div>`;
+}
+
+function resetDetalleGestion() {
+  document.getElementById('gestion-detalle-placeholder').style.display = 'flex';
+  document.getElementById('gestion-detalle-inner').style.display = 'none';
+  APP.valeGestion = null;
+  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
+}
+
+function seleccionarValeGestion(id, lista) {
+  const fuente = lista === 'cola' ? APP.porGestionar : APP.enPreparacion;
+  const vale   = fuente.find(v => v.id_vale === id);
+  if (!vale) return;
+  APP.valeGestion = vale;
+
+  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`.gestion-card[data-id="${id}"]`);
+  if (card) card.classList.add('selected');
+
+  if (APP.isDesktop()) {
+    mostrarDetalleGestionDesktop(vale);
+  } else {
+    mostrarDetalleGestionMobile(vale);
+  }
+}
+
+function buildDetalleGestionHTML(vale) {
+  const destinoIcon  = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
+  return `
+    <div class="detalle-estado-row">
+      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
+      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
+    </div>
+    <div class="detalle-meta">
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Solicitante</span>
+        <span class="detalle-meta-val">${vale.solicitante_nombre || vale.usuario_email}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Fecha</span>
+        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Obra</span>
+        <span class="detalle-meta-val">${vale.obra_codigo}</span>
+      </div>
+    </div>
+    ${vale.titulo ? `<div class="detalle-titulo-val">${vale.titulo}</div>` : ''}
+    <div class="detalle-section-lbl">Detalle del pedido</div>
+    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
+  `;
+}
+
+function buildBotonesGestion(vale, prefijo) {
+  if (vale.estado === 'APROBADO') {
+    return `<div class="gestion-btns">
+      <button class="btn btn-secondary" id="${prefijo}-btn-cancelar">✕ Cancelar</button>
+      <button class="btn btn-primary"   id="${prefijo}-btn-iniciar" >▶ Iniciar preparación</button>
+    </div>`;
+  }
+  if (vale.estado === 'PENDIENTE') {
+    return `<div class="gestion-btns">
+      <button class="btn btn-secondary"  id="${prefijo}-btn-cancelar" >✕ Cancelar</button>
+      <button class="btn btn-danger"     id="${prefijo}-btn-parcial"  >⚠ Entrega parcial</button>
+      <button class="btn btn-success"    id="${prefijo}-btn-entregar" >✓ Entregar</button>
+    </div>`;
+  }
+  return '';
+}
+
+function attachBotonesGestion(vale, prefijo, cerrarModal) {
+  const btn = id => document.getElementById(prefijo + id);
+
+  if (vale.estado === 'APROBADO') {
+    btn('-btn-iniciar')?.addEventListener('click', async () => {
+      setGestionBtns(prefijo, true);
+      await accionGestion('iniciarPreparacion', vale, null, false);
+      if (cerrarModal) cerrarModal();
+    });
+    btn('-btn-cancelar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota =>
+        accionGestion('cancelarVale', vale, nota, false)
+      );
+    });
+  }
+
+  if (vale.estado === 'PENDIENTE') {
+    btn('-btn-entregar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional antes de confirmar.', false, nota =>
+        accionGestion('entregarVale', vale, nota, true)
+      );
+    });
+    btn('-btn-parcial')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota =>
+        accionGestion('entregaParcialVale', vale, nota, true)
+      );
+    });
+    btn('-btn-cancelar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota =>
+        accionGestion('cancelarVale', vale, nota, false)
+      );
+    });
+  }
+}
+
+function setGestionBtns(prefijo, disabled) {
+  ['iniciar','cancelar','entregar','parcial'].forEach(id => {
+    const btn = document.getElementById(prefijo + '-btn-' + id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
+async function accionGestion(accion, vale, nota, esEntrega) {
+  const params = {
+    accion,
+    id_vale       : vale.id_vale,
+    gestionado_por: APP.perfil.email
+  };
+  if (nota) params.nota_cierre = nota;
+
+  try {
+    const res = await gasGet(params);
+    if (res.ok) {
+      const msgs = {
+        iniciarPreparacion : 'Preparación iniciada ▶',
+        entregarVale       : 'Vale entregado ✓',
+        entregaParcialVale : 'Entrega parcial registrada',
+        cancelarVale       : 'Vale cancelado'
+      };
+      toast(msgs[accion] || 'Acción realizada', 'success');
+      resetDetalleGestion();
+      cargarGestion();
+    } else {
+      toast('Error: ' + res.error, 'error');
+    }
+  } catch (_) {
+    toast('Sin conexión. Intentá de nuevo.', 'error');
+  }
+}
+
+function mostrarDetalleGestionDesktop(vale) {
+  document.getElementById('gestion-detalle-placeholder').style.display = 'none';
+  const inner = document.getElementById('gestion-detalle-inner');
+  inner.style.display = 'block';
+  inner.innerHTML = buildDetalleGestionHTML(vale) + buildBotonesGestion(vale, 'desk-g');
+  attachBotonesGestion(vale, 'desk-g', null);
+}
+
+function mostrarDetalleGestionMobile(vale) {
+  document.getElementById('modal-gestion-titulo').textContent = vale.titulo || 'Detalle del Vale';
+  document.getElementById('modal-gestion-body').innerHTML    = buildDetalleGestionHTML(vale);
+  document.getElementById('modal-gestion-footer').innerHTML  = buildBotonesGestion(vale, 'mob-g');
+  attachBotonesGestion(vale, 'mob-g', () => closeModal('modal-gestion-detalle'));
+  openModal('modal-gestion-detalle');
+}
+
+// ── Modal nota de cierre ──────────────────────────────────────────
+let _notaCierreCallback = null;
+let _notaCierreObligatoria = false;
+
+function abrirNotaCierre(titulo, desc, obligatoria, callback) {
+  _notaCierreCallback   = callback;
+  _notaCierreObligatoria = obligatoria;
+  document.getElementById('modal-nota-titulo').textContent = titulo;
+  document.getElementById('modal-nota-desc').textContent   = desc;
+  document.getElementById('modal-nota-req').style.display  = obligatoria ? 'inline' : 'none';
+  document.getElementById('nota-cierre-txt').value  = '';
+  document.getElementById('nota-cierre-chars').textContent = '0';
+  openModal('modal-nota-cierre');
+}
+
+document.getElementById('nota-cierre-txt').addEventListener('input', function() {
+  document.getElementById('nota-cierre-chars').textContent = this.value.length;
+});
+document.getElementById('modal-nota-close').addEventListener('click',  () => closeModal('modal-nota-cierre'));
+document.getElementById('modal-nota-cancel').addEventListener('click', () => closeModal('modal-nota-cierre'));
+document.getElementById('modal-nota-confirm').addEventListener('click', async () => {
+  const nota    = document.getElementById('nota-cierre-txt').value.trim();
+  const btnConf = document.getElementById('modal-nota-confirm');
+  const btnCan  = document.getElementById('modal-nota-cancel');
+  if (_notaCierreObligatoria && nota.length < 5) {
+    toast('La nota debe tener al menos 5 caracteres', 'error');
+    return;
+  }
+  btnConf.disabled = true; btnCan.disabled = true;
+  btnConf.textContent = 'Procesando…';
+  closeModal('modal-nota-cierre');
+  if (_notaCierreCallback) await _notaCierreCallback(nota || null);
+  btnConf.disabled = false; btnCan.disabled = false;
+  btnConf.textContent = 'Confirmar';
+});
+
+document.getElementById('modal-gestion-close').addEventListener('click', () => closeModal('modal-gestion-detalle'));
+
+// ════════════════════════════════════════════════════════════════
+// ETAPA 3 — TODOS LOS VALES (JEFE_OBRA)
+// ════════════════════════════════════════════════════════════════
+
+let _todosFiltroBusqueda = '';
+
+async function cargarTodosVales(filtro) {
+  _todosFiltroBusqueda = (filtro || '').trim();
+  const lista = document.getElementById('lista-todos-vales');
+  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+
+  // Mostrar/ocultar indicador de filtro activo
+  const indicador = document.getElementById('todos-filtro-activo');
+  if (_todosFiltroBusqueda) {
+    indicador.style.display = 'flex';
+    document.getElementById('todos-filtro-txt').textContent = _todosFiltroBusqueda;
+  } else {
+    indicador.style.display = 'none';
+  }
+
+  if (!APP.online) {
+    lista.innerHTML = '<div class="lista-vacia">Sin conexión.</div>';
+    return;
+  }
+  try {
+    const params = { accion: 'getTodosVales', email: APP.perfil.email };
+    if (_todosFiltroBusqueda) params.solicitante = _todosFiltroBusqueda;
+    const res = await gasGet(params);
+    if (!res.ok) { lista.innerHTML = `<div class="lista-vacia">${res.error}</div>`; return; }
+    APP.todosVales = res.data || [];
+    renderizarTodosVales();
+  } catch (_) {
+    lista.innerHTML = '<div class="lista-vacia">Error al cargar.</div>';
+  }
+}
+
+function renderizarTodosVales() {
+  const lista = document.getElementById('lista-todos-vales');
+  if (!APP.todosVales.length) {
+    lista.innerHTML = '<div class="lista-vacia">No se encontraron vales.</div>';
+    return;
+  }
+  lista.innerHTML = APP.todosVales.map(v => `
+    <div class="todos-vale-card" data-id="${v.id_vale}">
+      <div class="todos-vale-info">
+        <div class="todos-vale-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <div class="todos-vale-sub">
+          <span class="todos-vale-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
+          <span>${formatFecha(v.fecha_hora)}</span>
+          <span>${v.destino}</span>
+        </div>
+      </div>
+      <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
+    </div>
+  `).join('');
+
+  // Al tocar → abre modal detalle (readonly)
+  lista.querySelectorAll('.todos-vale-card').forEach(el =>
+    el.addEventListener('click', () => abrirDetalleTodos(el.dataset.id))
+  );
+}
+
+function abrirDetalleTodos(id) {
+  const vale = APP.todosVales.find(v => v.id_vale === id);
+  if (!vale) return;
+  // Reutilizamos el modal detalle existente (readonly, sin botones de edición)
+  const body   = document.getElementById('modal-detalle-body');
+  const footer = document.getElementById('modal-detalle-footer');
+  const destinoIcon  = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
+  const infoAprobacion = (vale.aprobado_por && ['APROBADO','RECHAZADO'].includes(vale.estado))
+    ? `<div class="detalle-aprobacion-info" style="margin-top:10px">
+        ${vale.estado === 'APROBADO' ? '✓ Aprobado' : '✕ Rechazado'} por
+        <strong>${vale.aprobado_por}</strong> — ${formatFecha(vale.fecha_aprobacion)}
+       </div>` : '';
+  const notaRechazo = (vale.estado === 'RECHAZADO' && vale.nota_cierre)
+    ? `<div class="detalle-rechazo" style="margin-top:10px">
+        <div class="detalle-rechazo-label">⚠ Motivo de rechazo</div>
+        <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
+       </div>` : '';
+  const notaCierre = (vale.nota_cierre && !['RECHAZADO'].includes(vale.estado))
+    ? `<div style="margin-top:10px;padding:10px 14px;background:var(--fondo);border:1px solid var(--gris-borde);border-radius:var(--radio-sm)">
+        <div class="detalle-section-lbl">Nota de cierre</div>
+        <div style="font-size:13px;margin-top:4px">${vale.nota_cierre}</div>
+       </div>` : '';
+  body.innerHTML = `
+    <div class="detalle-estado-row">
+      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
+      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
+    </div>
+    <div class="detalle-meta">
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Solicitante</span>
+        <span class="detalle-meta-val">${vale.solicitante_nombre || vale.usuario_email}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Fecha</span>
+        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Obra</span>
+        <span class="detalle-meta-val">${vale.obra_codigo}</span>
+      </div>
+    </div>
+    ${vale.titulo ? `<div class="detalle-titulo-val">${vale.titulo}</div>` : ''}
+    <div class="detalle-section-lbl">Detalle del pedido</div>
+    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
+    ${infoAprobacion}${notaRechazo}${notaCierre}
+  `;
+  footer.innerHTML = ''; // readonly — sin botones de acción
+  openModal('modal-detalle');
+}
+
+// Buscador todos los vales
+document.getElementById('todos-buscar-btn').addEventListener('click', () => {
+  const filtro = document.getElementById('todos-buscar-input').value.trim();
+  cargarTodosVales(filtro);
+});
+document.getElementById('todos-buscar-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const filtro = document.getElementById('todos-buscar-input').value.trim();
+    cargarTodosVales(filtro);
+  }
+});
+document.getElementById('todos-filtro-limpiar').addEventListener('click', () => {
+  document.getElementById('todos-buscar-input').value = '';
+  cargarTodosVales('');
+});
+
 // ── LOGOUT (función compartida) ──────────────────────────────────
 async function doLogout() {
   const ok = await confirmar('¿Cerrar sesión?', 'Vas a salir de Vale Digital.');
@@ -2238,6 +3015,10 @@ async function doActualizar() {
   }
   if (APP.tabActual === 'por-aprobar') {
     cargarPendientes();
+  } else if (APP.tabActual === 'por-gestionar') {
+    cargarGestion();
+  } else if (APP.tabActual === 'todos-vales') {
+    cargarTodosVales(_todosFiltroBusqueda);
   } else {
     cargarVales();
   }
