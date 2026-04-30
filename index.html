@@ -1753,7 +1753,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v9.0'
+  VERSION_UI : 'v10.0'
 };
 
 // Roles que pueden aprobar vales
@@ -1770,6 +1770,7 @@ const APP = {
   pendientes     : [],
   porGestionar   : [],   // vales APROBADO para almacenero/pañolero
   enPreparacion  : [],   // vales PENDIENTE en preparación
+  entregadosHoy  : 0,    // cantidad entregados hoy (ENTREGADO + ENTREGA_PARCIAL)
   todosVales     : [],   // vista JEFE_OBRA
   valeEdit       : null,
   valeAprob      : null,
@@ -1901,16 +1902,27 @@ async function sincronizarPendientes() {
 
 // ── TABS ────────────────────────────────────────────────────────
 function inicializarTabs() {
-  if (puedeAprobar())   document.getElementById('tab-btn-aprobar').style.display   = 'flex';
-  if (puedeGestionar()) document.getElementById('tab-btn-gestionar').style.display = 'flex';
-  if (puedeVerTodos())  document.getElementById('tab-btn-todos').style.display     = 'flex';
-  // ALMACENERO/PAÑOLERO no crean vales — ocultar FAB
-  if (puedeGestionar() && !puedeAprobar()) {
-    document.getElementById('fab-nuevo').style.display = 'none';
-  }
+  // Resetear visibilidad de tabs opcionales segun rol
+  document.getElementById('tab-btn-aprobar').style.display   = puedeAprobar()   ? 'flex' : 'none';
+  document.getElementById('tab-btn-gestionar').style.display = puedeGestionar() ? 'flex' : 'none';
+  document.getElementById('tab-btn-todos').style.display     = puedeVerTodos()  ? 'flex' : 'none';
+
+  // FAB: ocultar si es gestor puro
+  document.getElementById('fab-nuevo').style.display =
+    (puedeGestionar() && !puedeAprobar()) ? 'none' : 'flex';
+
+  // Re-adjuntar listeners sin duplicar (clonar cada boton)
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => cambiarTab(btn.dataset.tab));
+    const nuevo = btn.cloneNode(true);
+    btn.parentNode.replaceChild(nuevo, btn);
+    nuevo.addEventListener('click', () => cambiarTab(nuevo.dataset.tab));
   });
+
+  // Si el tab activo ya no es visible con el nuevo rol, volver a mis-vales
+  const tabActualBtn = document.querySelector('.tab-btn[data-tab="' + APP.tabActual + '"]');
+  if (!tabActualBtn || tabActualBtn.style.display === 'none') {
+    cambiarTab('mis-vales');
+  }
 }
 
 function cambiarTab(tabId) {
@@ -2001,9 +2013,14 @@ function iniciarApp() {
         .catch(() => {});
     }
     if (puedeGestionar()) {
-      gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email })
-        .then(res => { if (res.ok) { APP.porGestionar = res.data || []; actualizarBadgeGestionar(APP.porGestionar.length); } })
-        .catch(() => {});
+      Promise.all([
+        gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email }),
+        gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email })
+      ]).then(([rCola, rPrep]) => {
+        if (rCola.ok) APP.porGestionar  = rCola.data || [];
+        if (rPrep.ok) APP.enPreparacion = rPrep.data || [];
+        actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
+      }).catch(() => {});
     }
   }
 }
@@ -2491,6 +2508,14 @@ function abrirDetalle(id) {
        </div>`
     : '';
 
+  // Nota de cierre (entrega / entrega parcial / cancelación)
+  const notaCierre = (vale.nota_cierre && !['RECHAZADO','BORRADOR','ENVIADO','APROBADO','PENDIENTE'].includes(vale.estado))
+    ? `<div class="detalle-rechazo" style="border-left-color:var(--verde)">
+        <div class="detalle-rechazo-label" style="color:var(--verde)">📋 Nota del almacén/pañol</div>
+        <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
+       </div>`
+    : '';
+
   body.innerHTML = `
     <!-- Estado + destino -->
     <div class="detalle-estado-row">
@@ -2524,9 +2549,10 @@ function abrirDetalle(id) {
     <div class="detalle-section-lbl">Detalle del pedido</div>
     <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
 
-    <!-- Info aprobación + nota rechazo -->
+    <!-- Info aprobación + nota rechazo + nota cierre -->
     ${infoAprobacion}
     ${notaRechazo}
+    ${notaCierre}
   `;
 
   footer.innerHTML = '';
@@ -2592,12 +2618,14 @@ async function cargarGestion() {
     return;
   }
   try {
-    const [rCola, rPrep] = await Promise.all([
+    const [rCola, rPrep, rHoy] = await Promise.all([
       gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email }),
-      gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email })
+      gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email }),
+      gasGet({ accion: 'getEntregadosHoy',     email: APP.perfil.email })
     ]);
-    APP.porGestionar  = rCola.ok ? rCola.data : [];
-    APP.enPreparacion = rPrep.ok ? rPrep.data : [];
+    APP.porGestionar   = rCola.ok ? rCola.data : [];
+    APP.enPreparacion  = rPrep.ok ? rPrep.data : [];
+    APP.entregadosHoy  = rHoy.ok  ? rHoy.data.cantidad : 0;
     renderizarGestion();
   } catch (_) {
     document.getElementById('lista-por-gestionar').innerHTML  = '<div class="lista-vacia">Error al cargar.</div>';
@@ -2607,7 +2635,7 @@ async function cargarGestion() {
 
 function renderizarGestion() {
   // Badge tab
-  actualizarBadgeGestionar(APP.porGestionar.length);
+  actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
 
   // Sub-dashboard
   document.getElementById('gcnt-aprobado').textContent = APP.porGestionar.length;
@@ -2615,8 +2643,8 @@ function renderizarGestion() {
   document.getElementById('badge-cola').textContent = APP.porGestionar.length;
   document.getElementById('badge-prep').textContent = APP.enPreparacion.length;
 
-  // Conteo entregados hoy (no lo tenemos en memoria, mostramos —)
-  document.getElementById('gcnt-entregado').textContent = '—';
+  // Conteo entregados hoy
+  document.getElementById('gcnt-entregado').textContent = APP.entregadosHoy ?? '—';
 
   // Cola APROBADO
   const listaCola = document.getElementById('lista-por-gestionar');
@@ -2736,30 +2764,34 @@ function attachBotonesGestion(vale, prefijo, cerrarModal) {
     });
     btn('-btn-cancelar')?.addEventListener('click', () => {
       if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota =>
-        accionGestion('cancelarVale', vale, nota, false)
-      );
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('cancelarVale', vale, nota, false);
+      });
     });
   }
 
   if (vale.estado === 'PENDIENTE') {
     btn('-btn-entregar')?.addEventListener('click', () => {
       if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional antes de confirmar.', false, nota =>
-        accionGestion('entregarVale', vale, nota, true)
-      );
+      abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional antes de confirmar.', false, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('entregarVale', vale, nota, true);
+      });
     });
     btn('-btn-parcial')?.addEventListener('click', () => {
       if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota =>
-        accionGestion('entregaParcialVale', vale, nota, true)
-      );
+      abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('entregaParcialVale', vale, nota, true);
+      });
     });
     btn('-btn-cancelar')?.addEventListener('click', () => {
       if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota =>
-        accionGestion('cancelarVale', vale, nota, false)
-      );
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('cancelarVale', vale, nota, false);
+      });
     });
   }
 }
