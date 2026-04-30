@@ -2055,7 +2055,7 @@ input, textarea, select { font-family: inherit; }
         <!-- Generado dinámicamente -->
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="cerrarModalAdmin()">Cancelar</button>
+        <button class="btn btn-secondary" id="admin-form-btn-cancelar" onclick="cerrarModalAdmin()">Cancelar</button>
         <button class="btn btn-primary" id="admin-form-btn-guardar" onclick="guardarFormAdmin()">Guardar</button>
       </div>
     </div>
@@ -2227,7 +2227,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v11.3'
+  VERSION_UI : 'v11.4'
 };
 
 // Roles que pueden aprobar vales
@@ -4080,8 +4080,9 @@ function renderAdminUsuarios() {
       <span style="font-size:12px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.5px">${obra}</span>
     </div>`;
     grupos[obra].forEach(u => {
+      const idx   = _admin.usuarios.indexOf(u);
       const activo = u.activo === true || u.activo === 'TRUE';
-      html += `<div class="admin-card" onclick="abrirFormAdmin('editar-usuario','${u.email}')">
+      html += `<div class="admin-card" onclick="abrirFormAdmin('editar-usuario',${idx})">
         <div class="admin-card-header">
           <span class="admin-card-nombre">${escapeHtml(u.nombre)}</span>
           <span class="admin-card-badge ${activo ? 'admin-badge-activo' : 'admin-badge-inactivo'}">${activo ? 'Activo' : 'Inactivo'}</span>
@@ -4092,7 +4093,7 @@ function renderAdminUsuarios() {
           ${u.superior_email ? `<span>&#8593; ${escapeHtml(u.superior_email)}</span>` : ''}
         </div>
         <div class="admin-card-actions">
-          <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('usuario','${u.email}')">
+          <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('usuario',${idx})">
             ${activo ? 'Desactivar' : 'Activar'}
           </button>
         </div>
@@ -4108,9 +4109,9 @@ function renderAdminObras() {
   if (!_admin.obras.length) { cont.innerHTML = '<div class="lista-vacia">No hay obras.</div>'; return; }
 
   let html = '';
-  _admin.obras.forEach(o => {
+  _admin.obras.forEach((o, idx) => {
     const activa = o.activa === true || o.activa === 'TRUE';
-    html += `<div class="admin-card" onclick="abrirFormAdmin('editar-obra','${o.codigo}')">
+    html += `<div class="admin-card" onclick="abrirFormAdmin('editar-obra',${idx})">
       <div class="admin-card-header">
         <span class="admin-card-nombre">${escapeHtml(o.codigo)} — ${escapeHtml(o.descripcion)}</span>
         <span class="admin-card-badge ${activa ? 'admin-badge-activo' : 'admin-badge-inactivo'}">${activa ? 'Activa' : 'Inactiva'}</span>
@@ -4120,7 +4121,7 @@ function renderAdminObras() {
         ${o.email_pañol   ? `<span>&#128295; Pañol: ${escapeHtml(o.email_pañol)}</span>`   : ''}
       </div>
       <div class="admin-card-actions">
-        <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('obra','${o.codigo}')">
+        <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('obra',${idx})">
           ${activa ? 'Desactivar' : 'Activar'}
         </button>
       </div>
@@ -4130,22 +4131,22 @@ function renderAdminObras() {
 }
 
 // ── Toggle activo/activa ─────────────────────────────────────────
-async function toggleAdmin(tipo, clave) {
+async function toggleAdmin(tipo, idx) {
   if (!APP.online) { toast('Sin conexión'); return; }
+  const item   = tipo === 'usuario' ? _admin.usuarios[idx] : _admin.obras[idx];
+  if (!item) { toast('Error: elemento no encontrado'); return; }
   const params = tipo === 'usuario'
-    ? { accion: 'toggleUsuario', email_admin: APP.perfil.email, email_usuario: clave }
-    : { accion: 'toggleObra',   email_admin: APP.perfil.email, codigo: clave };
+    ? { accion: 'toggleUsuario', email_admin: APP.perfil.email, email_usuario: item.email }
+    : { accion: 'toggleObra',   email_admin: APP.perfil.email, codigo: item.codigo };
   try {
     const res = await gasGet(params);
     if (!res.ok) { toast('Error: ' + res.error); return; }
     if (tipo === 'usuario') {
-      const u = _admin.usuarios.find(x => x.email === clave);
-      if (u) u.activo = res.data.activo;
+      item.activo = res.data.activo;
       renderAdminUsuarios();
       toast(res.data.activo ? 'Usuario activado' : 'Usuario desactivado');
     } else {
-      const o = _admin.obras.find(x => x.codigo === clave);
-      if (o) o.activa = res.data.activa;
+      item.activa = res.data.activa;
       renderAdminObras();
       toast(res.data.activa ? 'Obra activada' : 'Obra desactivada');
     }
@@ -4153,7 +4154,7 @@ async function toggleAdmin(tipo, clave) {
 }
 
 // ── Modal formulario ─────────────────────────────────────────────
-function abrirFormAdmin(modo, clave) {
+function abrirFormAdmin(modo, idx) {
   _admin.modoForm = modo;
   _admin.itemEdit = null;
   const modal  = document.getElementById('modal-admin-form');
@@ -4164,7 +4165,7 @@ function abrirFormAdmin(modo, clave) {
     titulo.textContent = 'Nuevo usuario';
     body.innerHTML = htmlFormUsuario(null);
   } else if (modo === 'editar-usuario') {
-    const u = _admin.usuarios.find(x => x.email === clave);
+    const u = _admin.usuarios[idx];
     _admin.itemEdit = u;
     titulo.textContent = 'Editar usuario';
     body.innerHTML = htmlFormUsuario(u);
@@ -4172,7 +4173,7 @@ function abrirFormAdmin(modo, clave) {
     titulo.textContent = 'Nueva obra';
     body.innerHTML = htmlFormObra(null);
   } else if (modo === 'editar-obra') {
-    const o = _admin.obras.find(x => x.codigo === clave);
+    const o = _admin.obras[idx];
     _admin.itemEdit = o;
     titulo.textContent = 'Editar obra';
     body.innerHTML = htmlFormObra(o);
@@ -4257,10 +4258,16 @@ function htmlFormObra(o) {
 async function guardarFormAdmin() {
   if (!APP.online) { toast('Sin conexión'); return; }
   const btn = document.getElementById('admin-form-btn-guardar');
+  const btnCancel = document.getElementById('admin-form-btn-cancelar');
   btn.disabled = true;
   btn.textContent = 'Guardando...';
+  if (btnCancel) btnCancel.disabled = true;
 
-  const resetBtn = () => { btn.disabled = false; btn.textContent = 'Guardar'; };
+  const resetBtn = () => {
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+    if (btnCancel) btnCancel.disabled = false;
+  };
 
   try {
     let params = {};
