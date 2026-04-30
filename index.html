@@ -1290,6 +1290,43 @@ input, textarea, select { font-family: inherit; }
   margin: 0 auto;
   width: 100%;
 }
+.todos-filtro-seccion {
+  margin-bottom: 12px;
+}
+.todos-filtro-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.todos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid var(--gris-borde);
+  background: var(--fondo-card);
+  color: var(--texto);
+  transition: var(--trans);
+  user-select: none;
+}
+.chip:hover { border-color: var(--azul-vivo); color: var(--azul-vivo); }
+.chip.active {
+  background: var(--azul-vivo);
+  border-color: var(--azul-vivo);
+  color: #fff;
+}
+.chip.chip-todos { font-weight: 600; }
 .todos-buscador {
   display: flex;
   gap: 8px;
@@ -1568,14 +1605,29 @@ input, textarea, select { font-family: inherit; }
     <!-- TAB: TODOS LOS VALES (JEFE_OBRA) -->
     <div id="tab-todos-vales" class="tab-panel">
       <div id="panel-todos">
+
+        <!-- Filtro usuarios -->
+        <div class="todos-filtro-seccion">
+          <div class="todos-filtro-label">Solicitante</div>
+          <div class="todos-chips" id="chips-usuarios"></div>
+        </div>
+
+        <!-- Filtro estados -->
+        <div class="todos-filtro-seccion">
+          <div class="todos-filtro-label">Estado</div>
+          <div class="todos-chips" id="chips-estados"></div>
+        </div>
+
+        <!-- Busqueda en contenido -->
         <div class="todos-buscador">
-          <input id="todos-buscar-input" type="text" placeholder="Buscar por solicitante…" maxlength="60">
-          <button id="todos-buscar-btn">Buscar</button>
+          <input id="todos-buscar-input" type="text" placeholder="Buscar en título o contenido…" maxlength="100">
+          <button id="todos-buscar-btn">&#128269;</button>
         </div>
-        <div id="todos-filtro-activo" class="todos-filtro-activo" style="display:none">
-          Filtrando por: <strong id="todos-filtro-txt"></strong>
-          <button id="todos-filtro-limpiar">✕ Limpiar</button>
-        </div>
+
+        <!-- Contador resultados -->
+        <div id="todos-resultado-info" style="font-size:12px;color:var(--gris);margin-bottom:8px;display:none"></div>
+
+        <!-- Lista -->
         <div id="lista-todos-vales">
           <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
         </div>
@@ -1753,7 +1805,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v10.1'
+  VERSION_UI : 'v10.2'
 };
 
 // Roles que pueden aprobar vales
@@ -2602,438 +2654,253 @@ async function eliminarValeById(vale) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// ETAPA 3 — PANEL GESTIÓN (ALMACENERO / PAÑOLERO)
+// TODOS LOS VALES — filtrado guiado (usuarios + estados + contenido)
 // ════════════════════════════════════════════════════════════════
 
-function actualizarBadgeGestionar(cant) {
-  const badge = document.getElementById('tab-badge-gestionar');
-  if (cant > 0) { badge.textContent = cant; badge.style.display = 'inline-flex'; }
-  else badge.style.display = 'none';
-}
+const TODOS_ESTADOS = [
+  'BORRADOR','ENVIADO','APROBADO','PENDIENTE',
+  'ENTREGADO','ENTREGA_PARCIAL','CANCELADO','RECHAZADO'
+];
 
-async function cargarGestion() {
-  document.getElementById('lista-por-gestionar').innerHTML  = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
-  document.getElementById('lista-en-preparacion').innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
-  resetDetalleGestion();
+// Estado de filtros en memoria
+const _filtrosTodos = {
+  usuarios : new Set(),
+  estados  : new Set(),
+  texto    : ''
+};
 
-  if (!APP.online) {
-    const msg = '<div class="lista-vacia">Sin conexión.</div>';
-    document.getElementById('lista-por-gestionar').innerHTML  = msg;
-    document.getElementById('lista-en-preparacion').innerHTML = msg;
-    return;
-  }
-  try {
-    const [rCola, rPrep, rHoy] = await Promise.all([
-      gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email }),
-      gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email }),
-      gasGet({ accion: 'getEntregadosHoy',     email: APP.perfil.email })
-    ]);
-    APP.porGestionar   = rCola.ok ? rCola.data : [];
-    APP.enPreparacion  = rPrep.ok ? rPrep.data : [];
-    APP.entregadosHoy  = rHoy.ok  ? rHoy.data.cantidad : 0;
-    renderizarGestion();
-  } catch (_) {
-    document.getElementById('lista-por-gestionar').innerHTML  = '<div class="lista-vacia">Error al cargar.</div>';
-    document.getElementById('lista-en-preparacion').innerHTML = '';
-  }
-}
-
-function renderizarGestion() {
-  // Badge tab
-  actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
-
-  // Sub-dashboard
-  document.getElementById('gcnt-aprobado').textContent = APP.porGestionar.length;
-  document.getElementById('gcnt-pendiente').textContent = APP.enPreparacion.length;
-  document.getElementById('badge-cola').textContent = APP.porGestionar.length;
-  document.getElementById('badge-prep').textContent = APP.enPreparacion.length;
-
-  // Conteo entregados hoy
-  document.getElementById('gcnt-entregado').textContent = APP.entregadosHoy ?? '—';
-
-  // Cola APROBADO
-  const listaCola = document.getElementById('lista-por-gestionar');
-  if (!APP.porGestionar.length) {
-    listaCola.innerHTML = '<div class="lista-vacia">No hay vales en cola.</div>';
-  } else {
-    listaCola.innerHTML = APP.porGestionar.map(v => buildGestionCard(v, 'APROBADO')).join('');
-    listaCola.querySelectorAll('.gestion-card').forEach(el =>
-      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'cola'))
-    );
-  }
-
-  // En preparación PENDIENTE
-  const listaPrep = document.getElementById('lista-en-preparacion');
-  if (!APP.enPreparacion.length) {
-    listaPrep.innerHTML = '<div class="lista-vacia">No hay vales en preparación.</div>';
-  } else {
-    listaPrep.innerHTML = APP.enPreparacion.map(v => buildGestionCard(v, 'PENDIENTE')).join('');
-    listaPrep.querySelectorAll('.gestion-card').forEach(el =>
-      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'prep'))
-    );
-  }
-}
-
-function buildGestionCard(v, tipo) {
-  return `
-    <div class="gestion-card" data-id="${v.id_vale}" data-tipo="${tipo}">
-      <div class="gestion-card-top">
-        <div class="gestion-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
-        <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
-      </div>
-      <div class="gestion-card-meta">
-        <span class="gestion-card-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
-        <span class="aprob-card-destino">${v.destino}</span>
-        <span class="gestion-card-fecha">${formatFecha(v.fecha_hora)}</span>
-      </div>
-    </div>`;
-}
-
-function resetDetalleGestion() {
-  document.getElementById('gestion-detalle-placeholder').style.display = 'flex';
-  document.getElementById('gestion-detalle-inner').style.display = 'none';
-  APP.valeGestion = null;
-  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
-}
-
-function seleccionarValeGestion(id, lista) {
-  const fuente = lista === 'cola' ? APP.porGestionar : APP.enPreparacion;
-  const vale   = fuente.find(v => v.id_vale === id);
-  if (!vale) return;
-  APP.valeGestion = vale;
-
-  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
-  const card = document.querySelector(`.gestion-card[data-id="${id}"]`);
-  if (card) card.classList.add('selected');
-
-  if (APP.isDesktop()) {
-    mostrarDetalleGestionDesktop(vale);
-  } else {
-    mostrarDetalleGestionMobile(vale);
-  }
-}
-
-function buildDetalleGestionHTML(vale) {
-  const destinoIcon  = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
-  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
-  return `
-    <div class="detalle-estado-row">
-      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
-      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
-    </div>
-    <div class="detalle-meta">
-      <div class="detalle-meta-item">
-        <span class="detalle-meta-lbl">Solicitante</span>
-        <span class="detalle-meta-val">${vale.solicitante_nombre || vale.usuario_email}</span>
-      </div>
-      <div class="detalle-meta-item">
-        <span class="detalle-meta-lbl">Fecha</span>
-        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
-      </div>
-      <div class="detalle-meta-item">
-        <span class="detalle-meta-lbl">Obra</span>
-        <span class="detalle-meta-val">${vale.obra_codigo}</span>
-      </div>
-    </div>
-    ${vale.titulo ? `<div class="detalle-titulo-val">${vale.titulo}</div>` : ''}
-    <div class="detalle-section-lbl">Detalle del pedido</div>
-    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
-  `;
-}
-
-function buildBotonesGestion(vale, prefijo) {
-  if (vale.estado === 'APROBADO') {
-    return `<div class="gestion-btns">
-      <button class="btn btn-secondary" id="${prefijo}-btn-cancelar">✕ Cancelar</button>
-      <button class="btn btn-primary"   id="${prefijo}-btn-iniciar" >▶ Iniciar preparación</button>
-    </div>`;
-  }
-  if (vale.estado === 'PENDIENTE') {
-    return `<div class="gestion-btns">
-      <button class="btn btn-secondary"  id="${prefijo}-btn-cancelar" >✕ Cancelar</button>
-      <button class="btn btn-danger"     id="${prefijo}-btn-parcial"  >⚠ Entrega parcial</button>
-      <button class="btn btn-success"    id="${prefijo}-btn-entregar" >✓ Entregar</button>
-    </div>`;
-  }
-  return '';
-}
-
-function attachBotonesGestion(vale, prefijo, cerrarModal) {
-  const btn = id => document.getElementById(prefijo + id);
-
-  if (vale.estado === 'APROBADO') {
-    btn('-btn-iniciar')?.addEventListener('click', async () => {
-      setGestionBtns(prefijo, true);
-      await accionGestion('iniciarPreparacion', vale, null, false);
-      if (cerrarModal) cerrarModal();
-    });
-    btn('-btn-cancelar')?.addEventListener('click', () => {
-      if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
-        setGestionBtns(prefijo, true);
-        accionGestion('cancelarVale', vale, nota, false);
-      });
-    });
-  }
-
-  if (vale.estado === 'PENDIENTE') {
-    btn('-btn-entregar')?.addEventListener('click', () => {
-      if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional antes de confirmar.', false, nota => {
-        setGestionBtns(prefijo, true);
-        accionGestion('entregarVale', vale, nota, true);
-      });
-    });
-    btn('-btn-parcial')?.addEventListener('click', () => {
-      if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota => {
-        setGestionBtns(prefijo, true);
-        accionGestion('entregaParcialVale', vale, nota, true);
-      });
-    });
-    btn('-btn-cancelar')?.addEventListener('click', () => {
-      if (cerrarModal) cerrarModal();
-      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
-        setGestionBtns(prefijo, true);
-        accionGestion('cancelarVale', vale, nota, false);
-      });
-    });
-  }
-}
-
-function setGestionBtns(prefijo, disabled) {
-  ['iniciar','cancelar','entregar','parcial'].forEach(id => {
-    const btn = document.getElementById(prefijo + '-btn-' + id);
-    if (btn) btn.disabled = disabled;
-  });
-}
-
-async function accionGestion(accion, vale, nota, esEntrega) {
-  const params = {
-    accion,
-    id_vale       : vale.id_vale,
-    gestionado_por: APP.perfil.email
-  };
-  if (nota) params.nota_cierre = nota;
-
-  try {
-    const res = await gasGet(params);
-    if (res.ok) {
-      const msgs = {
-        iniciarPreparacion : 'Preparación iniciada ▶',
-        entregarVale       : 'Vale entregado ✓',
-        entregaParcialVale : 'Entrega parcial registrada',
-        cancelarVale       : 'Vale cancelado'
-      };
-      toast(msgs[accion] || 'Acción realizada', 'success');
-      resetDetalleGestion();
-      cargarGestion();
-    } else {
-      toast('Error: ' + res.error, 'error');
-    }
-  } catch (_) {
-    toast('Sin conexión. Intentá de nuevo.', 'error');
-  }
-}
-
-function mostrarDetalleGestionDesktop(vale) {
-  document.getElementById('gestion-detalle-placeholder').style.display = 'none';
-  const inner = document.getElementById('gestion-detalle-inner');
-  inner.style.display = 'block';
-  inner.innerHTML = buildDetalleGestionHTML(vale) + buildBotonesGestion(vale, 'desk-g');
-  attachBotonesGestion(vale, 'desk-g', null);
-}
-
-function mostrarDetalleGestionMobile(vale) {
-  document.getElementById('modal-gestion-titulo').textContent = vale.titulo || 'Detalle del Vale';
-  document.getElementById('modal-gestion-body').innerHTML    = buildDetalleGestionHTML(vale);
-  document.getElementById('modal-gestion-footer').innerHTML  = buildBotonesGestion(vale, 'mob-g');
-  attachBotonesGestion(vale, 'mob-g', () => closeModal('modal-gestion-detalle'));
-  openModal('modal-gestion-detalle');
-}
-
-// ── Modal nota de cierre ──────────────────────────────────────────
-let _notaCierreCallback = null;
-let _notaCierreObligatoria = false;
-
-function abrirNotaCierre(titulo, desc, obligatoria, callback) {
-  _notaCierreCallback   = callback;
-  _notaCierreObligatoria = obligatoria;
-  document.getElementById('modal-nota-titulo').textContent = titulo;
-  document.getElementById('modal-nota-desc').textContent   = desc;
-  document.getElementById('modal-nota-req').style.display  = obligatoria ? 'inline' : 'none';
-  document.getElementById('nota-cierre-txt').value  = '';
-  document.getElementById('nota-cierre-chars').textContent = '0';
-  openModal('modal-nota-cierre');
-}
-
-document.getElementById('nota-cierre-txt').addEventListener('input', function() {
-  document.getElementById('nota-cierre-chars').textContent = this.value.length;
-});
-document.getElementById('modal-nota-close').addEventListener('click',  () => closeModal('modal-nota-cierre'));
-document.getElementById('modal-nota-cancel').addEventListener('click', () => closeModal('modal-nota-cierre'));
-document.getElementById('modal-nota-confirm').addEventListener('click', async () => {
-  const nota    = document.getElementById('nota-cierre-txt').value.trim();
-  const btnConf = document.getElementById('modal-nota-confirm');
-  const btnCan  = document.getElementById('modal-nota-cancel');
-  if (_notaCierreObligatoria && nota.length < 5) {
-    toast('La nota debe tener al menos 5 caracteres', 'error');
-    return;
-  }
-  btnConf.disabled = true; btnCan.disabled = true;
-  btnConf.textContent = 'Procesando…';
-  closeModal('modal-nota-cierre');
-  if (_notaCierreCallback) await _notaCierreCallback(nota || null);
-  btnConf.disabled = false; btnCan.disabled = false;
-  btnConf.textContent = 'Confirmar';
-});
-
-document.getElementById('modal-gestion-close').addEventListener('click', () => closeModal('modal-gestion-detalle'));
-
-// ════════════════════════════════════════════════════════════════
-// ETAPA 3 — TODOS LOS VALES (JEFE_OBRA)
-// ════════════════════════════════════════════════════════════════
-
-let _todosFiltroBusqueda = '';
-
-async function cargarTodosVales(filtro) {
-  _todosFiltroBusqueda = (filtro || '').trim();
+// Cargar datos desde GAS sin filtros — filtramos en frontend
+async function cargarTodosVales() {
   const lista = document.getElementById('lista-todos-vales');
-  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando...</div>';
+  document.getElementById('todos-resultado-info').style.display = 'none';
 
-  // Subtítulo según rol
+  // Subtitulo segun rol
   let subtitulo = document.getElementById('todos-subtitulo');
   if (!subtitulo) {
     subtitulo = document.createElement('div');
     subtitulo.id = 'todos-subtitulo';
     subtitulo.style.cssText = 'font-size:12px;color:var(--gris);padding:4px 0 8px;';
-    const buscador = document.querySelector('.todos-buscador');
-    if (buscador) buscador.parentNode.insertBefore(subtitulo, buscador);
+    const panelTodos = document.getElementById('panel-todos');
+    if (panelTodos) panelTodos.insertBefore(subtitulo, panelTodos.firstChild);
   }
   if (APP.perfil.rol === 'SUPERVISOR') {
-    subtitulo.textContent = 'ℹ️ Mostrando solo los vales que vos aprobaste.';
+    subtitulo.textContent = 'Solo los vales que vos aprobaste.';
     subtitulo.style.display = 'block';
   } else {
     subtitulo.style.display = 'none';
   }
 
-  // Mostrar/ocultar indicador de filtro activo
-  const indicador = document.getElementById('todos-filtro-activo');
-  if (_todosFiltroBusqueda) {
-    indicador.style.display = 'flex';
-    document.getElementById('todos-filtro-txt').textContent = _todosFiltroBusqueda;
-  } else {
-    indicador.style.display = 'none';
-  }
+  if (!APP.online) { lista.innerHTML = '<div class="lista-vacia">Sin conexion.</div>'; return; }
 
-  if (!APP.online) {
-    lista.innerHTML = '<div class="lista-vacia">Sin conexión.</div>';
-    return;
-  }
   try {
-    const params = { accion: 'getTodosVales', email: APP.perfil.email };
-    if (_todosFiltroBusqueda) params.solicitante = _todosFiltroBusqueda;
-    const res = await gasGet(params);
+    const res = await gasGet({ accion: 'getTodosVales', email: APP.perfil.email });
     if (!res.ok) { lista.innerHTML = `<div class="lista-vacia">${res.error}</div>`; return; }
     APP.todosVales = res.data || [];
-    renderizarTodosVales();
+    // Resetear filtros al recargar
+    _filtrosTodos.usuarios.clear();
+    _filtrosTodos.estados.clear();
+    _filtrosTodos.texto = '';
+    document.getElementById('todos-buscar-input').value = '';
+    construirChips();
+    aplicarFiltrosTodos();
   } catch (_) {
     lista.innerHTML = '<div class="lista-vacia">Error al cargar.</div>';
   }
 }
 
-function renderizarTodosVales() {
+// Construir chips de usuarios y estados
+function construirChips() {
+  const nombresMap = new Map();
+  APP.todosVales.forEach(v => {
+    const email = v.usuario_email;
+    const nombre = v.solicitante_nombre || email;
+    if (!nombresMap.has(email)) nombresMap.set(email, nombre);
+  });
+
+  // Chips usuarios
+  const contUsuarios = document.getElementById('chips-usuarios');
+  contUsuarios.innerHTML = '';
+  const chipTodosU = crearChip('Todos', true, () => {
+    _filtrosTodos.usuarios.clear();
+    actualizarChipsActivos('chips-usuarios', null);
+    aplicarFiltrosTodos();
+  });
+  chipTodosU.classList.add('chip-todos');
+  contUsuarios.appendChild(chipTodosU);
+
+  nombresMap.forEach((nombre, email) => {
+    const chip = crearChip(nombre, false, () => {
+      if (_filtrosTodos.usuarios.has(email)) {
+        _filtrosTodos.usuarios.delete(email);
+      } else {
+        _filtrosTodos.usuarios.add(email);
+      }
+      actualizarChipsActivos('chips-usuarios', _filtrosTodos.usuarios.size ? [..._filtrosTodos.usuarios] : null);
+      aplicarFiltrosTodos();
+    });
+    chip.dataset.val = email;
+    contUsuarios.appendChild(chip);
+  });
+
+  // Chips estados
+  const contEstados = document.getElementById('chips-estados');
+  contEstados.innerHTML = '';
+  const chipTodosE = crearChip('Todos', true, () => {
+    _filtrosTodos.estados.clear();
+    actualizarChipsActivos('chips-estados', null);
+    aplicarFiltrosTodos();
+  });
+  chipTodosE.classList.add('chip-todos');
+  contEstados.appendChild(chipTodosE);
+
+  TODOS_ESTADOS.forEach(estado => {
+    if (!APP.todosVales.some(v => v.estado === estado)) return;
+    const chip = crearChip(estado.replace('_',' '), false, () => {
+      if (_filtrosTodos.estados.has(estado)) {
+        _filtrosTodos.estados.delete(estado);
+      } else {
+        _filtrosTodos.estados.add(estado);
+      }
+      actualizarChipsActivos('chips-estados', _filtrosTodos.estados.size ? [..._filtrosTodos.estados] : null);
+      aplicarFiltrosTodos();
+    });
+    chip.dataset.val = estado;
+    contEstados.appendChild(chip);
+  });
+}
+
+function crearChip(label, activo, onClick) {
+  const el = document.createElement('button');
+  el.className = 'chip' + (activo ? ' active' : '');
+  el.textContent = label;
+  el.addEventListener('click', onClick);
+  return el;
+}
+
+function actualizarChipsActivos(contId, valoresActivos) {
+  const cont = document.getElementById(contId);
+  cont.querySelectorAll('.chip').forEach(chip => {
+    const val = chip.dataset.val;
+    if (!val) {
+      chip.classList.toggle('active', !valoresActivos || valoresActivos.length === 0);
+    } else {
+      chip.classList.toggle('active', valoresActivos && valoresActivos.includes(val));
+    }
+  });
+}
+
+// Aplicar filtros combinados sobre APP.todosVales
+function aplicarFiltrosTodos() {
+  const texto = _filtrosTodos.texto.toLowerCase();
+
+  const filtrado = APP.todosVales.filter(v => {
+    if (_filtrosTodos.usuarios.size && !_filtrosTodos.usuarios.has(v.usuario_email)) return false;
+    if (_filtrosTodos.estados.size && !_filtrosTodos.estados.has(v.estado)) return false;
+    if (texto) {
+      const enTitulo    = (v.titulo || '').toLowerCase().includes(texto);
+      const enContenido = (v.contenido_html || '').replace(/<[^>]*>/g,'').toLowerCase().includes(texto);
+      if (!enTitulo && !enContenido) return false;
+    }
+    return true;
+  });
+
+  const info = document.getElementById('todos-resultado-info');
+  if (_filtrosTodos.usuarios.size || _filtrosTodos.estados.size || texto) {
+    info.textContent = filtrado.length + ' vale' + (filtrado.length !== 1 ? 's' : '') + ' encontrado' + (filtrado.length !== 1 ? 's' : '');
+    info.style.display = 'block';
+  } else {
+    info.style.display = 'none';
+  }
+
+  renderizarTodosVales(filtrado);
+}
+
+// Render
+function renderizarTodosVales(vales) {
   const lista = document.getElementById('lista-todos-vales');
-  if (!APP.todosVales.length) {
+  if (!vales || !vales.length) {
     lista.innerHTML = '<div class="lista-vacia">No se encontraron vales.</div>';
     return;
   }
-  lista.innerHTML = APP.todosVales.map(v => `
-    <div class="todos-vale-card" data-id="${v.id_vale}">
-      <div class="todos-vale-info">
-        <div class="todos-vale-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
-        <div class="todos-vale-sub">
-          <span class="todos-vale-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
-          <span>${formatFecha(v.fecha_hora)}</span>
-          <span>${v.destino}</span>
-        </div>
-      </div>
-      <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
-    </div>
-  `).join('');
+  lista.innerHTML = vales.map(v => {
+    const titulo = v.titulo || '<em style="color:var(--gris-claro)">Sin titulo</em>';
+    const solicitante = v.solicitante_nombre || v.usuario_email;
+    const fecha = formatFecha(v.fecha_hora);
+    const estadoBadge = v.estado.replace('_',' ');
+    return '<div class="todos-vale-card" data-id="' + v.id_vale + '">'
+      + '<div class="todos-vale-info">'
+      + '<div class="todos-vale-titulo">' + titulo + '</div>'
+      + '<div class="todos-vale-sub">'
+      + '<span class="todos-vale-solicitante">' + solicitante + '</span>'
+      + '<span>' + fecha + '</span>'
+      + '<span>' + v.destino + '</span>'
+      + '</div></div>'
+      + '<span class="badge-estado badge-' + v.estado + '">' + estadoBadge + '</span>'
+      + '</div>';
+  }).join('');
 
-  // Al tocar → abre modal detalle (readonly)
   lista.querySelectorAll('.todos-vale-card').forEach(el =>
     el.addEventListener('click', () => abrirDetalleTodos(el.dataset.id))
   );
 }
 
+// Detalle readonly
 function abrirDetalleTodos(id) {
   const vale = APP.todosVales.find(v => v.id_vale === id);
   if (!vale) return;
-  // Reutilizamos el modal detalle existente (readonly, sin botones de edición)
   const body   = document.getElementById('modal-detalle-body');
   const footer = document.getElementById('modal-detalle-footer');
-  const destinoIcon  = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
-  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacen' : 'Panol';
   const infoAprobacion = (vale.aprobado_por && ['APROBADO','RECHAZADO'].includes(vale.estado))
-    ? `<div class="detalle-aprobacion-info" style="margin-top:10px">
-        ${vale.estado === 'APROBADO' ? '✓ Aprobado' : '✕ Rechazado'} por
-        <strong>${vale.aprobado_por}</strong> — ${formatFecha(vale.fecha_aprobacion)}
-       </div>` : '';
+    ? '<div class="detalle-aprobacion-info" style="margin-top:10px">'
+      + (vale.estado === 'APROBADO' ? 'Aprobado' : 'Rechazado') + ' por '
+      + '<strong>' + vale.aprobado_por + '</strong> &mdash; ' + formatFecha(vale.fecha_aprobacion)
+      + '</div>' : '';
   const notaRechazo = (vale.estado === 'RECHAZADO' && vale.nota_cierre)
-    ? `<div class="detalle-rechazo" style="margin-top:10px">
-        <div class="detalle-rechazo-label">⚠ Motivo de rechazo</div>
-        <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
-       </div>` : '';
-  const notaCierre = (vale.nota_cierre && !['RECHAZADO'].includes(vale.estado))
-    ? `<div style="margin-top:10px;padding:10px 14px;background:var(--fondo);border:1px solid var(--gris-borde);border-radius:var(--radio-sm)">
-        <div class="detalle-section-lbl">Nota de cierre</div>
-        <div style="font-size:13px;margin-top:4px">${vale.nota_cierre}</div>
-       </div>` : '';
-  body.innerHTML = `
-    <div class="detalle-estado-row">
-      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
-      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
-    </div>
-    <div class="detalle-meta">
-      <div class="detalle-meta-item">
-        <span class="detalle-meta-lbl">Solicitante</span>
-        <span class="detalle-meta-val">${vale.solicitante_nombre || vale.usuario_email}</span>
-      </div>
-      <div class="detalle-meta-item">
-        <span class="detalle-meta-lbl">Fecha</span>
-        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
-      </div>
-      <div class="detalle-meta-item">
-        <span class="detalle-meta-lbl">Obra</span>
-        <span class="detalle-meta-val">${vale.obra_codigo}</span>
-      </div>
-    </div>
-    ${vale.titulo ? `<div class="detalle-titulo-val">${vale.titulo}</div>` : ''}
-    <div class="detalle-section-lbl">Detalle del pedido</div>
-    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
-    ${infoAprobacion}${notaRechazo}${notaCierre}
-  `;
-  footer.innerHTML = ''; // readonly — sin botones de acción
+    ? '<div class="detalle-rechazo" style="margin-top:10px">'
+      + '<div class="detalle-rechazo-label">Motivo de rechazo</div>'
+      + '<div class="detalle-rechazo-texto">' + vale.nota_cierre + '</div>'
+      + '</div>' : '';
+  const notaCierre = (vale.nota_cierre && vale.estado !== 'RECHAZADO')
+    ? '<div style="margin-top:10px;padding:10px 14px;background:var(--fondo);border:1px solid var(--gris-borde);border-radius:var(--radio-sm)">'
+      + '<div class="detalle-section-lbl">Nota de cierre</div>'
+      + '<div style="font-size:13px;margin-top:4px">' + vale.nota_cierre + '</div>'
+      + '</div>' : '';
+  body.innerHTML = '<div class="detalle-estado-row">'
+    + '<span class="badge-estado badge-' + vale.estado + '">' + vale.estado.replace('_',' ') + '</span>'
+    + '<span class="detalle-destino-badge">' + destinoLabel + '</span>'
+    + '</div>'
+    + '<div class="detalle-meta">'
+    + '<div class="detalle-meta-item"><span class="detalle-meta-lbl">Solicitante</span><span class="detalle-meta-val">' + (vale.solicitante_nombre || vale.usuario_email) + '</span></div>'
+    + '<div class="detalle-meta-item"><span class="detalle-meta-lbl">Fecha</span><span class="detalle-meta-val">' + formatFecha(vale.fecha_hora) + '</span></div>'
+    + '<div class="detalle-meta-item"><span class="detalle-meta-lbl">Obra</span><span class="detalle-meta-val">' + vale.obra_codigo + '</span></div>'
+    + '</div>'
+    + (vale.titulo ? '<div class="detalle-titulo-val">' + vale.titulo + '</div>' : '')
+    + '<div class="detalle-section-lbl">Detalle del pedido</div>'
+    + '<div class="detalle-contenido">' + (vale.contenido_html || '&mdash;') + '</div>'
+    + infoAprobacion + notaRechazo + notaCierre;
+  footer.innerHTML = '';
   openModal('modal-detalle');
 }
 
-// Buscador todos los vales
+// Buscador por texto — filtrado local instantaneo
 document.getElementById('todos-buscar-btn').addEventListener('click', () => {
-  const filtro = document.getElementById('todos-buscar-input').value.trim();
-  cargarTodosVales(filtro);
+  _filtrosTodos.texto = document.getElementById('todos-buscar-input').value.trim().toLowerCase();
+  aplicarFiltrosTodos();
+});
+document.getElementById('todos-buscar-input').addEventListener('input', () => {
+  _filtrosTodos.texto = document.getElementById('todos-buscar-input').value.trim().toLowerCase();
+  aplicarFiltrosTodos();
 });
 document.getElementById('todos-buscar-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const filtro = document.getElementById('todos-buscar-input').value.trim();
-    cargarTodosVales(filtro);
+  if (e.key === 'Escape') {
+    document.getElementById('todos-buscar-input').value = '';
+    _filtrosTodos.texto = '';
+    aplicarFiltrosTodos();
   }
 });
-document.getElementById('todos-filtro-limpiar').addEventListener('click', () => {
-  document.getElementById('todos-buscar-input').value = '';
-  cargarTodosVales('');
-});
+
 
 // ── LOGOUT (función compartida) ──────────────────────────────────
 async function doLogout() {
@@ -3071,7 +2938,7 @@ async function doActualizar() {
   } else if (APP.tabActual === 'por-gestionar') {
     cargarGestion();
   } else if (APP.tabActual === 'todos-vales') {
-    cargarTodosVales(_todosFiltroBusqueda);
+    cargarTodosVales();
   } else {
     cargarVales();
   }
