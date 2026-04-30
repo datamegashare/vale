@@ -1,10 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// Vale Digital — Service Worker v6.0
+// Vale Digital — Service Worker v7.0
 // Estrategia: cache-first para assets propios
 // GAS: siempre red directa, sin intercepción del SW
+// Novedad v7: escucha mensaje SKIP_WAITING para activación inmediata
 // ═══════════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'vale-digital-v6.0';
+const CACHE_NAME = 'vale-digital-v7.0';
 
 const ASSETS_ESTATICOS = [
   '/vale/',
@@ -19,7 +20,8 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(ASSETS_ESTATICOS))
-      .then(() => self.skipWaiting())
+    // NO llamar skipWaiting aquí — esperamos el mensaje explícito
+    // para que el usuario controle cuándo se aplica la actualización
   );
 });
 
@@ -34,6 +36,14 @@ self.addEventListener('activate', event => {
       )
     ).then(() => self.clients.claim())
   );
+});
+
+// ── MENSAJE: SKIP_WAITING ────────────────────────────────────────
+// Recibido desde doActualizar() cuando el usuario toca "Actualizar"
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // ── FETCH ────────────────────────────────────────────────────────

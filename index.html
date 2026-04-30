@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Vale Digital">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 
 <!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -2227,7 +2228,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v11.4'
+  VERSION_UI : 'v11.5'
 };
 
 // Roles que pueden aprobar vales
@@ -2401,7 +2402,7 @@ function inicializarTabs() {
   }
 }
 
-function cambiarTab(tabId) {
+function cambiarTab(tabId, forzar = false) {
   APP.tabActual = tabId;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -2410,21 +2411,27 @@ function cambiarTab(tabId) {
   const fab = document.getElementById('fab-nuevo');
   if (tabId === 'por-aprobar') {
     fab.style.display = 'none';
-    cargarPendientes();
+    // Recargar solo si no hay datos o si se forzó
+    if (forzar || !APP.pendientes.length) cargarPendientes();
+    else renderizarPendientes();
   } else if (tabId === 'por-gestionar') {
     fab.style.display = 'none';
-    cargarGestion();
+    cargarGestion(); // siempre fresco (estado cambia frecuentemente)
   } else if (tabId === 'todos-vales') {
     fab.style.display = 'none';
-    cargarTodosVales();
+    if (forzar || !APP.todosVales.length) cargarTodosVales();
+    else { construirChips(); aplicarFiltrosTodos(); }
   } else if (tabId === 'admin') {
     fab.style.display = 'none';
     document.getElementById('admin-fab').classList.add('visible');
-    cargarAdmin();
+    if (forzar || (!_admin.usuarios.length && !_admin.obras.length)) cargarAdmin();
+    else { renderAdminUsuarios(); renderAdminObras(); }
   } else {
     // mis-vales — FAB solo si no es gestor puro ni admin
     document.getElementById('admin-fab').classList.remove('visible');
     if (!puedeGestionar() || puedeAprobar()) fab.style.display = 'flex';
+    if (forzar || !APP.vales.length) cargarVales();
+    else { actualizarDashboard(APP.vales); renderizarLista(APP.vales); }
   }
   // Ocultar admin-fab cuando salimos del tab admin
   if (tabId !== 'admin') document.getElementById('admin-fab').classList.remove('visible');
@@ -2571,7 +2578,9 @@ function actualizarDashboard(vales) {
 function renderizarLista(vales) {
   const lista = document.getElementById('lista-vales');
   if (!vales.length) {
-    lista.innerHTML = '<div class="lista-vacia">No tenés vales en los últimos 30 días.<br>Usá el botón + para crear uno.</div>';
+    lista.innerHTML = esAdmin()
+      ? '<div class="lista-vacia">El rol ADMIN no genera vales propios.<br>Usá el tab <strong>Todos</strong> para consultar vales.</div>'
+      : '<div class="lista-vacia">No tenés vales en los últimos 30 días.<br>Usá el botón + para crear uno.</div>';
     return;
   }
   lista.innerHTML = vales.map(v => `
@@ -3891,6 +3900,19 @@ async function doLogout() {
 async function doActualizar() {
   cerrarMenu();
   toast('Actualizando…', '');
+
+  // Forzar actualización del Service Worker si hay uno nuevo disponible
+  if (APP._swReg) {
+    try {
+      await APP._swReg.update(); // verifica si hay nuevo SW
+      const sw = APP._swReg.waiting || APP._swReg.installing;
+      if (sw) {
+        sw.postMessage({ type: 'SKIP_WAITING' }); // activa inmediatamente
+        return; // el controllerchange listener recargará la página
+      }
+    } catch (_) {}
+  }
+
   // Re-leer perfil desde GAS para refrescar rol/obra si cambió en el Sheet
   if (APP.online && APP.perfil) {
     try {
@@ -3904,17 +3926,7 @@ async function doActualizar() {
       }
     } catch (_) { /* sin red, continúa con perfil local */ }
   }
-  if (APP.tabActual === 'por-aprobar') {
-    cargarPendientes();
-  } else if (APP.tabActual === 'por-gestionar') {
-    cargarGestion();
-  } else if (APP.tabActual === 'todos-vales') {
-    cargarTodosVales();
-  } else if (APP.tabActual === 'admin') {
-    cargarAdmin();
-  } else {
-    cargarVales();
-  }
+  cambiarTab(APP.tabActual, true); // forzar recarga desde GAS
 }
 
 // ── MENÚ MOBILE ──────────────────────────────────────────────────
@@ -3948,7 +3960,28 @@ document.getElementById('btn-logout').addEventListener('click', doLogout);
 // ── SERVICE WORKER ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js')
+    .then(reg => {
+      APP._swReg = reg;
+      // Escuchar cuando hay un nuevo SW esperando
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Nuevo SW instalado y esperando — notificar al usuario
+              toast('Nueva versión disponible. Tocá Actualizar para aplicarla.', '');
+            }
+          });
+        }
+      });
+    })
     .catch(err => console.warn('SW no registrado:', err));
+
+  // Recargar cuando el SW nuevo toma el control
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; window.location.reload(); }
+  });
 }
 
 // ── INIT ────────────────────────────────────────────────────────
