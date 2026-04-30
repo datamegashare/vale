@@ -1558,6 +1558,166 @@ input, textarea, select { font-family: inherit; }
   border-radius: 20px;
   padding: 2px 8px;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL ADMIN
+═══════════════════════════════════════════════════════════════ */
+#panel-admin {
+  padding: 16px 16px 80px;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+.admin-subtabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--gris-borde);
+  margin-bottom: 16px;
+}
+.admin-subtab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gris);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--trans);
+  text-align: center;
+}
+.admin-subtab.active {
+  color: var(--azul-vivo);
+  border-bottom-color: var(--azul-vivo);
+}
+.admin-subpanel { display: none; }
+.admin-subpanel.active { display: block; }
+
+/* Tarjeta de admin */
+.admin-card {
+  background: var(--fondo-card);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: var(--trans);
+  position: relative;
+}
+.admin-card:hover { border-color: var(--azul-vivo); box-shadow: 0 2px 8px rgba(46,109,164,.1); }
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.admin-card-nombre {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+}
+.admin-card-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.admin-badge-activo   { background: rgba(39,174,96,.12); color: #1a8a48; border: 1px solid rgba(39,174,96,.25); }
+.admin-badge-inactivo { background: rgba(192,57,43,.10); color: var(--rojo); border: 1px solid rgba(192,57,43,.22); }
+.admin-card-meta {
+  font-size: 12px;
+  color: var(--gris);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-card-meta span { display: flex; align-items: center; gap: 3px; }
+.admin-toggle-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1.5px solid var(--gris-borde);
+  color: var(--gris);
+  background: var(--fondo);
+  transition: var(--trans);
+}
+.admin-toggle-btn:hover { border-color: var(--azul-vivo); color: var(--azul-vivo); }
+
+/* FAB admin (botón + en panel admin) */
+.admin-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--azul-vivo);
+  color: #fff;
+  font-size: 26px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(46,109,164,.35);
+  z-index: 200;
+  transition: var(--trans);
+}
+.admin-fab.visible { display: flex; }
+.admin-fab:hover { transform: scale(1.07); }
+
+/* Modal admin (reutiliza estilos modal existentes) */
+#modal-admin-form .modal-body { padding: 20px 20px 8px; }
+.admin-form-group { margin-bottom: 14px; }
+.admin-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+}
+.admin-form-input, .admin-form-select {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo-card);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  outline: none;
+  transition: var(--trans);
+  box-sizing: border-box;
+}
+.admin-form-input:focus, .admin-form-select:focus {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.admin-form-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+.admin-form-check input[type="checkbox"] {
+  width: 18px; height: 18px; cursor: pointer;
+}
+.admin-form-check label { font-size: 14px; color: var(--texto); cursor: pointer; }
+
+/* Chips de obra en panel Todos — solo para ADMIN */
+#chips-obras-seccion { display: none; }
+#chips-obras-seccion.visible { display: block; }
 .todos-vale-card {
   background: var(--fondo-card);
   border-radius: var(--radio);
@@ -1681,6 +1841,9 @@ input, textarea, select { font-family: inherit; }
     </button>
     <button class="tab-btn" id="tab-btn-todos" data-tab="todos-vales" style="display:none">
       Todos
+    </button>
+    <button class="tab-btn" id="tab-btn-admin" data-tab="admin" style="display:none">
+      &#9881; Admin
     </button>
   </div>
 
@@ -1809,6 +1972,12 @@ input, textarea, select { font-family: inherit; }
     <div id="tab-todos-vales" class="tab-panel">
       <div id="panel-todos">
 
+        <!-- Filtro obra (solo ADMIN) -->
+        <div class="todos-filtro-seccion" id="chips-obras-seccion">
+          <div class="todos-filtro-label">Obra</div>
+          <div class="todos-chips" id="chips-obras"></div>
+        </div>
+
         <!-- Filtro usuarios -->
         <div class="todos-filtro-seccion">
           <div class="todos-filtro-label">Solicitante</div>
@@ -1837,10 +2006,57 @@ input, textarea, select { font-family: inherit; }
       </div>
     </div>
 
+    <!-- TAB: ADMIN -->
+    <div id="tab-admin" class="tab-panel">
+      <div id="panel-admin">
+
+        <!-- Sub-tabs Usuarios / Obras -->
+        <div class="admin-subtabs">
+          <button class="admin-subtab active" id="admin-subtab-usuarios" data-subtab="usuarios">Usuarios</button>
+          <button class="admin-subtab" id="admin-subtab-obras" data-subtab="obras">Obras</button>
+        </div>
+
+        <!-- Panel Usuarios -->
+        <div id="admin-panel-usuarios" class="admin-subpanel active">
+          <div id="admin-lista-usuarios">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando...</div>
+          </div>
+        </div>
+
+        <!-- Panel Obras -->
+        <div id="admin-panel-obras" class="admin-subpanel">
+          <div id="admin-lista-obras">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div><!-- /app-body -->
 
-  <!-- FAB -->
+  <!-- FAB principal -->
   <button class="fab" id="fab-nuevo" title="Nuevo vale">+</button>
+
+  <!-- FAB Admin -->
+  <button class="admin-fab" id="admin-fab" title="Nuevo">+</button>
+
+  <!-- MODAL ADMIN FORM -->
+  <div class="modal-overlay" id="modal-admin-form" style="display:none">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header">
+        <span id="admin-form-titulo">Nuevo usuario</span>
+        <button class="modal-close" onclick="cerrarModalAdmin()">&#10005;</button>
+      </div>
+      <div class="modal-body" id="admin-form-body">
+        <!-- Generado dinámicamente -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secundario" onclick="cerrarModalAdmin()">Cancelar</button>
+        <button class="btn-primario" id="admin-form-btn-guardar" onclick="guardarFormAdmin()">Guardar</button>
+      </div>
+    </div>
+  </div>
 
 </div><!-- /screen-app -->
 
@@ -2008,7 +2224,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v10.5'
+  VERSION_UI : 'v11.0'
 };
 
 // Roles que pueden aprobar vales
@@ -2016,7 +2232,7 @@ const ROLES_APROBADOR = ['SUPERVISOR', 'JEFE_OBRA'];
 // Roles que gestionan almacén/pañol
 const ROLES_GESTOR = ['ALMACENERO', 'PAÑOLERO'];
 // Roles que ven todos los vales de la obra
-const ROLES_VER_TODOS = ['JEFE_OBRA', 'ALMACENERO', 'PAÑOLERO', 'SUPERVISOR'];
+const ROLES_VER_TODOS = ['JEFE_OBRA', 'ALMACENERO', 'PAÑOLERO', 'SUPERVISOR', 'ADMIN'];
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
 const APP = {
@@ -2077,6 +2293,7 @@ function confirmar(titulo, texto) {
 function puedeAprobar()   { return APP.perfil && ROLES_APROBADOR.includes(APP.perfil.rol); }
 function puedeGestionar() { return APP.perfil && ROLES_GESTOR.includes(APP.perfil.rol); }
 function puedeVerTodos()  { return APP.perfil && ROLES_VER_TODOS.includes(APP.perfil.rol); }
+function esAdmin()        { return APP.perfil && APP.perfil.rol === 'ADMIN'; }
 
 // ── LOCAL STORAGE ───────────────────────────────────────────────
 const LS = {
@@ -2161,10 +2378,11 @@ function inicializarTabs() {
   document.getElementById('tab-btn-aprobar').style.display   = puedeAprobar()   ? 'flex' : 'none';
   document.getElementById('tab-btn-gestionar').style.display = puedeGestionar() ? 'flex' : 'none';
   document.getElementById('tab-btn-todos').style.display     = puedeVerTodos()  ? 'flex' : 'none';
+  document.getElementById('tab-btn-admin').style.display     = esAdmin()        ? 'flex' : 'none';
 
-  // FAB: ocultar si es gestor puro
+  // FAB: ocultar si es gestor puro o admin
   document.getElementById('fab-nuevo').style.display =
-    (puedeGestionar() && !puedeAprobar()) ? 'none' : 'flex';
+    (puedeGestionar() && !puedeAprobar()) || esAdmin() ? 'none' : 'flex';
 
   // Re-adjuntar listeners sin duplicar (clonar cada boton)
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -2196,10 +2414,17 @@ function cambiarTab(tabId) {
   } else if (tabId === 'todos-vales') {
     fab.style.display = 'none';
     cargarTodosVales();
+  } else if (tabId === 'admin') {
+    fab.style.display = 'none';
+    document.getElementById('admin-fab').classList.add('visible');
+    cargarAdmin();
   } else {
-    // mis-vales — FAB solo si no es gestor puro
+    // mis-vales — FAB solo si no es gestor puro ni admin
+    document.getElementById('admin-fab').classList.remove('visible');
     if (!puedeGestionar() || puedeAprobar()) fab.style.display = 'flex';
   }
+  // Ocultar admin-fab cuando salimos del tab admin
+  if (tabId !== 'admin') document.getElementById('admin-fab').classList.remove('visible');
 }
 
 // ── LOGIN ────────────────────────────────────────────────────────
@@ -2261,8 +2486,10 @@ function iniciarApp() {
   inicializarTabs();
   initPizarronTabs();
   initSlotsDrop();
-  // Gestores puros arrancan en "Por Gestionar", resto en "Mis Vales"
-  if (puedeGestionar() && !puedeAprobar()) {
+  // Redirección inicial por rol
+  if (esAdmin()) {
+    cambiarTab('admin');
+  } else if (puedeGestionar() && !puedeAprobar()) {
     cambiarTab('por-gestionar');
   } else {
     cargarVales();
@@ -3165,6 +3392,7 @@ const TODOS_ESTADOS = [
 const _filtrosTodos = {
   usuarios : new Set(),
   estados  : new Set(),
+  obras    : new Set(),
   texto    : ''
 };
 
@@ -3186,6 +3414,9 @@ async function cargarTodosVales() {
   if (APP.perfil.rol === 'SUPERVISOR') {
     subtitulo.textContent = 'Solo los vales que vos aprobaste.';
     subtitulo.style.display = 'block';
+  } else if (esAdmin()) {
+    subtitulo.textContent = 'Todos los vales de todas las obras — últimos 30 días.';
+    subtitulo.style.display = 'block';
   } else {
     subtitulo.style.display = 'none';
   }
@@ -3199,6 +3430,7 @@ async function cargarTodosVales() {
     // Resetear filtros al recargar
     _filtrosTodos.usuarios.clear();
     _filtrosTodos.estados.clear();
+    _filtrosTodos.obras.clear();
     _filtrosTodos.texto = '';
     document.getElementById('todos-buscar-input').value = '';
     construirChips();
@@ -3208,14 +3440,47 @@ async function cargarTodosVales() {
   }
 }
 
-// Construir chips de usuarios y estados
+// Construir chips de usuarios, estados y obras (obras solo para ADMIN)
 function construirChips() {
   const nombresMap = new Map();
+  const obrasSet   = new Set();
   APP.todosVales.forEach(v => {
     const email = v.usuario_email;
     const nombre = v.solicitante_nombre || email;
     if (!nombresMap.has(email)) nombresMap.set(email, nombre);
+    if (v.obra_codigo) obrasSet.add(v.obra_codigo);
   });
+
+  // Chips obra (solo ADMIN, y solo si hay más de una obra)
+  const seccionObras = document.getElementById('chips-obras-seccion');
+  if (esAdmin() && obrasSet.size > 1) {
+    seccionObras.classList.add('visible');
+    const contObras = document.getElementById('chips-obras');
+    contObras.innerHTML = '';
+    const chipTodosO = crearChip('Todas', true, () => {
+      _filtrosTodos.obras.clear();
+      actualizarChipsActivos('chips-obras', null);
+      aplicarFiltrosTodos();
+    });
+    chipTodosO.classList.add('chip-todos');
+    contObras.appendChild(chipTodosO);
+    [...obrasSet].sort().forEach(obra => {
+      const chip = crearChip(obra, false, () => {
+        if (_filtrosTodos.obras.has(obra)) {
+          _filtrosTodos.obras.delete(obra);
+        } else {
+          _filtrosTodos.obras.add(obra);
+        }
+        actualizarChipsActivos('chips-obras', _filtrosTodos.obras.size ? [..._filtrosTodos.obras] : null);
+        aplicarFiltrosTodos();
+      });
+      chip.dataset.val = obra;
+      contObras.appendChild(chip);
+    });
+  } else {
+    seccionObras.classList.remove('visible');
+    _filtrosTodos.obras.clear();
+  }
 
   // Chips usuarios
   const contUsuarios = document.getElementById('chips-usuarios');
@@ -3294,8 +3559,9 @@ function aplicarFiltrosTodos() {
   const texto = _filtrosTodos.texto.toLowerCase();
 
   const filtrado = APP.todosVales.filter(v => {
+    if (_filtrosTodos.obras.size    && !_filtrosTodos.obras.has(v.obra_codigo))    return false;
     if (_filtrosTodos.usuarios.size && !_filtrosTodos.usuarios.has(v.usuario_email)) return false;
-    if (_filtrosTodos.estados.size && !_filtrosTodos.estados.has(v.estado)) return false;
+    if (_filtrosTodos.estados.size  && !_filtrosTodos.estados.has(v.estado))       return false;
     if (texto) {
       const enTitulo    = (v.titulo || '').toLowerCase().includes(texto);
       const enContenido = (v.contenido_html || '').replace(/<[^>]*>/g,'').toLowerCase().includes(texto);
@@ -3305,7 +3571,7 @@ function aplicarFiltrosTodos() {
   });
 
   const info = document.getElementById('todos-resultado-info');
-  if (_filtrosTodos.usuarios.size || _filtrosTodos.estados.size || texto) {
+  if (_filtrosTodos.obras.size || _filtrosTodos.usuarios.size || _filtrosTodos.estados.size || texto) {
     info.textContent = filtrado.length + ' vale' + (filtrado.length !== 1 ? 's' : '') + ' encontrado' + (filtrado.length !== 1 ? 's' : '');
     info.style.display = 'block';
   } else {
@@ -3719,6 +3985,337 @@ window.addEventListener('load', () => {
     }, 200);
   }
 });
+
+
+// ════════════════════════════════════════════════════════════════
+// ETAPA 4 — PANEL ADMIN
+// ════════════════════════════════════════════════════════════════
+
+// Estado admin en memoria
+const _admin = {
+  usuarios    : [],
+  obras       : [],
+  subtabActual: 'usuarios',
+  modoForm    : null,   // 'crear-usuario' | 'editar-usuario' | 'crear-obra' | 'editar-obra'
+  itemEdit    : null    // objeto en edición
+};
+
+// ── Sub-tabs Admin ───────────────────────────────────────────────
+function initAdminSubtabs() {
+  document.querySelectorAll('.admin-subtab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const subtab = btn.dataset.subtab;
+      _admin.subtabActual = subtab;
+      document.querySelectorAll('.admin-subtab').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.admin-subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById('admin-panel-' + subtab).classList.add('active');
+      if (subtab === 'usuarios') renderAdminUsuarios();
+      else                       renderAdminObras();
+    });
+  });
+  document.getElementById('admin-fab').addEventListener('click', () => {
+    if (_admin.subtabActual === 'usuarios') abrirFormAdmin('crear-usuario');
+    else                                    abrirFormAdmin('crear-obra');
+  });
+}
+
+// ── Cargar datos ─────────────────────────────────────────────────
+async function cargarAdmin() {
+  if (!APP.online) {
+    document.getElementById('admin-lista-usuarios').innerHTML = '<div class="lista-vacia">Sin conexión.</div>';
+    document.getElementById('admin-lista-obras').innerHTML    = '<div class="lista-vacia">Sin conexión.</div>';
+    return;
+  }
+  initAdminSubtabs();
+  await Promise.all([cargarAdminUsuarios(), cargarAdminObras()]);
+}
+
+async function cargarAdminUsuarios() {
+  document.getElementById('admin-lista-usuarios').innerHTML =
+    '<div class="spinner-inline"><div class="spinner"></div>Cargando usuarios...</div>';
+  try {
+    const res = await gasGet({ accion: 'getUsuarios', email_admin: APP.perfil.email });
+    if (!res.ok) { document.getElementById('admin-lista-usuarios').innerHTML = `<div class="lista-vacia">${res.error}</div>`; return; }
+    _admin.usuarios = res.data || [];
+    renderAdminUsuarios();
+  } catch (_) {
+    document.getElementById('admin-lista-usuarios').innerHTML = '<div class="lista-vacia">Error al cargar.</div>';
+  }
+}
+
+async function cargarAdminObras() {
+  document.getElementById('admin-lista-obras').innerHTML =
+    '<div class="spinner-inline"><div class="spinner"></div>Cargando obras...</div>';
+  try {
+    const res = await gasGet({ accion: 'getObras', email_admin: APP.perfil.email });
+    if (!res.ok) { document.getElementById('admin-lista-obras').innerHTML = `<div class="lista-vacia">${res.error}</div>`; return; }
+    _admin.obras = res.data || [];
+    renderAdminObras();
+  } catch (_) {
+    document.getElementById('admin-lista-obras').innerHTML = '<div class="lista-vacia">Error al cargar.</div>';
+  }
+}
+
+// ── Render usuarios ──────────────────────────────────────────────
+function renderAdminUsuarios() {
+  const cont = document.getElementById('admin-lista-usuarios');
+  if (!_admin.usuarios.length) { cont.innerHTML = '<div class="lista-vacia">No hay usuarios.</div>'; return; }
+
+  // Agrupar por obra
+  const grupos = {};
+  _admin.usuarios.forEach(u => {
+    const k = u.obra_codigo || '—';
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(u);
+  });
+
+  let html = '';
+  Object.keys(grupos).sort().forEach(obra => {
+    html += `<div class="gestion-section" style="margin-bottom:4px;margin-top:16px">
+      <span style="font-size:12px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.5px">${obra}</span>
+    </div>`;
+    grupos[obra].forEach(u => {
+      const activo = u.activo === true || u.activo === 'TRUE';
+      html += `<div class="admin-card" onclick="abrirFormAdmin('editar-usuario','${u.email}')">
+        <div class="admin-card-header">
+          <span class="admin-card-nombre">${escapeHtml(u.nombre)}</span>
+          <span class="admin-card-badge ${activo ? 'admin-badge-activo' : 'admin-badge-inactivo'}">${activo ? 'Activo' : 'Inactivo'}</span>
+        </div>
+        <div class="admin-card-meta">
+          <span>&#128100; ${u.rol}</span>
+          <span>&#9993; ${escapeHtml(u.email)}</span>
+          ${u.superior_email ? `<span>&#8593; ${escapeHtml(u.superior_email)}</span>` : ''}
+        </div>
+        <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('usuario','${u.email}')">
+          ${activo ? 'Desactivar' : 'Activar'}
+        </button>
+      </div>`;
+    });
+  });
+  cont.innerHTML = html;
+}
+
+// ── Render obras ─────────────────────────────────────────────────
+function renderAdminObras() {
+  const cont = document.getElementById('admin-lista-obras');
+  if (!_admin.obras.length) { cont.innerHTML = '<div class="lista-vacia">No hay obras.</div>'; return; }
+
+  let html = '';
+  _admin.obras.forEach(o => {
+    const activa = o.activa === true || o.activa === 'TRUE';
+    html += `<div class="admin-card" onclick="abrirFormAdmin('editar-obra','${o.codigo}')">
+      <div class="admin-card-header">
+        <span class="admin-card-nombre">${escapeHtml(o.codigo)} — ${escapeHtml(o.descripcion)}</span>
+        <span class="admin-card-badge ${activa ? 'admin-badge-activo' : 'admin-badge-inactivo'}">${activa ? 'Activa' : 'Inactiva'}</span>
+      </div>
+      <div class="admin-card-meta">
+        ${o.email_almacen ? `<span>&#127981; Almacén: ${escapeHtml(o.email_almacen)}</span>` : ''}
+        ${o.email_pañol   ? `<span>&#128295; Pañol: ${escapeHtml(o.email_pañol)}</span>`   : ''}
+      </div>
+      <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('obra','${o.codigo}')">
+        ${activa ? 'Desactivar' : 'Activar'}
+      </button>
+    </div>`;
+  });
+  cont.innerHTML = html;
+}
+
+// ── Toggle activo/activa ─────────────────────────────────────────
+async function toggleAdmin(tipo, clave) {
+  if (!APP.online) { mostrarToast('Sin conexión'); return; }
+  const params = tipo === 'usuario'
+    ? { accion: 'toggleUsuario', email_admin: APP.perfil.email, email_usuario: clave }
+    : { accion: 'toggleObra',   email_admin: APP.perfil.email, codigo: clave };
+  try {
+    const res = await gasGet(params);
+    if (!res.ok) { mostrarToast('Error: ' + res.error); return; }
+    if (tipo === 'usuario') {
+      const u = _admin.usuarios.find(x => x.email === clave);
+      if (u) u.activo = res.data.activo;
+      renderAdminUsuarios();
+      mostrarToast(res.data.activo ? 'Usuario activado' : 'Usuario desactivado');
+    } else {
+      const o = _admin.obras.find(x => x.codigo === clave);
+      if (o) o.activa = res.data.activa;
+      renderAdminObras();
+      mostrarToast(res.data.activa ? 'Obra activada' : 'Obra desactivada');
+    }
+  } catch (_) { mostrarToast('Error de red'); }
+}
+
+// ── Modal formulario ─────────────────────────────────────────────
+function abrirFormAdmin(modo, clave) {
+  _admin.modoForm = modo;
+  _admin.itemEdit = null;
+  const modal  = document.getElementById('modal-admin-form');
+  const titulo = document.getElementById('admin-form-titulo');
+  const body   = document.getElementById('admin-form-body');
+
+  if (modo === 'crear-usuario') {
+    titulo.textContent = 'Nuevo usuario';
+    body.innerHTML = htmlFormUsuario(null);
+  } else if (modo === 'editar-usuario') {
+    const u = _admin.usuarios.find(x => x.email === clave);
+    _admin.itemEdit = u;
+    titulo.textContent = 'Editar usuario';
+    body.innerHTML = htmlFormUsuario(u);
+  } else if (modo === 'crear-obra') {
+    titulo.textContent = 'Nueva obra';
+    body.innerHTML = htmlFormObra(null);
+  } else if (modo === 'editar-obra') {
+    const o = _admin.obras.find(x => x.codigo === clave);
+    _admin.itemEdit = o;
+    titulo.textContent = 'Editar obra';
+    body.innerHTML = htmlFormObra(o);
+  }
+
+  modal.style.display = 'flex';
+}
+
+function cerrarModalAdmin() {
+  document.getElementById('modal-admin-form').style.display = 'none';
+  _admin.modoForm = null;
+  _admin.itemEdit = null;
+}
+
+// ── HTML formularios ─────────────────────────────────────────────
+const ROLES_LISTA = ['CAPATAZ','SUPERVISOR','JEFE_OBRA','ALMACENERO','PAÑOLERO','ADMIN'];
+
+function htmlFormUsuario(u) {
+  const obras = _admin.obras.filter(o => o.activa === true || o.activa === 'TRUE');
+  const opObras = obras.map(o =>
+    `<option value="${o.codigo}" ${u && u.obra_codigo === o.codigo ? 'selected' : ''}>${o.codigo} — ${escapeHtml(o.descripcion)}</option>`
+  ).join('');
+  const opRoles = ROLES_LISTA.map(r =>
+    `<option value="${r}" ${u && u.rol === r ? 'selected' : ''}>${r}</option>`
+  ).join('');
+  // Opciones de superior: todos los usuarios con rol aprobador
+  const aprobadores = _admin.usuarios.filter(x => ['SUPERVISOR','JEFE_OBRA'].includes(x.rol));
+  const opSuperior = `<option value="">— Sin superior explícito —</option>` +
+    aprobadores.map(a =>
+      `<option value="${a.email}" ${u && u.superior_email === a.email ? 'selected' : ''}>${escapeHtml(a.nombre)} (${a.rol})</option>`
+    ).join('');
+
+  return `<div class="modal-body" style="padding:16px 20px 8px">
+    ${u ? `<div class="admin-form-group">
+      <label class="admin-form-label">Email (no editable)</label>
+      <input class="admin-form-input" value="${escapeHtml(u.email)}" disabled style="opacity:.6">
+    </div>` : `<div class="admin-form-group">
+      <label class="admin-form-label">Email *</label>
+      <input class="admin-form-input" id="af-email" type="email" placeholder="usuario@gmail.com" value="">
+    </div>`}
+    <div class="admin-form-group">
+      <label class="admin-form-label">Nombre *</label>
+      <input class="admin-form-input" id="af-nombre" type="text" placeholder="Nombre completo" value="${u ? escapeHtml(u.nombre) : ''}">
+    </div>
+    <div class="admin-form-row">
+      <div class="admin-form-group">
+        <label class="admin-form-label">Rol *</label>
+        <select class="admin-form-select" id="af-rol">${opRoles}</select>
+      </div>
+      <div class="admin-form-group">
+        <label class="admin-form-label">Obra *</label>
+        <select class="admin-form-select" id="af-obra">${opObras}</select>
+      </div>
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Superior (opcional)</label>
+      <select class="admin-form-select" id="af-superior">${opSuperior}</select>
+    </div>
+  </div>`;
+}
+
+function htmlFormObra(o) {
+  return `<div class="modal-body" style="padding:16px 20px 8px">
+    ${o ? `<div class="admin-form-group">
+      <label class="admin-form-label">Código (no editable)</label>
+      <input class="admin-form-input" value="${escapeHtml(o.codigo)}" disabled style="opacity:.6">
+    </div>` : `<div class="admin-form-group">
+      <label class="admin-form-label">Código *</label>
+      <input class="admin-form-input" id="af-codigo" type="text" placeholder="OB-003" maxlength="20" value="" style="text-transform:uppercase">
+    </div>`}
+    <div class="admin-form-group">
+      <label class="admin-form-label">Descripción *</label>
+      <input class="admin-form-input" id="af-descripcion" type="text" placeholder="Nombre de la obra" value="${o ? escapeHtml(o.descripcion) : ''}">
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Email Almacén</label>
+      <input class="admin-form-input" id="af-email-almacen" type="email" placeholder="almacen@empresa.com" value="${o ? escapeHtml(o.email_almacen || '') : ''}">
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Email Pañol</label>
+      <input class="admin-form-input" id="af-email-panol" type="email" placeholder="panol@empresa.com" value="${o ? escapeHtml(o.email_pañol || '') : ''}">
+    </div>
+  </div>`;
+}
+
+// ── Guardar formulario ───────────────────────────────────────────
+async function guardarFormAdmin() {
+  if (!APP.online) { mostrarToast('Sin conexión'); return; }
+  const btn = document.getElementById('admin-form-btn-guardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  try {
+    let params = {};
+    const modo = _admin.modoForm;
+
+    if (modo === 'crear-usuario') {
+      const email  = (document.getElementById('af-email')?.value  || '').trim();
+      const nombre = (document.getElementById('af-nombre')?.value || '').trim();
+      const rol    = document.getElementById('af-rol')?.value || '';
+      const obra   = document.getElementById('af-obra')?.value || '';
+      const sup    = document.getElementById('af-superior')?.value || '';
+      if (!email || !nombre || !rol || !obra) { mostrarToast('Completá los campos obligatorios'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      params = { accion: 'crearUsuario', email_admin: APP.perfil.email, email, nombre, rol, obra_codigo: obra, activo: 'TRUE', superior_email: sup };
+
+    } else if (modo === 'editar-usuario') {
+      const nombre = (document.getElementById('af-nombre')?.value || '').trim();
+      const rol    = document.getElementById('af-rol')?.value || '';
+      const obra   = document.getElementById('af-obra')?.value || '';
+      const sup    = document.getElementById('af-superior')?.value || '';
+      if (!nombre || !rol || !obra) { mostrarToast('Completá los campos obligatorios'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      params = { accion: 'editarUsuario', email_admin: APP.perfil.email, email_usuario: _admin.itemEdit.email, nombre, rol, obra_codigo: obra, superior_email: sup };
+
+    } else if (modo === 'crear-obra') {
+      const codigo = (document.getElementById('af-codigo')?.value || '').trim().toUpperCase();
+      const desc   = (document.getElementById('af-descripcion')?.value || '').trim();
+      const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
+      const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
+      if (!codigo || !desc) { mostrarToast('Completá código y descripción'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      params = { accion: 'crearObra', email_admin: APP.perfil.email, codigo, descripcion: desc, email_almacen: almacen, email_pañol: panol, activa: 'TRUE' };
+
+    } else if (modo === 'editar-obra') {
+      const desc    = (document.getElementById('af-descripcion')?.value || '').trim();
+      const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
+      const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
+      if (!desc) { mostrarToast('La descripción es obligatoria'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      params = { accion: 'editarObra', email_admin: APP.perfil.email, codigo: _admin.itemEdit.codigo, descripcion: desc, email_almacen: almacen, email_pañol: panol };
+    }
+
+    const res = await gasGet(params);
+    if (!res.ok) { mostrarToast('Error: ' + res.error); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+
+    cerrarModalAdmin();
+    mostrarToast(modo.includes('crear') ? 'Creado correctamente ✓' : 'Guardado ✓');
+
+    // Recargar lista correspondiente
+    if (modo.includes('usuario')) await cargarAdminUsuarios();
+    else                          await cargarAdminObras();
+
+  } catch (_) {
+    mostrarToast('Error de red');
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+  }
+}
+
+// ── Helper escapeHtml (si no existe ya) ─────────────────────────
+if (typeof escapeHtml === 'undefined') {
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+}
 </script>
 </body>
 </html>
