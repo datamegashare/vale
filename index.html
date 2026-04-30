@@ -2653,6 +2653,296 @@ async function eliminarValeById(vale) {
   cargarVales();
 }
 
+═══
+// ETAPA 3 — PANEL GESTIÓN (ALMACENERO / PAÑOLERO)
+// ════════════════════════════════════════════════════════════════
+
+function actualizarBadgeGestionar(cant) {
+  const badge = document.getElementById('tab-badge-gestionar');
+  if (cant > 0) { badge.textContent = cant; badge.style.display = 'inline-flex'; }
+  else badge.style.display = 'none';
+}
+
+async function cargarGestion() {
+  document.getElementById('lista-por-gestionar').innerHTML  = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  document.getElementById('lista-en-preparacion').innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  resetDetalleGestion();
+
+  if (!APP.online) {
+    const msg = '<div class="lista-vacia">Sin conexión.</div>';
+    document.getElementById('lista-por-gestionar').innerHTML  = msg;
+    document.getElementById('lista-en-preparacion').innerHTML = msg;
+    return;
+  }
+  try {
+    const [rCola, rPrep, rHoy] = await Promise.all([
+      gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email }),
+      gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email }),
+      gasGet({ accion: 'getEntregadosHoy',     email: APP.perfil.email })
+    ]);
+    APP.porGestionar   = rCola.ok ? rCola.data : [];
+    APP.enPreparacion  = rPrep.ok ? rPrep.data : [];
+    APP.entregadosHoy  = rHoy.ok  ? rHoy.data.cantidad : 0;
+    renderizarGestion();
+  } catch (_) {
+    document.getElementById('lista-por-gestionar').innerHTML  = '<div class="lista-vacia">Error al cargar.</div>';
+    document.getElementById('lista-en-preparacion').innerHTML = '';
+  }
+}
+
+function renderizarGestion() {
+  // Badge tab
+  actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
+
+  // Sub-dashboard
+  document.getElementById('gcnt-aprobado').textContent = APP.porGestionar.length;
+  document.getElementById('gcnt-pendiente').textContent = APP.enPreparacion.length;
+  document.getElementById('badge-cola').textContent = APP.porGestionar.length;
+  document.getElementById('badge-prep').textContent = APP.enPreparacion.length;
+
+  // Conteo entregados hoy
+  document.getElementById('gcnt-entregado').textContent = APP.entregadosHoy ?? '—';
+
+  // Cola APROBADO
+  const listaCola = document.getElementById('lista-por-gestionar');
+  if (!APP.porGestionar.length) {
+    listaCola.innerHTML = '<div class="lista-vacia">No hay vales en cola.</div>';
+  } else {
+    listaCola.innerHTML = APP.porGestionar.map(v => buildGestionCard(v, 'APROBADO')).join('');
+    listaCola.querySelectorAll('.gestion-card').forEach(el =>
+      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'cola'))
+    );
+  }
+
+  // En preparación PENDIENTE
+  const listaPrep = document.getElementById('lista-en-preparacion');
+  if (!APP.enPreparacion.length) {
+    listaPrep.innerHTML = '<div class="lista-vacia">No hay vales en preparación.</div>';
+  } else {
+    listaPrep.innerHTML = APP.enPreparacion.map(v => buildGestionCard(v, 'PENDIENTE')).join('');
+    listaPrep.querySelectorAll('.gestion-card').forEach(el =>
+      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'prep'))
+    );
+  }
+}
+
+function buildGestionCard(v, tipo) {
+  return `
+    <div class="gestion-card" data-id="${v.id_vale}" data-tipo="${tipo}">
+      <div class="gestion-card-top">
+        <div class="gestion-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
+      </div>
+      <div class="gestion-card-meta">
+        <span class="gestion-card-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
+        <span class="aprob-card-destino">${v.destino}</span>
+        <span class="gestion-card-fecha">${formatFecha(v.fecha_hora)}</span>
+      </div>
+    </div>`;
+}
+
+function resetDetalleGestion() {
+  document.getElementById('gestion-detalle-placeholder').style.display = 'flex';
+  document.getElementById('gestion-detalle-inner').style.display = 'none';
+  APP.valeGestion = null;
+  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
+}
+
+function seleccionarValeGestion(id, lista) {
+  const fuente = lista === 'cola' ? APP.porGestionar : APP.enPreparacion;
+  const vale   = fuente.find(v => v.id_vale === id);
+  if (!vale) return;
+  APP.valeGestion = vale;
+
+  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`.gestion-card[data-id="${id}"]`);
+  if (card) card.classList.add('selected');
+
+  if (APP.isDesktop()) {
+    mostrarDetalleGestionDesktop(vale);
+  } else {
+    mostrarDetalleGestionMobile(vale);
+  }
+}
+
+function buildDetalleGestionHTML(vale) {
+  const destinoIcon  = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
+  return `
+    <div class="detalle-estado-row">
+      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
+      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
+    </div>
+    <div class="detalle-meta">
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Solicitante</span>
+        <span class="detalle-meta-val">${vale.solicitante_nombre || vale.usuario_email}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Fecha</span>
+        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Obra</span>
+        <span class="detalle-meta-val">${vale.obra_codigo}</span>
+      </div>
+    </div>
+    ${vale.titulo ? `<div class="detalle-titulo-val">${vale.titulo}</div>` : ''}
+    <div class="detalle-section-lbl">Detalle del pedido</div>
+    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
+  `;
+}
+
+function buildBotonesGestion(vale, prefijo) {
+  if (vale.estado === 'APROBADO') {
+    return `<div class="gestion-btns">
+      <button class="btn btn-secondary" id="${prefijo}-btn-cancelar">✕ Cancelar</button>
+      <button class="btn btn-primary"   id="${prefijo}-btn-iniciar" >▶ Iniciar preparación</button>
+    </div>`;
+  }
+  if (vale.estado === 'PENDIENTE') {
+    return `<div class="gestion-btns">
+      <button class="btn btn-secondary"  id="${prefijo}-btn-cancelar" >✕ Cancelar</button>
+      <button class="btn btn-danger"     id="${prefijo}-btn-parcial"  >⚠ Entrega parcial</button>
+      <button class="btn btn-success"    id="${prefijo}-btn-entregar" >✓ Entregar</button>
+    </div>`;
+  }
+  return '';
+}
+
+function attachBotonesGestion(vale, prefijo, cerrarModal) {
+  const btn = id => document.getElementById(prefijo + id);
+
+  if (vale.estado === 'APROBADO') {
+    btn('-btn-iniciar')?.addEventListener('click', async () => {
+      setGestionBtns(prefijo, true);
+      await accionGestion('iniciarPreparacion', vale, null, false);
+      if (cerrarModal) cerrarModal();
+    });
+    btn('-btn-cancelar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('cancelarVale', vale, nota, false);
+      });
+    });
+  }
+
+  if (vale.estado === 'PENDIENTE') {
+    btn('-btn-entregar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional antes de confirmar.', false, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('entregarVale', vale, nota, true);
+      });
+    });
+    btn('-btn-parcial')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('entregaParcialVale', vale, nota, true);
+      });
+    });
+    btn('-btn-cancelar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('cancelarVale', vale, nota, false);
+      });
+    });
+  }
+}
+
+function setGestionBtns(prefijo, disabled) {
+  ['iniciar','cancelar','entregar','parcial'].forEach(id => {
+    const btn = document.getElementById(prefijo + '-btn-' + id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
+async function accionGestion(accion, vale, nota, esEntrega) {
+  const params = {
+    accion,
+    id_vale       : vale.id_vale,
+    gestionado_por: APP.perfil.email
+  };
+  if (nota) params.nota_cierre = nota;
+
+  try {
+    const res = await gasGet(params);
+    if (res.ok) {
+      const msgs = {
+        iniciarPreparacion : 'Preparación iniciada ▶',
+        entregarVale       : 'Vale entregado ✓',
+        entregaParcialVale : 'Entrega parcial registrada',
+        cancelarVale       : 'Vale cancelado'
+      };
+      toast(msgs[accion] || 'Acción realizada', 'success');
+      resetDetalleGestion();
+      cargarGestion();
+    } else {
+      toast('Error: ' + res.error, 'error');
+    }
+  } catch (_) {
+    toast('Sin conexión. Intentá de nuevo.', 'error');
+  }
+}
+
+function mostrarDetalleGestionDesktop(vale) {
+  document.getElementById('gestion-detalle-placeholder').style.display = 'none';
+  const inner = document.getElementById('gestion-detalle-inner');
+  inner.style.display = 'block';
+  inner.innerHTML = buildDetalleGestionHTML(vale) + buildBotonesGestion(vale, 'desk-g');
+  attachBotonesGestion(vale, 'desk-g', null);
+}
+
+function mostrarDetalleGestionMobile(vale) {
+  document.getElementById('modal-gestion-titulo').textContent = vale.titulo || 'Detalle del Vale';
+  document.getElementById('modal-gestion-body').innerHTML    = buildDetalleGestionHTML(vale);
+  document.getElementById('modal-gestion-footer').innerHTML  = buildBotonesGestion(vale, 'mob-g');
+  attachBotonesGestion(vale, 'mob-g', () => closeModal('modal-gestion-detalle'));
+  openModal('modal-gestion-detalle');
+}
+
+// ── Modal nota de cierre ──────────────────────────────────────────
+let _notaCierreCallback = null;
+let _notaCierreObligatoria = false;
+
+function abrirNotaCierre(titulo, desc, obligatoria, callback) {
+  _notaCierreCallback   = callback;
+  _notaCierreObligatoria = obligatoria;
+  document.getElementById('modal-nota-titulo').textContent = titulo;
+  document.getElementById('modal-nota-desc').textContent   = desc;
+  document.getElementById('modal-nota-req').style.display  = obligatoria ? 'inline' : 'none';
+  document.getElementById('nota-cierre-txt').value  = '';
+  document.getElementById('nota-cierre-chars').textContent = '0';
+  openModal('modal-nota-cierre');
+}
+
+document.getElementById('nota-cierre-txt').addEventListener('input', function() {
+  document.getElementById('nota-cierre-chars').textContent = this.value.length;
+});
+document.getElementById('modal-nota-close').addEventListener('click',  () => closeModal('modal-nota-cierre'));
+document.getElementById('modal-nota-cancel').addEventListener('click', () => closeModal('modal-nota-cierre'));
+document.getElementById('modal-nota-confirm').addEventListener('click', async () => {
+  const nota    = document.getElementById('nota-cierre-txt').value.trim();
+  const btnConf = document.getElementById('modal-nota-confirm');
+  const btnCan  = document.getElementById('modal-nota-cancel');
+  if (_notaCierreObligatoria && nota.length < 5) {
+    toast('La nota debe tener al menos 5 caracteres', 'error');
+    return;
+  }
+  btnConf.disabled = true; btnCan.disabled = true;
+  btnConf.textContent = 'Procesando…';
+  closeModal('modal-nota-cierre');
+  if (_notaCierreCallback) await _notaCierreCallback(nota || null);
+  btnConf.disabled = false; btnCan.disabled = false;
+  btnConf.textContent = 'Confirmar';
+});
+
+document.getElementById('modal-gestion-close').addEventListener('click', () => closeModal('modal-gestion-detalle'));
+
+// ═════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════
 // TODOS LOS VALES — filtrado guiado (usuarios + estados + contenido)
 // ════════════════════════════════════════════════════════════════
