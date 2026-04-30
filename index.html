@@ -1753,7 +1753,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v10.0'
+  VERSION_UI : 'v10.1'
 };
 
 // Roles que pueden aprobar vales
@@ -1761,7 +1761,7 @@ const ROLES_APROBADOR = ['SUPERVISOR', 'JEFE_OBRA'];
 // Roles que gestionan almacén/pañol
 const ROLES_GESTOR = ['ALMACENERO', 'PAÑOLERO'];
 // Roles que ven todos los vales de la obra
-const ROLES_VER_TODOS = ['JEFE_OBRA'];
+const ROLES_VER_TODOS = ['JEFE_OBRA', 'ALMACENERO', 'PAÑOLERO', 'SUPERVISOR'];
 
 // ── ESTADO GLOBAL ───────────────────────────────────────────────
 const APP = {
@@ -2004,7 +2004,12 @@ function iniciarApp() {
   actualizarHeaderPerfil();
   actualizarBadge(navigator.onLine);
   inicializarTabs();
-  cargarVales();
+  // Gestores puros arrancan en "Por Gestionar", resto en "Mis Vales"
+  if (puedeGestionar() && !puedeAprobar()) {
+    cambiarTab('por-gestionar');
+  } else {
+    cargarVales();
+  }
   // Precargar badges en background
   if (APP.online) {
     if (puedeAprobar()) {
@@ -2895,6 +2900,22 @@ async function cargarTodosVales(filtro) {
   _todosFiltroBusqueda = (filtro || '').trim();
   const lista = document.getElementById('lista-todos-vales');
   lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+
+  // Subtítulo según rol
+  let subtitulo = document.getElementById('todos-subtitulo');
+  if (!subtitulo) {
+    subtitulo = document.createElement('div');
+    subtitulo.id = 'todos-subtitulo';
+    subtitulo.style.cssText = 'font-size:12px;color:var(--gris);padding:4px 0 8px;';
+    const buscador = document.querySelector('.todos-buscador');
+    if (buscador) buscador.parentNode.insertBefore(subtitulo, buscador);
+  }
+  if (APP.perfil.rol === 'SUPERVISOR') {
+    subtitulo.textContent = 'ℹ️ Mostrando solo los vales que vos aprobaste.';
+    subtitulo.style.display = 'block';
+  } else {
+    subtitulo.style.display = 'none';
+  }
 
   // Mostrar/ocultar indicador de filtro activo
   const indicador = document.getElementById('todos-filtro-activo');
