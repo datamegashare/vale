@@ -1792,6 +1792,84 @@ input, textarea, select { font-family: inherit; }
   border: 2px solid #1A2B45;
   box-sizing: border-box;
 }
+
+/* ── PANEL NOTIFICACIONES (modal) ───────────────────────────────── */
+#modal-notif {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 60px 16px 0;
+  background: rgba(0,0,0,.35);
+}
+#modal-notif.open { display: flex; }
+.notif-panel {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+  width: 100%;
+  max-width: 380px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notif-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.notif-panel-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.notif-panel-close {
+  font-size: 18px;
+  color: var(--gris);
+  line-height: 1;
+}
+.notif-panel-close:hover { color: var(--texto); }
+.notif-panel-lista {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+.notif-item {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item-msg {
+  font-size: 13px;
+  color: var(--texto);
+  line-height: 1.45;
+  margin-bottom: 4px;
+}
+.notif-item-fecha {
+  font-size: 11px;
+  color: var(--gris);
+}
+.notif-panel-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--gris-borde);
+  text-align: center;
+}
+.notif-panel-footer button {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+}
+.notif-vacia {
+  padding: 32px 18px;
+  text-align: center;
+  color: var(--gris);
+  font-size: 13px;
+}
 </style>
 </head>
 <body>
@@ -2103,6 +2181,22 @@ input, textarea, select { font-family: inherit; }
     </div>
   </div>
 
+  <!-- MODAL NOTIFICACIONES -->
+  <div id="modal-notif">
+    <div class="notif-panel">
+      <div class="notif-panel-header">
+        <span class="notif-panel-titulo">🔔 Notificaciones</span>
+        <button class="notif-panel-close" onclick="cerrarPanelNotif()">✕</button>
+      </div>
+      <div class="notif-panel-lista" id="notif-panel-lista">
+        <div class="notif-vacia">Sin notificaciones nuevas.</div>
+      </div>
+      <div class="notif-panel-footer">
+        <button onclick="marcarTodasLeidas()">Marcar todas como leídas</button>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /screen-app -->
 
 <!-- ═══════════ MODAL: DETALLE GESTIÓN (mobile) ═══════════ -->
@@ -2269,7 +2363,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v12.0'
+  VERSION_UI : 'v12.1'
 };
 
 // Roles que pueden aprobar vales
@@ -3947,12 +4041,37 @@ async function doActualizar() {
   // Forzar actualización del Service Worker si hay uno nuevo disponible
   if (APP._swReg) {
     try {
-      await APP._swReg.update(); // verifica si hay nuevo SW
-      const sw = APP._swReg.waiting || APP._swReg.installing;
-      if (sw) {
+      await APP._swReg.update(); // descarga nuevo SW si existe en el servidor
+
+      const activarSW = (sw) => {
         sw.postMessage({ type: 'SKIP_WAITING' }); // activa inmediatamente
-        return; // el controllerchange listener recargará la página
+        // controllerchange listener se encarga de recargar la página
+      };
+
+      if (APP._swReg.waiting) {
+        // Ya está esperando — activar directo
+        activarSW(APP._swReg.waiting);
+        return;
       }
+
+      if (APP._swReg.installing) {
+        // Todavía instalando (común en mobile) — esperar a que termine
+        await new Promise((resolve) => {
+          const sw = APP._swReg.installing;
+          sw.addEventListener('statechange', function handler() {
+            if (sw.state === 'installed') {
+              sw.removeEventListener('statechange', handler);
+              activarSW(sw);
+              resolve();
+            } else if (sw.state === 'redundant') {
+              sw.removeEventListener('statechange', handler);
+              resolve(); // falló, continuar sin recargar
+            }
+          });
+        });
+        return;
+      }
+      // No hay SW nuevo — continuar con recarga de datos normal
     } catch (_) {}
   }
 
@@ -4491,13 +4610,45 @@ async function pollNotificaciones() {
   } catch (_) { /* sin red, ignorar */ }
 }
 
-// ── Marcar leídas al hacer click en el badge ─────────────────────
-async function onClickNotif() {
-  if (!_notif.noLeidas.length) return;
+// ── Renderizar panel de notificaciones ──────────────────────────
+function renderPanelNotif() {
+  const lista = document.getElementById('notif-panel-lista');
+  if (!_notif.noLeidas.length) {
+    lista.innerHTML = '<div class="notif-vacia">Sin notificaciones nuevas.</div>';
+    return;
+  }
+  lista.innerHTML = _notif.noLeidas.map(n => {
+    const fecha = n.fecha ? new Date(n.fecha).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    return `<div class="notif-item">
+      <div class="notif-item-msg">${n.mensaje}</div>
+      <div class="notif-item-fecha">${fecha}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Abrir/cerrar panel ───────────────────────────────────────────
+function abrirPanelNotif() {
+  renderPanelNotif();
+  document.getElementById('modal-notif').classList.add('open');
+}
+
+function cerrarPanelNotif() {
+  document.getElementById('modal-notif').classList.remove('open');
+}
+
+// ── Marcar todas como leídas ─────────────────────────────────────
+async function marcarTodasLeidas() {
+  cerrarPanelNotif();
   actualizarBadgeNotif(0);
   _notif.noLeidas = [];
-  // Marcar en GAS en background
   gasGet({ accion: 'marcarLeidas', email: APP.perfil.email }).catch(() => {});
+}
+
+// ── Click en el badge: abrir panel ──────────────────────────────
+function onClickNotif() {
+  if (_notif.noLeidas.length > 0) {
+    abrirPanelNotif();
+  }
 }
 
 // ── Iniciar polling al login ──────────────────────────────────────
@@ -4508,9 +4659,14 @@ function iniciarPollingNotificaciones() {
   pollNotificaciones();
   // Polling cada 5 min
   _notif.intervalo = setInterval(pollNotificaciones, _notif.POLL_MS);
-  // Listener del botón de notificaciones
+  // Listener del botón de notificaciones — abre el panel
   const btn = document.getElementById('btn-notif');
   if (btn) btn.addEventListener('click', onClickNotif);
+  // Cerrar panel al tocar el backdrop
+  const modalNotif = document.getElementById('modal-notif');
+  if (modalNotif) modalNotif.addEventListener('click', e => {
+    if (e.target === modalNotif) cerrarPanelNotif();
+  });
 }
 
 // ── Detener polling al logout ────────────────────────────────────
