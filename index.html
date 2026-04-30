@@ -1013,6 +1013,17 @@ input, textarea, select { font-family: inherit; }
   margin-bottom: 6px;
 }
 /* Contenido HTML */
+/* Listas en contenido HTML (Quill) — todas las vistas */
+.detalle-contenido ol, .detalle-contenido ul,
+.aprob-detalle-contenido ol, .aprob-detalle-contenido ul,
+.pizarron-card-contenido ol, .pizarron-card-contenido ul {
+  padding-left: 1.5em;
+  margin: 4px 0;
+}
+.detalle-contenido ol, .aprob-detalle-contenido ol, .pizarron-card-contenido ol { list-style: decimal; }
+.detalle-contenido ul, .aprob-detalle-contenido ul, .pizarron-card-contenido ul { list-style: disc; }
+.detalle-contenido li, .aprob-detalle-contenido li, .pizarron-card-contenido li { margin-bottom: 2px; }
+
 .detalle-contenido {
   font-size: 14px;
   color: var(--texto);
@@ -1997,7 +2008,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v10.4'
+  VERSION_UI : 'v10.5'
 };
 
 // Roles que pueden aprobar vales
