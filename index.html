@@ -1601,7 +1601,6 @@ input, textarea, select { font-family: inherit; }
   margin-bottom: 10px;
   cursor: pointer;
   transition: var(--trans);
-  position: relative;
 }
 .admin-card:hover { border-color: var(--azul-vivo); box-shadow: 0 2px 8px rgba(46,109,164,.1); }
 .admin-card-header {
@@ -1634,19 +1633,23 @@ input, textarea, select { font-family: inherit; }
   gap: 8px;
 }
 .admin-card-meta span { display: flex; align-items: center; gap: 3px; }
+.admin-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
 .admin-toggle-btn {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
   border-radius: 20px;
   border: 1.5px solid var(--gris-borde);
   color: var(--gris);
   background: var(--fondo);
   transition: var(--trans);
+  white-space: nowrap;
 }
 .admin-toggle-btn:hover { border-color: var(--azul-vivo); color: var(--azul-vivo); }
 
@@ -2043,7 +2046,7 @@ input, textarea, select { font-family: inherit; }
 
   <!-- MODAL ADMIN FORM -->
   <div class="modal-overlay" id="modal-admin-form" style="display:none">
-    <div class="modal" style="max-width:480px">
+    <div class="modal" style="max-width:560px;width:95%">
       <div class="modal-header">
         <span id="admin-form-titulo">Nuevo usuario</span>
         <button class="modal-close" onclick="cerrarModalAdmin()">&#10005;</button>
@@ -2052,8 +2055,8 @@ input, textarea, select { font-family: inherit; }
         <!-- Generado dinámicamente -->
       </div>
       <div class="modal-footer">
-        <button class="btn-secundario" onclick="cerrarModalAdmin()">Cancelar</button>
-        <button class="btn-primario" id="admin-form-btn-guardar" onclick="guardarFormAdmin()">Guardar</button>
+        <button class="btn btn-secondary" onclick="cerrarModalAdmin()">Cancelar</button>
+        <button class="btn btn-primary" id="admin-form-btn-guardar" onclick="guardarFormAdmin()">Guardar</button>
       </div>
     </div>
   </div>
@@ -2224,7 +2227,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v11.0'
+  VERSION_UI : 'v11.1'
 };
 
 // Roles que pueden aprobar vales
@@ -3907,6 +3910,8 @@ async function doActualizar() {
     cargarGestion();
   } else if (APP.tabActual === 'todos-vales') {
     cargarTodosVales();
+  } else if (APP.tabActual === 'admin') {
+    cargarAdmin();
   } else {
     cargarVales();
   }
@@ -4086,9 +4091,11 @@ function renderAdminUsuarios() {
           <span>&#9993; ${escapeHtml(u.email)}</span>
           ${u.superior_email ? `<span>&#8593; ${escapeHtml(u.superior_email)}</span>` : ''}
         </div>
-        <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('usuario','${u.email}')">
-          ${activo ? 'Desactivar' : 'Activar'}
-        </button>
+        <div class="admin-card-actions">
+          <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('usuario','${u.email}')">
+            ${activo ? 'Desactivar' : 'Activar'}
+          </button>
+        </div>
       </div>`;
     });
   });
@@ -4112,9 +4119,11 @@ function renderAdminObras() {
         ${o.email_almacen ? `<span>&#127981; Almacén: ${escapeHtml(o.email_almacen)}</span>` : ''}
         ${o.email_pañol   ? `<span>&#128295; Pañol: ${escapeHtml(o.email_pañol)}</span>`   : ''}
       </div>
-      <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('obra','${o.codigo}')">
-        ${activa ? 'Desactivar' : 'Activar'}
-      </button>
+      <div class="admin-card-actions">
+        <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('obra','${o.codigo}')">
+          ${activa ? 'Desactivar' : 'Activar'}
+        </button>
+      </div>
     </div>`;
   });
   cont.innerHTML = html;
@@ -4189,14 +4198,13 @@ function htmlFormUsuario(u) {
   const opRoles = ROLES_LISTA.map(r =>
     `<option value="${r}" ${u && u.rol === r ? 'selected' : ''}>${r}</option>`
   ).join('');
-  // Opciones de superior: todos los usuarios con rol aprobador
   const aprobadores = _admin.usuarios.filter(x => ['SUPERVISOR','JEFE_OBRA'].includes(x.rol));
   const opSuperior = `<option value="">— Sin superior explícito —</option>` +
     aprobadores.map(a =>
       `<option value="${a.email}" ${u && u.superior_email === a.email ? 'selected' : ''}>${escapeHtml(a.nombre)} (${a.rol})</option>`
     ).join('');
 
-  return `<div class="modal-body" style="padding:16px 20px 8px">
+  return `
     ${u ? `<div class="admin-form-group">
       <label class="admin-form-label">Email (no editable)</label>
       <input class="admin-form-input" value="${escapeHtml(u.email)}" disabled style="opacity:.6">
@@ -4208,25 +4216,22 @@ function htmlFormUsuario(u) {
       <label class="admin-form-label">Nombre *</label>
       <input class="admin-form-input" id="af-nombre" type="text" placeholder="Nombre completo" value="${u ? escapeHtml(u.nombre) : ''}">
     </div>
-    <div class="admin-form-row">
-      <div class="admin-form-group">
-        <label class="admin-form-label">Rol *</label>
-        <select class="admin-form-select" id="af-rol">${opRoles}</select>
-      </div>
-      <div class="admin-form-group">
-        <label class="admin-form-label">Obra *</label>
-        <select class="admin-form-select" id="af-obra">${opObras}</select>
-      </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Rol *</label>
+      <select class="admin-form-select" id="af-rol">${opRoles}</select>
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Obra *</label>
+      <select class="admin-form-select" id="af-obra">${opObras}</select>
     </div>
     <div class="admin-form-group">
       <label class="admin-form-label">Superior (opcional)</label>
       <select class="admin-form-select" id="af-superior">${opSuperior}</select>
-    </div>
-  </div>`;
+    </div>`;
 }
 
 function htmlFormObra(o) {
-  return `<div class="modal-body" style="padding:16px 20px 8px">
+  return `
     ${o ? `<div class="admin-form-group">
       <label class="admin-form-label">Código (no editable)</label>
       <input class="admin-form-input" value="${escapeHtml(o.codigo)}" disabled style="opacity:.6">
@@ -4245,8 +4250,7 @@ function htmlFormObra(o) {
     <div class="admin-form-group">
       <label class="admin-form-label">Email Pañol</label>
       <input class="admin-form-input" id="af-email-panol" type="email" placeholder="panol@empresa.com" value="${o ? escapeHtml(o.email_pañol || '') : ''}">
-    </div>
-  </div>`;
+    </div>`;
 }
 
 // ── Guardar formulario ───────────────────────────────────────────
@@ -4296,12 +4300,40 @@ async function guardarFormAdmin() {
     const res = await gasGet(params);
     if (!res.ok) { mostrarToast('Error: ' + res.error); btn.disabled = false; btn.textContent = 'Guardar'; return; }
 
+    // Actualizar caché local inmediatamente (sin esperar nuevo fetch)
+    if (modo === 'editar-usuario') {
+      const u = _admin.usuarios.find(x => x.email === _admin.itemEdit.email);
+      if (u) {
+        u.nombre         = params.nombre;
+        u.rol            = params.rol;
+        u.obra_codigo    = params.obra_codigo;
+        u.superior_email = params.superior_email;
+      }
+    } else if (modo === 'editar-obra') {
+      const o = _admin.obras.find(x => x.codigo === _admin.itemEdit.codigo);
+      if (o) {
+        o.descripcion   = params.descripcion;
+        o.email_almacen = params.email_almacen;
+        o.email_pañol   = params.email_pañol;
+      }
+    } else if (modo === 'crear-usuario') {
+      _admin.usuarios.push({ email: params.email, nombre: params.nombre, rol: params.rol,
+        obra_codigo: params.obra_codigo, activo: true, superior_email: params.superior_email || '' });
+    } else if (modo === 'crear-obra') {
+      _admin.obras.push({ codigo: params.codigo, descripcion: params.descripcion,
+        email_almacen: params.email_almacen || '', email_pañol: params.email_pañol || '', activa: true });
+    }
+
     cerrarModalAdmin();
     mostrarToast(modo.includes('crear') ? 'Creado correctamente ✓' : 'Guardado ✓');
 
-    // Recargar lista correspondiente
-    if (modo.includes('usuario')) await cargarAdminUsuarios();
-    else                          await cargarAdminObras();
+    // Re-render inmediato con datos locales
+    if (modo.includes('usuario')) renderAdminUsuarios();
+    else                          renderAdminObras();
+
+    // Sincronizar desde GAS en background
+    if (modo.includes('usuario')) cargarAdminUsuarios().catch(() => {});
+    else                          cargarAdminObras().catch(() => {});
 
   } catch (_) {
     mostrarToast('Error de red');
