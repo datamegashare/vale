@@ -1281,6 +1281,152 @@ input, textarea, select { font-family: inherit; }
 }
 .gestion-btns .btn { min-width: 120px; }
 
+
+/* ═══════════════════════════════════════════════════
+   PIZARRÓN (solo desktop, panel derecho gestión)
+═══════════════════════════════════════════════════ */
+.gestion-detalle-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--gris-borde);
+  margin-bottom: 20px;
+}
+.gestion-detalle-tab {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gris);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--trans);
+  background: none;
+}
+.gestion-detalle-tab:hover { color: var(--texto); }
+.gestion-detalle-tab.active {
+  color: var(--azul-vivo);
+  border-bottom-color: var(--azul-vivo);
+}
+#pizarron-panel {
+  display: none;
+}
+#pizarron-panel.visible {
+  display: block;
+}
+.pizarron-hint {
+  font-size: 12px;
+  color: var(--gris);
+  margin-bottom: 16px;
+}
+.pizarron-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.pizarron-slot {
+  min-height: 180px;
+  border: 2px dashed var(--gris-borde);
+  border-radius: var(--radio);
+  background: var(--fondo);
+  transition: var(--trans);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pizarron-slot.drag-over {
+  border-color: var(--azul-vivo);
+  background: rgba(46,109,164,.06);
+}
+.pizarron-slot.ocupado {
+  border-style: solid;
+  border-color: var(--gris-borde);
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0;
+}
+.pizarron-slot-empty {
+  font-size: 13px;
+  color: var(--gris-claro);
+  text-align: center;
+  padding: 12px;
+  pointer-events: none;
+}
+.pizarron-card {
+  width: 100%;
+  height: 100%;
+  padding: 14px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pizarron-card-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(192,57,43,.1);
+  color: var(--rojo);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  line-height: 1;
+  transition: var(--trans);
+}
+.pizarron-card-close:hover { background: rgba(192,57,43,.2); }
+.pizarron-card-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+  padding-right: 26px;
+  line-height: 1.3;
+}
+.pizarron-card-meta {
+  font-size: 11px;
+  color: var(--gris);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pizarron-card-contenido {
+  font-size: 12px;
+  color: var(--texto);
+  line-height: 1.4;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 120px;
+  border-top: 1px solid var(--gris-borde);
+  padding-top: 8px;
+}
+.pizarron-card-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--gris-borde);
+  padding-top: 8px;
+  margin-top: auto;
+}
+.pizarron-card-btns .btn {
+  font-size: 11px;
+  padding: 5px 10px;
+  min-width: unset;
+  flex: 1;
+}
+.gestion-card[draggable="true"] {
+  cursor: grab;
+}
+.gestion-card[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
 /* ═══════════════════════════════════════════════════
    PANEL TODOS LOS VALES (JEFE_OBRA)
 ═══════════════════════════════════════════════════ */
@@ -1592,12 +1738,31 @@ input, textarea, select { font-family: inherit; }
           </div>
         </div>
         <!-- Columna detalle (solo desktop) -->
+        <!-- Columna detalle (solo desktop) -->
         <div class="gestion-detalle-col" id="gestion-detalle-col">
-          <div class="aprob-detalle-placeholder" id="gestion-detalle-placeholder">
-            <span>📦</span>
-            Seleccioná un vale para gestionar
+          <!-- Tabs Detalle / Pizarron -->
+          <div class="gestion-detalle-tabs" id="gestion-detalle-tabs">
+            <button class="gestion-detalle-tab active" id="tab-btn-detalle-g">Detalle</button>
+            <button class="gestion-detalle-tab" id="tab-btn-pizarron">&#127963; Pizarrón</button>
           </div>
-          <div id="gestion-detalle-inner" style="display:none"></div>
+          <!-- Panel Detalle -->
+          <div id="detalle-panel">
+            <div class="aprob-detalle-placeholder" id="gestion-detalle-placeholder">
+              <span>📦</span>
+              Seleccióná un vale para gestionar
+            </div>
+            <div id="gestion-detalle-inner" style="display:none"></div>
+          </div>
+          <!-- Panel Pizarron -->
+          <div id="pizarron-panel">
+            <div class="pizarron-hint">Arrastrá vales en preparación hacia los slots. Máximo 4.</div>
+            <div class="pizarron-grid" id="pizarron-grid">
+              <div class="pizarron-slot" id="pslot-0" data-slot="0"></div>
+              <div class="pizarron-slot" id="pslot-1" data-slot="1"></div>
+              <div class="pizarron-slot" id="pslot-2" data-slot="2"></div>
+              <div class="pizarron-slot" id="pslot-3" data-slot="3"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1805,7 +1970,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v10.2'
+  VERSION_UI : 'v10.3'
 };
 
 // Roles que pueden aprobar vales
@@ -2056,6 +2221,8 @@ function iniciarApp() {
   actualizarHeaderPerfil();
   actualizarBadge(navigator.onLine);
   inicializarTabs();
+  initPizarronTabs();
+  initSlotsDrop();
   // Gestores puros arrancan en "Por Gestionar", resto en "Mis Vales"
   if (puedeGestionar() && !puedeAprobar()) {
     cambiarTab('por-gestionar');
@@ -2720,10 +2887,14 @@ function renderizarGestion() {
     listaPrep.innerHTML = '<div class="lista-vacia">No hay vales en preparación.</div>';
   } else {
     listaPrep.innerHTML = APP.enPreparacion.map(v => buildGestionCard(v, 'PENDIENTE')).join('');
-    listaPrep.querySelectorAll('.gestion-card').forEach(el =>
-      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'prep'))
-    );
+    listaPrep.querySelectorAll('.gestion-card').forEach(el => {
+      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'prep'));
+      // Habilitar drag hacia el pizarron (solo desktop)
+      if (window.innerWidth >= 768) habilitarDragGestionCard(el, el.dataset.id);
+    });
   }
+  // Limpiar pizarron al recargar datos
+  resetPizarron();
 }
 
 function buildGestionCard(v, tipo) {
@@ -3173,6 +3344,171 @@ function abrirDetalleTodos(id) {
   footer.innerHTML = '';
   openModal('modal-detalle');
 }
+
+
+// ════════════════════════════════════════════════════════════════
+// PIZARRÓN — panel de trabajo visual (solo desktop)
+// ════════════════════════════════════════════════════════════════
+
+const MAX_SLOTS = 4;
+// pizarronSlots[0..3] = id_vale | null
+const pizarronSlots = [null, null, null, null];
+let _dragValeId = null; // id_vale siendo arrastrado
+
+// ── Tabs Detalle / Pizarron ───────────────────────────────────────
+function initPizarronTabs() {
+  const btnDetalle  = document.getElementById('tab-btn-detalle-g');
+  const btnPizarron = document.getElementById('tab-btn-pizarron');
+  if (!btnDetalle || !btnPizarron) return;
+
+  btnDetalle.addEventListener('click', () => {
+    btnDetalle.classList.add('active');
+    btnPizarron.classList.remove('active');
+    document.getElementById('detalle-panel').style.display = '';
+    document.getElementById('pizarron-panel').classList.remove('visible');
+  });
+
+  btnPizarron.addEventListener('click', () => {
+    btnPizarron.classList.add('active');
+    btnDetalle.classList.remove('active');
+    document.getElementById('detalle-panel').style.display = 'none';
+    document.getElementById('pizarron-panel').classList.add('visible');
+    renderPizarron();
+  });
+}
+
+// ── Drag desde lista En preparacion ──────────────────────────────
+function habilitarDragGestionCard(el, valeId) {
+  el.setAttribute('draggable', 'true');
+  el.addEventListener('dragstart', e => {
+    _dragValeId = valeId;
+    e.dataTransfer.effectAllowed = 'copy';
+  });
+  el.addEventListener('dragend', () => { _dragValeId = null; });
+}
+
+// ── Drop en slots ─────────────────────────────────────────────────
+function initSlotsDrop() {
+  document.querySelectorAll('.pizarron-slot').forEach(slot => {
+    slot.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      slot.classList.add('drag-over');
+    });
+    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+    slot.addEventListener('drop', e => {
+      e.preventDefault();
+      slot.classList.remove('drag-over');
+      if (!_dragValeId) return;
+      const slotIdx = parseInt(slot.dataset.slot);
+      // Ya esta en el pizarron?
+      if (pizarronSlots.includes(_dragValeId)) {
+        toast('Este vale ya esta en el pizarron.', '');
+        return;
+      }
+      // Slot ocupado?
+      if (pizarronSlots[slotIdx] !== null) {
+        toast('Ese slot ya tiene un vale. Quita el actual primero.', '');
+        return;
+      }
+      pizarronSlots[slotIdx] = _dragValeId;
+      renderPizarronSlot(slotIdx);
+    });
+  });
+}
+
+// ── Render pizarron completo ──────────────────────────────────────
+function renderPizarron() {
+  for (let i = 0; i < MAX_SLOTS; i++) renderPizarronSlot(i);
+}
+
+function renderPizarronSlot(idx) {
+  const slot = document.getElementById('pslot-' + idx);
+  if (!slot) return;
+  const valeId = pizarronSlots[idx];
+
+  if (!valeId) {
+    slot.className = 'pizarron-slot';
+    slot.innerHTML = '<div class="pizarron-slot-empty">Arrastra un vale aqui</div>';
+    return;
+  }
+
+  const vale = APP.enPreparacion.find(v => v.id_vale === valeId);
+  if (!vale) {
+    // Vale ya no esta en preparacion (fue entregado/cancelado)
+    pizarronSlots[idx] = null;
+    slot.className = 'pizarron-slot';
+    slot.innerHTML = '<div class="pizarron-slot-empty">Arrastra un vale aqui</div>';
+    return;
+  }
+
+  slot.className = 'pizarron-slot ocupado';
+
+  const solicitante = vale.solicitante_nombre || vale.usuario_email;
+  const fecha = formatFecha(vale.fecha_hora);
+  const titulo = vale.titulo || '<em>Sin titulo</em>';
+  const contenido = vale.contenido_html || '&mdash;';
+
+  slot.innerHTML =
+    '<div class="pizarron-card">' +
+      '<button class="pizarron-card-close" title="Quitar del pizarron">&#x2715;</button>' +
+      '<div class="pizarron-card-titulo">' + titulo + '</div>' +
+      '<div class="pizarron-card-meta">' +
+        '<span>' + solicitante + '</span>' +
+        '<span>' + fecha + '</span>' +
+      '</div>' +
+      '<div class="pizarron-card-contenido">' + contenido + '</div>' +
+      '<div class="pizarron-card-btns">' +
+        '<button class="btn btn-danger pz-btn-cancelar">&#x2715; Cancelar</button>' +
+        '<button class="btn btn-danger pz-btn-parcial">&#x26A0; Parcial</button>' +
+        '<button class="btn btn-success pz-btn-entregar">&#x2713; Entregar</button>' +
+      '</div>' +
+    '</div>';
+
+  // Boton cerrar
+  slot.querySelector('.pizarron-card-close').addEventListener('click', () => {
+    pizarronSlots[idx] = null;
+    renderPizarronSlot(idx);
+  });
+
+  // Botones accion — reutilizan accionGestion
+  slot.querySelector('.pz-btn-entregar').addEventListener('click', () => {
+    abrirNotaCierre('Nota de entrega', 'Podes agregar una nota opcional.', false, nota => {
+      setGestionBtns('pz-' + idx, true);
+      accionGestion('entregarVale', vale, nota, true).then(() => {
+        pizarronSlots[idx] = null;
+        renderPizarronSlot(idx);
+      });
+    });
+  });
+
+  slot.querySelector('.pz-btn-parcial').addEventListener('click', () => {
+    abrirNotaCierre('Entrega parcial', 'Describí que se entrego y que falto.', true, nota => {
+      setGestionBtns('pz-' + idx, true);
+      accionGestion('entregaParcialVale', vale, nota, true).then(() => {
+        pizarronSlots[idx] = null;
+        renderPizarronSlot(idx);
+      });
+    });
+  });
+
+  slot.querySelector('.pz-btn-cancelar').addEventListener('click', () => {
+    abrirNotaCierre('Cancelar vale', 'Ingresa el motivo de la cancelacion.', true, nota => {
+      setGestionBtns('pz-' + idx, true);
+      accionGestion('cancelarVale', vale, nota, false).then(() => {
+        pizarronSlots[idx] = null;
+        renderPizarronSlot(idx);
+      });
+    });
+  });
+}
+
+// Limpiar pizarron al recargar gestion (nueva carga de datos)
+function resetPizarron() {
+  pizarronSlots.fill(null);
+  renderPizarron();
+}
+
 
 // Buscador por texto — filtrado local instantaneo
 document.getElementById('todos-buscar-btn').addEventListener('click', () => {
