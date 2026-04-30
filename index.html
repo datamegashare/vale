@@ -1272,6 +1272,33 @@ input, textarea, select { font-family: inherit; }
   }
 }
 
+
+/* Pizarron — colores de tarjeta */
+.pizarron-color-picker {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.pcolor-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.pcolor-dot:hover { transform: scale(1.2); }
+.pcolor-dot.selected { border-color: var(--texto); transform: scale(1.15); }
+
+.pizarron-slot.ocupado { border-color: var(--gris-borde); }
+.pizarron-slot[data-color="amarillo"] { background: #fffde7; border-color: #f9e04b; }
+.pizarron-slot[data-color="celeste"]  { background: #e3f2fd; border-color: #90caf9; }
+.pizarron-slot[data-color="verde"]    { background: #e8f5e9; border-color: #81c784; }
+.pizarron-slot[data-color="rosa"]     { background: #fce4ec; border-color: #f48fb1; }
+.pizarron-slot[data-color="naranja"]  { background: #fff3e0; border-color: #ffb74d; }
+.pizarron-slot[data-color="lila"]     { background: #f3e5f5; border-color: #ce93d8; }
 /* Botones de acción gestión */
 .gestion-btns {
   display: flex;
@@ -1970,7 +1997,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v10.3'
+  VERSION_UI : 'v10.4'
 };
 
 // Roles que pueden aprobar vales
@@ -3352,7 +3379,16 @@ function abrirDetalleTodos(id) {
 
 const MAX_SLOTS = 4;
 // pizarronSlots[0..3] = id_vale | null
-const pizarronSlots = [null, null, null, null];
+const pizarronSlots  = [null, null, null, null]; // id_vale por slot
+const pizarronColors = [null, null, null, null]; // color elegido por slot
+const PIZARRON_COLORS = [
+  { id: 'amarillo', hex: '#f9e04b', label: 'Amarillo' },
+  { id: 'celeste',  hex: '#90caf9', label: 'Celeste'  },
+  { id: 'verde',    hex: '#81c784', label: 'Verde'    },
+  { id: 'rosa',     hex: '#f48fb1', label: 'Rosa'     },
+  { id: 'naranja',  hex: '#ffb74d', label: 'Naranja'  },
+  { id: 'lila',     hex: '#ce93d8', label: 'Lila'     },
+];
 let _dragValeId = null; // id_vale siendo arrastrado
 
 // ── Tabs Detalle / Pizarron ───────────────────────────────────────
@@ -3412,6 +3448,7 @@ function initSlotsDrop() {
         return;
       }
       pizarronSlots[slotIdx] = _dragValeId;
+      if (!pizarronColors[slotIdx]) pizarronColors[slotIdx] = PIZARRON_COLORS[0].id;
       renderPizarronSlot(slotIdx);
     });
   });
@@ -3442,12 +3479,23 @@ function renderPizarronSlot(idx) {
     return;
   }
 
+  const colorActual = pizarronColors[idx] || PIZARRON_COLORS[0].id;
   slot.className = 'pizarron-slot ocupado';
+  slot.dataset.color = colorActual;
 
   const solicitante = vale.solicitante_nombre || vale.usuario_email;
   const fecha = formatFecha(vale.fecha_hora);
   const titulo = vale.titulo || '<em>Sin titulo</em>';
   const contenido = vale.contenido_html || '&mdash;';
+
+  // Picker de colores
+  const pickerHTML = '<div class="pizarron-color-picker">' +
+    PIZARRON_COLORS.map(c =>
+      '<button class="pcolor-dot' + (c.id === colorActual ? ' selected' : '') + '"' +
+      ' data-color="' + c.id + '" title="' + c.label + '"' +
+      ' style="background:' + c.hex + '"></button>'
+    ).join('') +
+    '</div>';
 
   slot.innerHTML =
     '<div class="pizarron-card">' +
@@ -3457,6 +3505,7 @@ function renderPizarronSlot(idx) {
         '<span>' + solicitante + '</span>' +
         '<span>' + fecha + '</span>' +
       '</div>' +
+      pickerHTML +
       '<div class="pizarron-card-contenido">' + contenido + '</div>' +
       '<div class="pizarron-card-btns">' +
         '<button class="btn btn-danger pz-btn-cancelar">&#x2715; Cancelar</button>' +
@@ -3468,7 +3517,22 @@ function renderPizarronSlot(idx) {
   // Boton cerrar
   slot.querySelector('.pizarron-card-close').addEventListener('click', () => {
     pizarronSlots[idx] = null;
+    pizarronColors[idx] = null;
+    slot.removeAttribute('data-color');
     renderPizarronSlot(idx);
+  });
+
+  // Picker de colores
+  slot.querySelectorAll('.pcolor-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const color = dot.dataset.color;
+      pizarronColors[idx] = color;
+      slot.dataset.color = color;
+      // Actualizar selected en los dots sin rerenderizar toda la tarjeta
+      slot.querySelectorAll('.pcolor-dot').forEach(d =>
+        d.classList.toggle('selected', d.dataset.color === color)
+      );
+    });
   });
 
   // Botones accion — reutilizan accionGestion
@@ -3506,6 +3570,7 @@ function renderPizarronSlot(idx) {
 // Limpiar pizarron al recargar gestion (nueva carga de datos)
 function resetPizarron() {
   pizarronSlots.fill(null);
+  pizarronColors.fill(null);
   renderPizarron();
 }
 
