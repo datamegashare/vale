@@ -2363,7 +2363,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v12.1'
+  VERSION_UI : 'v12.2'
 };
 
 // Roles que pueden aprobar vales
@@ -4122,7 +4122,7 @@ document.getElementById('btn-logout').addEventListener('click', doLogout);
 
 // ── SERVICE WORKER ───────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
+  navigator.serviceWorker.register('sw2.js')
     .then(reg => {
       APP._swReg = reg;
       // Escuchar cuando hay un nuevo SW esperando
