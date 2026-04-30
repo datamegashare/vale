@@ -2227,7 +2227,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v11.1'
+  VERSION_UI : 'v11.2'
 };
 
 // Roles que pueden aprobar vales
@@ -4131,25 +4131,25 @@ function renderAdminObras() {
 
 // ── Toggle activo/activa ─────────────────────────────────────────
 async function toggleAdmin(tipo, clave) {
-  if (!APP.online) { mostrarToast('Sin conexión'); return; }
+  if (!APP.online) { toast('Sin conexión'); return; }
   const params = tipo === 'usuario'
     ? { accion: 'toggleUsuario', email_admin: APP.perfil.email, email_usuario: clave }
     : { accion: 'toggleObra',   email_admin: APP.perfil.email, codigo: clave };
   try {
     const res = await gasGet(params);
-    if (!res.ok) { mostrarToast('Error: ' + res.error); return; }
+    if (!res.ok) { toast('Error: ' + res.error); return; }
     if (tipo === 'usuario') {
       const u = _admin.usuarios.find(x => x.email === clave);
       if (u) u.activo = res.data.activo;
       renderAdminUsuarios();
-      mostrarToast(res.data.activo ? 'Usuario activado' : 'Usuario desactivado');
+      toast(res.data.activo ? 'Usuario activado' : 'Usuario desactivado');
     } else {
       const o = _admin.obras.find(x => x.codigo === clave);
       if (o) o.activa = res.data.activa;
       renderAdminObras();
-      mostrarToast(res.data.activa ? 'Obra activada' : 'Obra desactivada');
+      toast(res.data.activa ? 'Obra activada' : 'Obra desactivada');
     }
-  } catch (_) { mostrarToast('Error de red'); }
+  } catch (_) { toast('Error de red'); }
 }
 
 // ── Modal formulario ─────────────────────────────────────────────
@@ -4255,7 +4255,7 @@ function htmlFormObra(o) {
 
 // ── Guardar formulario ───────────────────────────────────────────
 async function guardarFormAdmin() {
-  if (!APP.online) { mostrarToast('Sin conexión'); return; }
+  if (!APP.online) { toast('Sin conexión'); return; }
   const btn = document.getElementById('admin-form-btn-guardar');
   btn.disabled = true;
   btn.textContent = 'Guardando...';
@@ -4270,7 +4270,7 @@ async function guardarFormAdmin() {
       const rol    = document.getElementById('af-rol')?.value || '';
       const obra   = document.getElementById('af-obra')?.value || '';
       const sup    = document.getElementById('af-superior')?.value || '';
-      if (!email || !nombre || !rol || !obra) { mostrarToast('Completá los campos obligatorios'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      if (!email || !nombre || !rol || !obra) { toast('Completá los campos obligatorios'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
       params = { accion: 'crearUsuario', email_admin: APP.perfil.email, email, nombre, rol, obra_codigo: obra, activo: 'TRUE', superior_email: sup };
 
     } else if (modo === 'editar-usuario') {
@@ -4278,7 +4278,7 @@ async function guardarFormAdmin() {
       const rol    = document.getElementById('af-rol')?.value || '';
       const obra   = document.getElementById('af-obra')?.value || '';
       const sup    = document.getElementById('af-superior')?.value || '';
-      if (!nombre || !rol || !obra) { mostrarToast('Completá los campos obligatorios'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      if (!nombre || !rol || !obra) { toast('Completá los campos obligatorios'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
       params = { accion: 'editarUsuario', email_admin: APP.perfil.email, email_usuario: _admin.itemEdit.email, nombre, rol, obra_codigo: obra, superior_email: sup };
 
     } else if (modo === 'crear-obra') {
@@ -4286,19 +4286,19 @@ async function guardarFormAdmin() {
       const desc   = (document.getElementById('af-descripcion')?.value || '').trim();
       const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
       const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
-      if (!codigo || !desc) { mostrarToast('Completá código y descripción'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      if (!codigo || !desc) { toast('Completá código y descripción'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
       params = { accion: 'crearObra', email_admin: APP.perfil.email, codigo, descripcion: desc, email_almacen: almacen, email_pañol: panol, activa: 'TRUE' };
 
     } else if (modo === 'editar-obra') {
       const desc    = (document.getElementById('af-descripcion')?.value || '').trim();
       const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
       const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
-      if (!desc) { mostrarToast('La descripción es obligatoria'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+      if (!desc) { toast('La descripción es obligatoria'); btn.disabled = false; btn.textContent = 'Guardar'; return; }
       params = { accion: 'editarObra', email_admin: APP.perfil.email, codigo: _admin.itemEdit.codigo, descripcion: desc, email_almacen: almacen, email_pañol: panol };
     }
 
     const res = await gasGet(params);
-    if (!res.ok) { mostrarToast('Error: ' + res.error); btn.disabled = false; btn.textContent = 'Guardar'; return; }
+    if (!res.ok) { toast('Error: ' + res.error); btn.disabled = false; btn.textContent = 'Guardar'; return; }
 
     // Actualizar caché local inmediatamente (sin esperar nuevo fetch)
     if (modo === 'editar-usuario') {
@@ -4325,7 +4325,7 @@ async function guardarFormAdmin() {
     }
 
     cerrarModalAdmin();
-    mostrarToast(modo.includes('crear') ? 'Creado correctamente ✓' : 'Guardado ✓');
+    toast(modo.includes('crear') ? 'Creado correctamente ✓' : 'Guardado ✓');
 
     // Re-render inmediato con datos locales
     if (modo.includes('usuario')) renderAdminUsuarios();
@@ -4336,7 +4336,7 @@ async function guardarFormAdmin() {
     else                          cargarAdminObras().catch(() => {});
 
   } catch (_) {
-    mostrarToast('Error de red');
+    toast('Error de red');
     btn.disabled = false;
     btn.textContent = 'Guardar';
   }
