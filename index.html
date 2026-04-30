@@ -1755,6 +1755,43 @@ input, textarea, select { font-family: inherit; }
   flex-wrap: wrap;
 }
 .todos-vale-solicitante { font-weight: 600; color: var(--azul-vivo); }
+
+/* ── BADGE NOTIFICACIONES ────────────────────────────────────── */
+.notif-btn {
+  position: relative;
+  display: none; /* se muestra solo si hay notificaciones */
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  font-size: 18px;
+  margin-right: 4px;
+  transition: var(--trans);
+  cursor: pointer;
+}
+.notif-btn.visible { display: flex; }
+.notif-btn:hover { background: rgba(255,255,255,.20); }
+.notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #1A2B45;
+  box-sizing: border-box;
+}
 </style>
 </head>
 <body>
@@ -1800,6 +1837,10 @@ input, textarea, select { font-family: inherit; }
     </div>
 
     <!-- Botones desktop -->
+    <button id="btn-notif" class="notif-btn" title="Notificaciones">
+      🔔
+      <span class="notif-badge" id="notif-badge-hdr">0</span>
+    </button>
     <button id="btn-actualizar" class="btn-hdr-action" title="Actualizar datos">🔄 Actualizar</button>
     <button id="btn-instalar-pwa" class="btn-hdr-action" style="display:none" title="Instalar app">📲 Instalar</button>
     <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
@@ -2228,7 +2269,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v11.5'
+  VERSION_UI : 'v12.0'
 };
 
 // Roles que pueden aprobar vales
@@ -2494,6 +2535,7 @@ function iniciarApp() {
   actualizarHeaderPerfil();
   actualizarBadge(navigator.onLine);
   inicializarTabs();
+  iniciarPollingNotificaciones(); // E5
   initPizarronTabs();
   initSlotsDrop();
   // Redirección inicial por rol
@@ -3886,6 +3928,7 @@ document.getElementById('todos-buscar-input').addEventListener('keydown', e => {
 async function doLogout() {
   const ok = await confirmar('¿Cerrar sesión?', 'Vas a salir de Vale Digital.');
   if (!ok) return;
+  detenerPollingNotificaciones(); // E5
   google.accounts.id.disableAutoSelect();
   APP.perfil     = null;
   APP.vales      = [];
@@ -3927,6 +3970,7 @@ async function doActualizar() {
     } catch (_) { /* sin red, continúa con perfil local */ }
   }
   cambiarTab(APP.tabActual, true); // forzar recarga desde GAS
+  pollNotificaciones();              // refrescar badge notificaciones
 }
 
 // ── MENÚ MOBILE ──────────────────────────────────────────────────
@@ -4378,6 +4422,105 @@ if (typeof escapeHtml === 'undefined') {
   function escapeHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// ETAPA 5 — NOTIFICACIONES
+// ════════════════════════════════════════════════════════════════
+
+const _notif = {
+  intervalo  : null,   // handle del setInterval
+  noLeidas   : [],     // array de notificaciones no leídas
+  POLL_MS    : 5 * 60 * 1000  // 5 minutos
+};
+
+// ── Actualizar badge en header ───────────────────────────────────
+function actualizarBadgeNotif(cantidad) {
+  const btn   = document.getElementById('btn-notif');
+  const badge = document.getElementById('notif-badge-hdr');
+  if (!btn || !badge) return;
+  badge.textContent = cantidad > 9 ? '9+' : String(cantidad);
+  btn.classList.toggle('visible', cantidad > 0);
+}
+
+// ── Construir mensaje contextual para el toast ───────────────────
+function mensajeContextualNotif(notifs) {
+  if (!notifs.length) return null;
+
+  // Agrupar por tipo de acción inferida del mensaje
+  const parAprobar  = notifs.filter(n => n.mensaje.includes('pendiente de aprobación'));
+  const parGestionar = notifs.filter(n => n.mensaje.includes('para gestionar'));
+  const aprobados   = notifs.filter(n => n.mensaje.includes('fue aprobado'));
+  const rechazados  = notifs.filter(n => n.mensaje.includes('fue rechazado'));
+  const entregados  = notifs.filter(n =>
+    n.mensaje.includes('entregado') || n.mensaje.includes('entrega parcial') || n.mensaje.includes('cancelado')
+  );
+
+  const partes = [];
+  if (parAprobar.length)   partes.push(`${parAprobar.length} vale${parAprobar.length > 1 ? 's' : ''} para aprobar`);
+  if (parGestionar.length) partes.push(`${parGestionar.length} vale${parGestionar.length > 1 ? 's' : ''} para gestionar`);
+  if (aprobados.length)    partes.push(`${aprobados.length} aprobado${aprobados.length > 1 ? 's' : ''}`);
+  if (rechazados.length)   partes.push(`${rechazados.length} rechazado${rechazados.length > 1 ? 's' : ''}`);
+  if (entregados.length)   partes.push(`${entregados.length} con novedad de entrega`);
+
+  if (!partes.length) {
+    return notifs.length === 1
+      ? notifs[0].mensaje
+      : `${notifs.length} notificaciones nuevas`;
+  }
+  return '🔔 ' + partes.join(' · ');
+}
+
+// ── Polling: consultar GAS y mostrar si hay novedades ────────────
+async function pollNotificaciones() {
+  if (!APP.online || !APP.perfil) return;
+  try {
+    const res = await gasGet({ accion: 'getNotificaciones', email: APP.perfil.email });
+    if (!res.ok) return;
+    const noLeidas = res.data || [];
+    _notif.noLeidas = noLeidas;
+
+    if (noLeidas.length > 0) {
+      actualizarBadgeNotif(noLeidas.length);
+      const msg = mensajeContextualNotif(noLeidas);
+      if (msg) toast(msg, '');
+    } else {
+      actualizarBadgeNotif(0);
+    }
+  } catch (_) { /* sin red, ignorar */ }
+}
+
+// ── Marcar leídas al hacer click en el badge ─────────────────────
+async function onClickNotif() {
+  if (!_notif.noLeidas.length) return;
+  actualizarBadgeNotif(0);
+  _notif.noLeidas = [];
+  // Marcar en GAS en background
+  gasGet({ accion: 'marcarLeidas', email: APP.perfil.email }).catch(() => {});
+}
+
+// ── Iniciar polling al login ──────────────────────────────────────
+function iniciarPollingNotificaciones() {
+  // Limpiar intervalo previo si existía (por si se llama dos veces)
+  if (_notif.intervalo) clearInterval(_notif.intervalo);
+  // Primera consulta inmediata
+  pollNotificaciones();
+  // Polling cada 5 min
+  _notif.intervalo = setInterval(pollNotificaciones, _notif.POLL_MS);
+  // Listener del botón de notificaciones
+  const btn = document.getElementById('btn-notif');
+  if (btn) btn.addEventListener('click', onClickNotif);
+}
+
+// ── Detener polling al logout ────────────────────────────────────
+function detenerPollingNotificaciones() {
+  if (_notif.intervalo) {
+    clearInterval(_notif.intervalo);
+    _notif.intervalo = null;
+  }
+  _notif.noLeidas = [];
+  actualizarBadgeNotif(0);
 }
 </script>
 </body>
