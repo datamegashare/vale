@@ -1870,6 +1870,104 @@ input, textarea, select { font-family: inherit; }
   color: var(--gris);
   font-size: 13px;
 }
+
+/* ═══════════════════════════════════════════════════
+   TIMELINE DE ESTADOS (v13)
+═══════════════════════════════════════════════════ */
+.timeline-wrap {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gris-borde);
+}
+.timeline-titulo {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 14px;
+}
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--gris-borde);
+  border-radius: 2px;
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 18px;
+  animation: fadeUp .3s ease both;
+}
+.tl-item:last-child { margin-bottom: 0; }
+.tl-dot {
+  position: absolute;
+  left: -24px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--gris-borde);
+  background: var(--gris-claro);
+  z-index: 1;
+}
+.tl-dot.BORRADOR        { background: var(--gris-claro);  box-shadow: 0 0 0 2px var(--gris-claro); }
+.tl-dot.ENVIADO         { background: var(--azul-vivo);   box-shadow: 0 0 0 2px var(--azul-vivo); }
+.tl-dot.APROBADO        { background: var(--verde);       box-shadow: 0 0 0 2px var(--verde); }
+.tl-dot.RECHAZADO       { background: var(--rojo);        box-shadow: 0 0 0 2px var(--rojo); }
+.tl-dot.PENDIENTE       { background: var(--azul-claro);  box-shadow: 0 0 0 2px var(--azul-claro); }
+.tl-dot.ENTREGADO       { background: var(--verde);       box-shadow: 0 0 0 2px var(--verde); }
+.tl-dot.ENTREGA_PARCIAL { background: var(--naranja);     box-shadow: 0 0 0 2px var(--naranja); }
+.tl-dot.CANCELADO       { background: var(--gris);        box-shadow: 0 0 0 2px var(--gris); }
+.tl-dot.ELIMINADO       { background: var(--gris-claro);  box-shadow: 0 0 0 2px var(--gris-claro); }
+.tl-estado {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 2px;
+}
+.tl-actor {
+  font-size: 11px;
+  color: var(--texto-sub);
+  margin-bottom: 1px;
+}
+.tl-fecha {
+  font-size: 11px;
+  color: var(--gris-claro);
+}
+.tl-duracion {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+  background: rgba(46,109,164,.08);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+.tl-nota {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--rojo);
+  font-style: italic;
+  line-height: 1.4;
+}
+.tl-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--texto-sub);
+  padding: 8px 0;
+}
 </style>
 </head>
 <body>
@@ -2363,7 +2461,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v12.2'
+  VERSION_UI : 'v13.0'
 };
 
 // Roles que pueden aprobar vales
@@ -2629,68 +2727,133 @@ function iniciarApp() {
   actualizarHeaderPerfil();
   actualizarBadge(navigator.onLine);
   inicializarTabs();
-  iniciarPollingNotificaciones(); // E5
+  iniciarPollingNotificaciones(); // E5 — ahora llama recargarContexto()
   initPizarronTabs();
   initSlotsDrop();
-  // Redirección inicial por rol
+  // Carga inicial: una sola call GAS (getContexto) trae todo
+  if (APP.online) {
+    recargarContexto({ esInicio: true });
+  } else {
+    // Sin conexión: cargar desde localStorage
+    const valesLS = obtenerValesLocales();
+    APP.vales = valesLS.filter(v => v.estado !== 'ELIMINADO');
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+    redirigirPorRol();
+  }
+}
+
+// ── Redirigir a tab inicial según rol ────────────────────────────
+function redirigirPorRol() {
   if (esAdmin()) {
     cambiarTab('admin');
   } else if (puedeGestionar() && !puedeAprobar()) {
     cambiarTab('por-gestionar');
   } else {
-    cargarVales();
+    cambiarTab('mis-vales');
   }
-  // Precargar badges en background
-  if (APP.online) {
-    if (puedeAprobar()) {
-      gasGet({ accion: 'getPendientesAprobacion', email: APP.perfil.email })
-        .then(res => { if (res.ok) { APP.pendientes = res.data || []; actualizarBadgePendientes(APP.pendientes.length); } })
-        .catch(() => {});
+}
+
+// ── getContexto: carga toda la app en una sola call GAS ──────────
+// Llamado en: inicio de sesión, polling 5min, botón Actualizar.
+// esInicio=true → redirige al tab por rol.
+// esInicio=false → mantiene el tab actual y lo re-renderiza.
+async function recargarContexto({ esInicio = false } = {}) {
+  if (!APP.online || !APP.perfil) return;
+  try {
+    const res = await gasGet({ accion: 'getContexto', email: APP.perfil.email });
+    if (!res.ok) {
+      console.warn('getContexto error:', res.error);
+      return;
     }
-    if (puedeGestionar()) {
-      Promise.all([
-        gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email }),
-        gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email })
-      ]).then(([rCola, rPrep]) => {
-        if (rCola.ok) APP.porGestionar  = rCola.data || [];
-        if (rPrep.ok) APP.enPreparacion = rPrep.data || [];
-        actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
-      }).catch(() => {});
+    const ctx = res.data;
+
+    // Poblar estado global
+    APP.vales         = (ctx.misVales      || []).map(v => ({ ...v, _sync: true }));
+    APP.pendientes    = ctx.porAprobar     || [];
+    APP.porGestionar  = ctx.porGestionar   || [];
+    APP.enPreparacion = ctx.enPreparacion  || [];
+    APP.entregadosHoy = ctx.entregadosHoy  ?? 0;
+    APP.todosVales    = ctx.todosVales     || [];
+
+    // Notificaciones
+    const noLeidas = ctx.notificaciones || [];
+    _notif.noLeidas = noLeidas;
+    actualizarBadgeNotif(noLeidas.length);
+    if (noLeidas.length > 0 && !esInicio) {
+      const msg = mensajeContextualNotif(noLeidas);
+      if (msg) toast(msg, '');
     }
+
+    // Actualizar badges tabs
+    actualizarBadgePendientes(APP.pendientes.length);
+    actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
+
+    // Sincronizar vales locales pendientes
+    const locales = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
+    locales.forEach(lv => {
+      if (!APP.vales.find(rv => rv.id_vale === lv.id_vale)) APP.vales.unshift(lv);
+    });
+    APP.vales = APP.vales.filter(v => v.estado !== 'ELIMINADO');
+
+    // Guardar en localStorage
+    APP.vales.forEach(v => LS.upsert(v));
+
+    if (esInicio) {
+      redirigirPorRol();
+    } else {
+      // Re-renderizar el tab activo con datos frescos
+      renderizarTabActual();
+    }
+
+  } catch (e) {
+    console.warn('recargarContexto excepción:', e.message);
+  }
+}
+
+// ── Re-renderizar el tab activo sin nueva call GAS ───────────────
+function renderizarTabActual() {
+  const tab = APP.tabActual;
+  if (tab === 'mis-vales') {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+  } else if (tab === 'por-aprobar') {
+    renderizarPendientes();
+  } else if (tab === 'por-gestionar') {
+    renderizarGestion();
+  } else if (tab === 'todos-vales') {
+    construirChips();
+    aplicarFiltrosTodos();
+  } else if (tab === 'admin') {
+    renderAdminUsuarios();
+    renderAdminObras();
   }
 }
 
 // ── CARGAR MIS VALES ────────────────────────────────────────────
+// v13: APP.vales ya viene populado por recargarContexto().
+// Esta función solo renderiza. Si está vacío y hay red, fuerza refresh.
 async function cargarVales() {
   const lista = document.getElementById('lista-vales');
-  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>';
 
-  let vales = [];
-  if (APP.online) {
-    try {
-      const res = await gasGet({ accion: 'getMisVales', email: APP.perfil.email });
-      if (res.ok) {
-        vales = res.data.map(v => ({ ...v, _sync: true }));
-        vales.forEach(v => LS.upsert(v));
-        const locales = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
-        locales.forEach(lv => {
-          if (!vales.find(rv => rv.id_vale === lv.id_vale)) vales.unshift(lv);
-        });
-      }
-    } catch (_) {
-      vales = obtenerValesLocales();
-      toast('Modo offline — mostrando datos locales', 'error');
-    }
-  } else {
-    vales = obtenerValesLocales();
+  if (!APP.online) {
+    const valesLS = obtenerValesLocales();
+    APP.vales = valesLS.filter(v => v.estado !== 'ELIMINADO');
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+    return;
   }
 
-  const todosLS = LS.get();
-  APP.vales = vales
-    .filter(v => v.estado !== 'ELIMINADO')
-    .map(v => ({ ...v, ...(todosLS.find(lv => lv.id_vale === v.id_vale) || {}) }));
-  actualizarDashboard(APP.vales);
-  renderizarLista(APP.vales);
+  // Si hay datos en APP.vales, renderizar directo (ya vienen de getContexto)
+  if (APP.vales.length > 0) {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+    return;
+  }
+
+  // Fallback: si por alguna razón APP.vales está vacío, pedir contexto
+  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>';
+  await recargarContexto({ esInicio: false });
 }
 
 function obtenerValesLocales() {
@@ -2740,30 +2903,17 @@ function renderizarLista(vales) {
 }
 
 // ── CARGAR PENDIENTES DE APROBACIÓN ─────────────────────────────
+// v13: APP.pendientes ya viene de recargarContexto().
+// Esta función renderiza directamente.
 async function cargarPendientes() {
-  const lista = document.getElementById('lista-pendientes');
-  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
-
-  // Limpiar detalle
   resetDetalleAprobacion();
-
   if (!APP.online) {
-    lista.innerHTML = '<div class="lista-vacia">Sin conexión. Conectate para ver los pendientes.</div>';
+    document.getElementById('lista-pendientes').innerHTML =
+      '<div class="lista-vacia">Sin conexión. Conectate para ver los pendientes.</div>';
     return;
   }
-
-  try {
-    const res = await gasGet({ accion: 'getPendientesAprobacion', email: APP.perfil.email });
-    if (!res.ok) {
-      lista.innerHTML = `<div class="lista-vacia">${res.error}</div>`;
-      return;
-    }
-    APP.pendientes = res.data || [];
-    renderizarPendientes();
-    actualizarBadgePendientes(APP.pendientes.length);
-  } catch (_) {
-    lista.innerHTML = '<div class="lista-vacia">Error al cargar. Intentá de nuevo.</div>';
-  }
+  renderizarPendientes();
+  actualizarBadgePendientes(APP.pendientes.length);
 }
 
 function actualizarBadgePendientes(cant) {
@@ -2979,12 +3129,14 @@ document.getElementById('modal-rechazo-confirm').addEventListener('click', async
   }
 });
 
-// Quita un vale de la lista de pendientes y actualiza la UI
-function quitarPendiente(id) {
+// Quita un vale de la lista de pendientes y recarga contexto completo
+async function quitarPendiente(id) {
   APP.pendientes = APP.pendientes.filter(v => v.id_vale !== id);
   actualizarBadgePendientes(APP.pendientes.length);
   renderizarPendientes();
   resetDetalleAprobacion();
+  // v13: recargar contexto para refrescar todos los datos y badges
+  if (APP.online) await recargarContexto({ esInicio: false });
 }
 
 // ── MODAL NUEVO VALE ─────────────────────────────────────────────
@@ -3062,17 +3214,18 @@ async function guardarVale(estado) {
 
   const ahora = new Date().toISOString();
   const vale  = {
-    id_vale       : APP.valeEdit?.id_vale || uuid(),
-    fecha_hora    : APP.valeEdit?.fecha_hora || ahora,
-    usuario_email : APP.perfil.email,
-    usuario_nombre: APP.perfil.nombre,
-    obra_codigo   : APP.perfil.obra_codigo,
+    id_vale         : APP.valeEdit?.id_vale || uuid(),
+    fecha_hora      : APP.valeEdit?.fecha_hora || ahora,
+    usuario_email   : APP.perfil.email,
+    usuario_nombre  : APP.perfil.nombre,
+    obra_codigo     : APP.perfil.obra_codigo,
     destino,
-    titulo        : document.getElementById('form-titulo').value.trim(),
-    contenido_html: contenido,
+    titulo          : document.getElementById('form-titulo').value.trim(),
+    contenido_html  : contenido,
     estado,
-    eliminado     : false,
-    _sync         : false
+    estado_anterior : APP.valeEdit?.estado || '',  // v13: para registrar transición en HISTORIAL
+    eliminado       : false,
+    _sync           : false
   };
 
   LS.upsert(vale);
@@ -3102,7 +3255,13 @@ async function guardarVale(estado) {
       toast('Sin conexión — se sincronizará al reconectar', '');
     }
   }
-  cargarVales();
+  // v13: recargar contexto completo para actualizar todas las listas
+  if (APP.online) {
+    await recargarContexto({ esInicio: false });
+  } else {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+  }
 }
 
 // ELIMINAR BORRADOR (desde modal editar)
@@ -3190,9 +3349,18 @@ function abrirDetalle(id) {
     ${infoAprobacion}
     ${notaRechazo}
     ${notaCierre}
-  `;
+
+    <!-- Timeline v13 -->
+    <div class="timeline-wrap" id="timeline-detalle">
+      <div class="timeline-titulo">Historial del vale</div>
+      <div class="tl-loading"><div class="spinner"></div> Cargando historial…</div>
+    </div>
+  \`;
 
   footer.innerHTML = '';
+  // Cargar timeline en background (call separada, bajo demanda)
+  cargarTimeline(vale.id_vale, 'timeline-detalle');
+
   if (vale.estado === 'BORRADOR') {
     footer.innerHTML = `
       <button class="btn btn-danger"  id="det-btn-eliminar">🗑 Eliminar</button>
@@ -3230,7 +3398,12 @@ async function eliminarValeById(vale) {
     LS.remove(vale.id_vale);
     toast('Vale eliminado', 'success');
   }
-  cargarVales();
+  if (APP.online) {
+    await recargarContexto({ esInicio: false });
+  } else {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3243,31 +3416,25 @@ function actualizarBadgeGestionar(cant) {
   else badge.style.display = 'none';
 }
 
+// v13: APP.porGestionar, enPreparacion, entregadosHoy ya vienen de recargarContexto.
+// cargarGestion() solo renderiza. Luego de una acción de gestión, se llama
+// recargarContexto() para refrescar todo en una sola call.
 async function cargarGestion() {
-  document.getElementById('lista-por-gestionar').innerHTML  = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
-  document.getElementById('lista-en-preparacion').innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
   resetDetalleGestion();
-
   if (!APP.online) {
     const msg = '<div class="lista-vacia">Sin conexión.</div>';
     document.getElementById('lista-por-gestionar').innerHTML  = msg;
     document.getElementById('lista-en-preparacion').innerHTML = msg;
     return;
   }
-  try {
-    const [rCola, rPrep, rHoy] = await Promise.all([
-      gasGet({ accion: 'getValesPorGestionar', email: APP.perfil.email }),
-      gasGet({ accion: 'getValesPendientes',   email: APP.perfil.email }),
-      gasGet({ accion: 'getEntregadosHoy',     email: APP.perfil.email })
-    ]);
-    APP.porGestionar   = rCola.ok ? rCola.data : [];
-    APP.enPreparacion  = rPrep.ok ? rPrep.data : [];
-    APP.entregadosHoy  = rHoy.ok  ? rHoy.data.cantidad : 0;
+  if (APP.porGestionar.length > 0 || APP.enPreparacion.length > 0) {
     renderizarGestion();
-  } catch (_) {
-    document.getElementById('lista-por-gestionar').innerHTML  = '<div class="lista-vacia">Error al cargar.</div>';
-    document.getElementById('lista-en-preparacion').innerHTML = '';
+    return;
   }
+  // Fallback: si no hay datos aún, pedir contexto
+  document.getElementById('lista-por-gestionar').innerHTML  = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  document.getElementById('lista-en-preparacion').innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  await recargarContexto({ esInicio: false });
 }
 
 function renderizarGestion() {
@@ -3463,7 +3630,8 @@ async function accionGestion(accion, vale, nota, esEntrega) {
       };
       toast(msgs[accion] || 'Acción realizada', 'success');
       resetDetalleGestion();
-      cargarGestion();
+      // v13: recargar contexto completo (una sola call actualiza todo)
+      await recargarContexto({ esInicio: false });
     } else {
       toast('Error: ' + res.error, 'error');
     }
@@ -3571,21 +3739,14 @@ async function cargarTodosVales() {
 
   if (!APP.online) { lista.innerHTML = '<div class="lista-vacia">Sin conexion.</div>'; return; }
 
-  try {
-    const res = await gasGet({ accion: 'getTodosVales', email: APP.perfil.email });
-    if (!res.ok) { lista.innerHTML = `<div class="lista-vacia">${res.error}</div>`; return; }
-    APP.todosVales = res.data || [];
-    // Resetear filtros al recargar
-    _filtrosTodos.usuarios.clear();
-    _filtrosTodos.estados.clear();
-    _filtrosTodos.obras.clear();
-    _filtrosTodos.texto = '';
-    document.getElementById('todos-buscar-input').value = '';
-    construirChips();
-    aplicarFiltrosTodos();
-  } catch (_) {
-    lista.innerHTML = '<div class="lista-vacia">Error al cargar.</div>';
-  }
+  // v13: APP.todosVales ya viene de recargarContexto — solo renderizar
+  _filtrosTodos.usuarios.clear();
+  _filtrosTodos.estados.clear();
+  _filtrosTodos.obras.clear();
+  _filtrosTodos.texto = '';
+  document.getElementById('todos-buscar-input').value = '';
+  construirChips();
+  aplicarFiltrosTodos();
 }
 
 // Construir chips de usuarios, estados y obras (obras solo para ADMIN)
@@ -3792,8 +3953,10 @@ function abrirDetalleTodos(id) {
     + (vale.titulo ? '<div class="detalle-titulo-val">' + vale.titulo + '</div>' : '')
     + '<div class="detalle-section-lbl">Detalle del pedido</div>'
     + '<div class="detalle-contenido">' + (vale.contenido_html || '&mdash;') + '</div>'
-    + infoAprobacion + notaRechazo + notaCierre;
+    + infoAprobacion + notaRechazo + notaCierre
+    + '<div class="timeline-wrap" id="timeline-todos">'    + '<div class="timeline-titulo">Historial del vale</div>'    + '<div class="tl-loading"><div class="spinner"></div> Cargando historial…</div>'    + '</div>';
   footer.innerHTML = '';
+  cargarTimeline(vale.id_vale, 'timeline-todos');
   openModal('modal-detalle');
 }
 
@@ -4088,8 +4251,8 @@ async function doActualizar() {
       }
     } catch (_) { /* sin red, continúa con perfil local */ }
   }
-  cambiarTab(APP.tabActual, true); // forzar recarga desde GAS
-  pollNotificaciones();              // refrescar badge notificaciones
+  // Una sola call trae todo: datos + notificaciones + badges
+  await recargarContexto({ esInicio: false });
 }
 
 // ── MENÚ MOBILE ──────────────────────────────────────────────────
@@ -4591,23 +4754,12 @@ function mensajeContextualNotif(notifs) {
   return '🔔 ' + partes.join(' · ');
 }
 
-// ── Polling: consultar GAS y mostrar si hay novedades ────────────
+// ── Polling: refresca todo el contexto (datos + notificaciones) ──
+// v13: en lugar de solo getNotificaciones, llama recargarContexto
+// para que cada 5 min se actualicen también las listas y badges.
 async function pollNotificaciones() {
   if (!APP.online || !APP.perfil) return;
-  try {
-    const res = await gasGet({ accion: 'getNotificaciones', email: APP.perfil.email });
-    if (!res.ok) return;
-    const noLeidas = res.data || [];
-    _notif.noLeidas = noLeidas;
-
-    if (noLeidas.length > 0) {
-      actualizarBadgeNotif(noLeidas.length);
-      const msg = mensajeContextualNotif(noLeidas);
-      if (msg) toast(msg, '');
-    } else {
-      actualizarBadgeNotif(0);
-    }
-  } catch (_) { /* sin red, ignorar */ }
+  await recargarContexto({ esInicio: false });
 }
 
 // ── Renderizar panel de notificaciones ──────────────────────────
@@ -4677,6 +4829,115 @@ function detenerPollingNotificaciones() {
   }
   _notif.noLeidas = [];
   actualizarBadgeNotif(0);
+}
+
+// ════════════════════════════════════════════════════════════════
+// v13 — TIMELINE DE ESTADOS
+// ════════════════════════════════════════════════════════════════
+
+// Colores por estado (para el dot)
+const TL_COLOR = {
+  BORRADOR       : 'BORRADOR',
+  ENVIADO        : 'ENVIADO',
+  APROBADO       : 'APROBADO',
+  RECHAZADO      : 'RECHAZADO',
+  PENDIENTE      : 'PENDIENTE',
+  ENTREGADO      : 'ENTREGADO',
+  ENTREGA_PARCIAL: 'ENTREGA_PARCIAL',
+  CANCELADO      : 'CANCELADO',
+  ELIMINADO      : 'ELIMINADO'
+};
+
+// Labels legibles por estado
+const TL_LABEL = {
+  BORRADOR       : 'Creado como borrador',
+  ENVIADO        : 'Enviado para aprobación',
+  APROBADO       : 'Aprobado',
+  RECHAZADO      : 'Rechazado',
+  PENDIENTE      : 'Preparación iniciada',
+  ENTREGADO      : 'Entregado',
+  ENTREGA_PARCIAL: 'Entrega parcial',
+  CANCELADO      : 'Cancelado',
+  ELIMINADO      : 'Eliminado'
+};
+
+// Formatear duración entre dos fechas ISO en texto legible
+function formatDuracion(fechaDesde, fechaHasta) {
+  if (!fechaDesde || !fechaHasta) return null;
+  const ms = new Date(fechaHasta) - new Date(fechaDesde);
+  if (isNaN(ms) || ms < 0) return null;
+  const min  = Math.floor(ms / 60000);
+  const hs   = Math.floor(min / 60);
+  const dias = Math.floor(hs / 24);
+  if (dias > 0)  return dias  + 'd ' + (hs % 24)  + 'h';
+  if (hs > 0)    return hs    + 'h ' + (min % 60) + 'min';
+  if (min > 0)   return min   + ' min';
+  return 'menos de 1 min';
+}
+
+// Cargar y renderizar el historial de un vale en el contenedor indicado
+async function cargarTimeline(id_vale, contenedorId) {
+  const cont = document.getElementById(contenedorId);
+  if (!cont) return;
+
+  if (!APP.online) {
+    cont.innerHTML =
+      '<div class="timeline-titulo">Historial del vale</div>' +
+      '<div class="tl-loading" style="color:var(--gris-claro)">Sin conexión — historial no disponible.</div>';
+    return;
+  }
+
+  try {
+    const res = await gasGet({ accion: 'getHistorialVale', id_vale });
+    if (!res.ok || !res.data || res.data.length === 0) {
+      cont.innerHTML =
+        '<div class="timeline-titulo">Historial del vale</div>' +
+        '<div style="font-size:12px;color:var(--gris-claro);padding:6px 0">Sin historial registrado (vale previo a v13).</div>';
+      return;
+    }
+
+    const items = res.data; // ya ordenados ASC por fecha desde el GAS
+
+    let html = '<div class="timeline-titulo">Historial del vale</div><div class="timeline">';
+
+    items.forEach((item, idx) => {
+      const estado   = item.estado_nuevo || '';
+      const label    = TL_LABEL[estado] || estado.replace('_', ' ');
+      const dotClass = TL_COLOR[estado] || '';
+      const fecha    = item.fecha ? formatFecha(item.fecha) : '—';
+      const actor    = item.usuario_nombre || item.usuario_email || '';
+
+      // Duración desde el item anterior
+      let durHtml = '';
+      if (idx > 0) {
+        const dur = formatDuracion(items[idx - 1].fecha, item.fecha);
+        if (dur) durHtml = '<span class="tl-duracion">⏱ ' + dur + '</span>';
+      }
+
+      // Nota (rechazo o cierre)
+      const notaHtml = item.nota
+        ? '<div class="tl-nota">📝 ' + escapeHtml(String(item.nota)) + '</div>'
+        : '';
+
+      html +=
+        '<div class="tl-item">' +
+          '<div class="tl-dot ' + dotClass + '"></div>' +
+          '<div class="tl-estado">' + escapeHtml(label) + '</div>' +
+          '<div class="tl-actor">' + escapeHtml(actor) + '</div>' +
+          '<div class="tl-fecha">' + fecha + '</div>' +
+          durHtml +
+          notaHtml +
+        '</div>';
+    });
+
+    html += '</div>'; // cierre .timeline
+    cont.innerHTML = html;
+
+  } catch (e) {
+    cont.innerHTML =
+      '<div class="timeline-titulo">Historial del vale</div>' +
+      '<div style="font-size:12px;color:var(--gris-claro)">Error al cargar historial.</div>';
+  }
 }
 </script>
 </body>
