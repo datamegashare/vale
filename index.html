@@ -611,16 +611,13 @@ input, textarea, select { font-family: inherit; }
   right: 20px;
   width: 58px; height: 58px;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
-  color: #fff;
-  font-size: 28px;
-  font-weight: 300;
+  background: var(--azul-vivo);
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 6px 20px rgba(46,109,164,.45);
   transition: var(--trans);
   z-index: 90;
-  line-height: 1;
 }
+.fab svg { width: 26px; height: 26px; stroke: #fff; stroke-width: 2.5; fill: none; stroke-linecap: round; }
 .fab:active { transform: scale(.93); box-shadow: 0 3px 10px rgba(46,109,164,.35); }
 
 /* ═══════════════════════════════════════════════════
@@ -2266,10 +2263,14 @@ input, textarea, select { font-family: inherit; }
   </div><!-- /app-body -->
 
   <!-- FAB principal -->
-  <button class="fab" id="fab-nuevo" title="Nuevo vale">+</button>
+  <button class="fab" id="fab-nuevo" title="Nuevo vale">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
 
   <!-- FAB Admin -->
-  <button class="admin-fab" id="admin-fab" title="Nuevo">+</button>
+  <button class="admin-fab" id="admin-fab" title="Nuevo">
+    <svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:#fff;stroke-width:2.5;fill:none;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
 
   <!-- MODAL ADMIN FORM -->
   <div class="modal-overlay" id="modal-admin-form" style="display:none">
@@ -2470,7 +2471,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v14.2'
+  VERSION_UI : 'v14.5'
 };
 
 // Roles que pueden aprobar vales
