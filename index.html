@@ -2461,7 +2461,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v13.1'
+  VERSION_UI : 'v13.2'
 };
 
 // Roles que pueden aprobar vales
@@ -3658,10 +3658,13 @@ function mostrarDetalleGestionMobile(vale) {
 
 // ── Modal nota de cierre ──────────────────────────────────────────
 let _notaCierreCallback = null;
+let _notaCierreCallbackCancel = null;
 let _notaCierreObligatoria = false;
 
-function abrirNotaCierre(titulo, desc, obligatoria, callback) {
+// onCancel (opcional): se llama si el usuario cancela el modal sin confirmar
+function abrirNotaCierre(titulo, desc, obligatoria, callback, onCancel) {
   _notaCierreCallback   = callback;
+  _notaCierreCallbackCancel = onCancel || null;
   _notaCierreObligatoria = obligatoria;
   document.getElementById('modal-nota-titulo').textContent = titulo;
   document.getElementById('modal-nota-desc').textContent   = desc;
@@ -3674,8 +3677,14 @@ function abrirNotaCierre(titulo, desc, obligatoria, callback) {
 document.getElementById('nota-cierre-txt').addEventListener('input', function() {
   document.getElementById('nota-cierre-chars').textContent = this.value.length;
 });
-document.getElementById('modal-nota-close').addEventListener('click',  () => closeModal('modal-nota-cierre'));
-document.getElementById('modal-nota-cancel').addEventListener('click', () => closeModal('modal-nota-cierre'));
+document.getElementById('modal-nota-close').addEventListener('click',  () => {
+  closeModal('modal-nota-cierre');
+  if (_notaCierreCallbackCancel) { _notaCierreCallbackCancel(); _notaCierreCallbackCancel = null; }
+});
+document.getElementById('modal-nota-cancel').addEventListener('click', () => {
+  closeModal('modal-nota-cierre');
+  if (_notaCierreCallbackCancel) { _notaCierreCallbackCancel(); _notaCierreCallbackCancel = null; }
+});
 document.getElementById('modal-nota-confirm').addEventListener('click', async () => {
   const nota    = document.getElementById('nota-cierre-txt').value.trim();
   const btnConf = document.getElementById('modal-nota-confirm');
@@ -3687,6 +3696,7 @@ document.getElementById('modal-nota-confirm').addEventListener('click', async ()
   btnConf.disabled = true; btnCan.disabled = true;
   btnConf.textContent = 'Procesando…';
   closeModal('modal-nota-cierre');
+  _notaCierreCallbackCancel = null; // ya confirmó, no ejecutar onCancel
   if (_notaCierreCallback) await _notaCierreCallback(nota || null);
   btnConf.disabled = false; btnCan.disabled = false;
   btnConf.textContent = 'Confirmar';
@@ -4123,35 +4133,46 @@ function renderPizarronSlot(idx) {
     });
   });
 
+  // Helper: deshabilitar/habilitar los 3 botones del slot del pizarrón
+  function setPzBtns(slotEl, disabled) {
+    ['pz-btn-entregar', 'pz-btn-parcial', 'pz-btn-cancelar'].forEach(cls => {
+      const btn = slotEl.querySelector('.' + cls);
+      if (btn) btn.disabled = disabled;
+    });
+  }
+
   // Botones accion — reutilizan accionGestion
   slot.querySelector('.pz-btn-entregar').addEventListener('click', () => {
-    abrirNotaCierre('Nota de entrega', 'Podes agregar una nota opcional.', false, nota => {
-      setGestionBtns('pz-' + idx, true);
+    setPzBtns(slot, true);
+    abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional.', false, nota => {
       accionGestion('entregarVale', vale, nota, true).then(() => {
         pizarronSlots[idx] = null;
+        slot.removeAttribute('data-color');
         renderPizarronSlot(idx);
       });
-    });
+    }, () => setPzBtns(slot, false));
   });
 
   slot.querySelector('.pz-btn-parcial').addEventListener('click', () => {
-    abrirNotaCierre('Entrega parcial', 'Describí que se entrego y que falto.', true, nota => {
-      setGestionBtns('pz-' + idx, true);
+    setPzBtns(slot, true);
+    abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota => {
       accionGestion('entregaParcialVale', vale, nota, true).then(() => {
         pizarronSlots[idx] = null;
+        slot.removeAttribute('data-color');
         renderPizarronSlot(idx);
       });
-    });
+    }, () => setPzBtns(slot, false));
   });
 
   slot.querySelector('.pz-btn-cancelar').addEventListener('click', () => {
-    abrirNotaCierre('Cancelar vale', 'Ingresa el motivo de la cancelacion.', true, nota => {
-      setGestionBtns('pz-' + idx, true);
+    setPzBtns(slot, true);
+    abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
       accionGestion('cancelarVale', vale, nota, false).then(() => {
         pizarronSlots[idx] = null;
+        slot.removeAttribute('data-color');
         renderPizarronSlot(idx);
       });
-    });
+    }, () => setPzBtns(slot, false));
   });
 }
 
@@ -4159,6 +4180,12 @@ function renderPizarronSlot(idx) {
 function resetPizarron() {
   pizarronSlots.fill(null);
   pizarronColors.fill(null);
+  // BUG #2 fix: limpiar data-color de todos los slots para que no
+  // quede el color de fondo al vaciarse
+  for (let i = 0; i < 4; i++) {
+    const slot = document.getElementById('pslot-' + i);
+    if (slot) slot.removeAttribute('data-color');
+  }
   renderPizarron();
 }
 
