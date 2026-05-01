@@ -1661,21 +1661,20 @@ input, textarea, select { font-family: inherit; }
 /* FAB admin (botón + en panel admin) */
 .admin-fab {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
+  bottom: 28px;
+  right: 20px;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
   background: var(--azul-vivo);
-  color: #fff;
-  font-size: 26px;
   display: none;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 16px rgba(46,109,164,.35);
+  box-shadow: 0 6px 20px rgba(46,109,164,.45);
   z-index: 200;
   transition: var(--trans);
 }
+.admin-fab svg { width: 26px; height: 26px; stroke: #fff; stroke-width: 2.5; fill: none; stroke-linecap: round; }
 .admin-fab.visible { display: flex; }
 .admin-fab:hover { transform: scale(1.07); }
 
