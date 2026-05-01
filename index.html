@@ -4504,7 +4504,7 @@ function renderAdminObras() {
       </div>
       <div class="admin-card-meta">
         ${o.email_almacen ? `<span>&#127981; Almacén: ${escapeHtml(o.email_almacen)}</span>` : ''}
-        ${o.email_pañol   ? `<span>&#128295; Pañol: ${escapeHtml(o.email_pañol)}</span>`   : ''}
+        ${o.email_panol   ? `<span>&#128295; Pañol: ${escapeHtml(o.email_panol)}</span>`   : ''}
       </div>
       <div class="admin-card-actions">
         <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('obra',${idx})">
@@ -4636,7 +4636,7 @@ function htmlFormObra(o) {
     </div>
     <div class="admin-form-group">
       <label class="admin-form-label">Email Pañol</label>
-      <input class="admin-form-input" id="af-email-panol" type="email" placeholder="panol@empresa.com" value="${o ? escapeHtml(o.email_pañol || '') : ''}">
+      <input class="admin-form-input" id="af-email-panol" type="email" placeholder="panol@empresa.com" value="${o ? escapeHtml(o.email_panol || '') : ''}">
     </div>`;
 }
 
@@ -4701,13 +4701,13 @@ async function guardarFormAdmin() {
       if (u) { u.nombre = params.nombre; u.rol = params.rol; u.obra_codigo = params.obra_codigo; u.superior_email = params.superior_email; }
     } else if (modo === 'editar-obra') {
       const o = _admin.obras.find(x => x.codigo === _admin.itemEdit.codigo);
-      if (o) { o.descripcion = params.descripcion; o.email_almacen = params.email_almacen; o.email_pañol = params.email_pañol; }
+      if (o) { o.descripcion = params.descripcion; o.email_almacen = params.email_almacen; o.email_panol = params.email_panol; }
     } else if (modo === 'crear-usuario') {
       _admin.usuarios.push({ email: params.email, nombre: params.nombre, rol: params.rol,
         obra_codigo: params.obra_codigo, activo: true, superior_email: params.superior_email || '' });
     } else if (modo === 'crear-obra') {
       _admin.obras.push({ codigo: params.codigo, descripcion: params.descripcion,
-        email_almacen: params.email_almacen || '', email_pañol: params.email_pañol || '', activa: true });
+        email_almacen: params.email_almacen || '', email_panol: params.email_panol || '', activa: true });
     }
 
     // Restaurar botón ANTES de cerrar el modal (evita operar sobre nodo eliminado del DOM)
