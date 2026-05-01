@@ -6,7 +6,7 @@
 <title>Vale Digital</title>
 <meta name="description" content="Sistema de pedidos a almacén y pañol">
 <meta name="theme-color" content="#1A2B45">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Vale Digital">
 <link rel="manifest" href="manifest.json">
@@ -2461,7 +2461,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v13.2'
+  VERSION_UI : 'v14'
 };
 
 // Roles que pueden aprobar vales
@@ -4682,14 +4682,14 @@ async function guardarFormAdmin() {
       const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
       const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
       if (!codigo || !desc) { toast('Completá código y descripción'); resetBtn(); return; }
-      params = { accion: 'crearObra', email_admin: APP.perfil.email, codigo, descripcion: desc, email_almacen: almacen, email_pañol: panol, activa: 'TRUE' };
+      params = { accion: 'crearObra', email_admin: APP.perfil.email, codigo, descripcion: desc, email_almacen: almacen, email_panol: panol, activa: 'TRUE' };
 
     } else if (modo === 'editar-obra') {
       const desc    = (document.getElementById('af-descripcion')?.value || '').trim();
       const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
       const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
       if (!desc) { toast('La descripción es obligatoria'); resetBtn(); return; }
-      params = { accion: 'editarObra', email_admin: APP.perfil.email, codigo: _admin.itemEdit.codigo, descripcion: desc, email_almacen: almacen, email_pañol: panol };
+      params = { accion: 'editarObra', email_admin: APP.perfil.email, codigo: _admin.itemEdit.codigo, descripcion: desc, email_almacen: almacen, email_panol: panol };
     }
 
     const res = await gasGet(params);
