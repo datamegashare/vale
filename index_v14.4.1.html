@@ -1,0 +1,5009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vale Digital</title>
+<meta name="description" content="Sistema de pedidos a almacén y pañol">
+<meta name="theme-color" content="#1A2B45">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vale Digital">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Quill editor -->
+<link href="https://cdn.quilljs.com/2.0.3/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/2.0.3/quill.min.js" defer></script>
+
+<style>
+/* ═══════════════════════════════════════════════════
+   VARIABLES Y RESET
+═══════════════════════════════════════════════════ */
+:root {
+  --azul:        #1A2B45;
+  --azul-med:    #1E3A5F;
+  --azul-vivo:   #2E6DA4;
+  --azul-claro:  #4A90D9;
+  --acento:      #F0A500;
+  --acento-dark: #C07800;
+  --verde:       #2E7D52;
+  --verde-dark:  #1B5E3A;
+  --rojo:        #C0392B;
+  --rojo-dark:   #922B21;
+  --naranja:     #D4660A;
+  --gris-oscuro: #1C1C1E;
+  --gris-med:    #3A3A3C;
+  --gris:        #6C6C70;
+  --gris-claro:  #AEAEB2;
+  --gris-borde:  #D1D1D6;
+  --fondo:       #F4F6FA;
+  --fondo-card:  #FFFFFF;
+  --texto:       #1C1C1E;
+  --texto-sub:   #6C6C70;
+  --sombra:      0 2px 12px rgba(26,43,69,.10);
+  --sombra-lg:   0 8px 32px rgba(26,43,69,.18);
+  --radio:       14px;
+  --radio-sm:    8px;
+  --trans:       all .22s cubic-bezier(.4,0,.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+/* ═══════════════════════════════════════════════════
+   PANTALLAS
+═══════════════════════════════════════════════════ */
+.screen { display: none; min-height: 100dvh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ═══════════════════════════════════════════════════
+   PANTALLA LOGIN
+═══════════════════════════════════════════════════ */
+#screen-login {
+  background: var(--azul);
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  position: relative;
+  overflow: hidden;
+}
+#screen-login::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(74,144,217,.18) 0%, transparent 70%);
+  top: -100px; right: -100px;
+  pointer-events: none;
+}
+#screen-login::after {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(240,165,0,.10) 0%, transparent 70%);
+  bottom: 40px; left: -60px;
+  pointer-events: none;
+}
+.login-box {
+  width: 100%;
+  max-width: 360px;
+  z-index: 1;
+  animation: fadeUp .5s ease both;
+}
+.login-logo {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 28px;
+  box-shadow: 0 8px 24px rgba(74,144,217,.35);
+}
+.login-logo svg { width: 38px; height: 38px; fill: #fff; }
+.login-titulo {
+  text-align: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -.5px;
+  margin-bottom: 6px;
+}
+.login-sub {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255,255,255,.55);
+  margin-bottom: 12px;
+}
+.login-version {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255,255,255,.28);
+  letter-spacing: .5px;
+  margin-bottom: 36px;
+}
+.login-btn-wrap {
+  display: flex;
+  justify-content: center;
+}
+.login-error {
+  margin-top: 20px;
+  background: rgba(192,57,43,.25);
+  border: 1px solid rgba(192,57,43,.5);
+  border-radius: var(--radio-sm);
+  padding: 12px 16px;
+  color: #FFB3AC;
+  font-size: 13px;
+  text-align: center;
+  display: none;
+}
+.login-error.visible { display: block; animation: fadeUp .3s ease both; }
+
+/* ═══════════════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════════════ */
+#screen-app { padding-bottom: 32px; }
+
+/* HEADER */
+.header {
+  background: var(--azul-med);
+  color: #fff;
+  padding: 0 12px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06), var(--sombra);
+}
+.header-logo {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.header-logo svg { width: 18px; height: 18px; fill: #fff; }
+.header-titulo {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.3px;
+  flex: 1;
+  white-space: nowrap;
+}
+
+/* Badge online/offline — solo punto en mobile, texto en desktop */
+.badge-conexion {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: var(--trans);
+  flex-shrink: 0;
+}
+.badge-conexion.online  { background: rgba(46,125,82,.3);  color: #6EE7A0; }
+.badge-conexion.offline { background: rgba(192,57,43,.3);  color: #FFB3AC; }
+.badge-conexion-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.badge-conexion.online  .badge-conexion-dot { background: #6EE7A0; }
+.badge-conexion.offline .badge-conexion-dot { background: #FFB3AC; animation: pulse 1.5s infinite; }
+/* Ocultar texto en mobile, mostrar solo el punto */
+.badge-conexion-txt { display: none; }
+
+/* Info usuario — solo desktop */
+.header-info {
+  display: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.header-usuario {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,.9);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.header-obra    { font-size: 10px; color: rgba(255,255,255,.5); }
+.header-rol     { font-size: 10px; font-weight: 700; color: var(--acento); letter-spacing: .3px; }
+.header-version { font-size: 9px; color: rgba(255,255,255,.28); letter-spacing: .3px; }
+
+/* Botones header — solo desktop */
+.btn-hdr-action {
+  display: none;
+  align-items: center; gap: 5px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: var(--trans);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.btn-hdr-action:hover  { background: rgba(255,255,255,.18); }
+.btn-hdr-action:active { transform: scale(.95); }
+.btn-nuevo-vale {
+  display: none;
+  align-items: center; gap: 5px;
+  background: #F5A623;
+  border: none;
+  border-radius: 8px;
+  color: #1a1a2e;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: var(--trans);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.btn-nuevo-vale:hover  { background: #e09520; }
+.btn-nuevo-vale:active { transform: scale(.95); }
+
+/* Botón 3 puntos — solo mobile */
+.btn-menu {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  transition: var(--trans);
+  flex-shrink: 0;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.btn-menu:active { background: rgba(255,255,255,.18); }
+
+/* Dropdown menú */
+.menu-dropdown {
+  position: absolute;
+  top: 52px;
+  right: 12px;
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-lg);
+  border: 1px solid var(--gris-borde);
+  min-width: 220px;
+  z-index: 200;
+  overflow: hidden;
+  display: none;
+  animation: scaleIn .18s cubic-bezier(.4,0,.2,1) both;
+  transform-origin: top right;
+}
+.menu-dropdown.open { display: block; }
+.menu-dropdown-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--gris-borde);
+  background: var(--fondo);
+}
+.menu-dropdown-nombre {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.menu-dropdown-obra {
+  font-size: 12px;
+  color: var(--texto-sub);
+  margin-top: 1px;
+}
+.menu-dropdown-rol {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--azul-vivo);
+  margin-top: 2px;
+  letter-spacing: .3px;
+}
+.menu-dropdown-version {
+  font-size: 10px;
+  color: var(--gris-claro);
+  margin-top: 4px;
+  letter-spacing: .3px;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--texto);
+  cursor: pointer;
+  transition: var(--trans);
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+.menu-item:hover  { background: var(--fondo); }
+.menu-item:active { background: var(--gris-borde); }
+.menu-item-icon   { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.menu-item.danger { color: var(--rojo); }
+.menu-item + .menu-item { border-top: 1px solid var(--gris-borde); }
+
+/* Overlay invisible para cerrar menú al tocar afuera */
+.menu-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 199;
+}
+.menu-backdrop.open { display: block; }
+
+/* BTN LOGOUT — solo desktop */
+.btn-logout {
+  display: none;
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  align-items: center; justify-content: center;
+  background: rgba(255,255,255,.08);
+  transition: var(--trans);
+  flex-shrink: 0;
+}
+.btn-logout:hover { background: rgba(255,255,255,.16); }
+.btn-logout svg { width: 16px; height: 16px; stroke: rgba(255,255,255,.7); fill: none; }
+
+/* ── DESKTOP: mostrar info completa, ocultar menú ── */
+@media (min-width: 640px) {
+  .badge-conexion-txt { display: inline; }
+  .header-info        { display: flex; }
+  .btn-hdr-action     { display: flex; }
+  .btn-nuevo-vale.visible { display: flex; }
+  .btn-menu           { display: none; }
+  .btn-logout         { display: flex; }
+}
+
+/* ═══════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════ */
+.tabs-bar {
+  display: flex;
+  background: var(--azul);
+  padding: 8px 16px;
+  gap: 0;
+}
+.tabs-bar-inner {
+  display: inline-flex;
+  background: rgba(255,255,255,.08);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+.tab-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,.55);
+  border-radius: 8px;
+  transition: var(--trans);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.tab-btn.active {
+  color: #1a1a2e;
+  font-weight: 600;
+  background: #F5A623;
+}
+.tab-badge {
+  background: rgba(26,26,46,.25);
+  color: #1a1a2e;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT PRINCIPAL — mobile / desktop
+═══════════════════════════════════════════════════ */
+.app-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Panel activo mobile */
+.tab-panel { display: none; flex: 1; flex-direction: column; }
+.tab-panel.active { display: flex; }
+
+/* MAIN INTERIOR */
+.main {
+  padding: 20px 16px 100px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Layout aprobación desktop */
+@media (min-width: 768px) {
+  #panel-aprobacion.active {
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    max-width: 100%;
+  }
+  .aprob-lista-col {
+    width: 360px;
+    min-width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gris-borde);
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .aprob-detalle-col {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   MINI DASHBOARD
+═══════════════════════════════════════════════════ */
+.dashboard-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 12px;
+}
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.dash-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 10px;
+  text-align: center;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  transition: var(--trans);
+}
+.dash-card:active { transform: scale(.97); }
+.dash-card-num {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+  color: var(--azul-med);
+}
+.dash-card-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.dash-card.borrador  .dash-card-num { color: var(--gris); }
+.dash-card.enviado   .dash-card-num { color: var(--azul-vivo); }
+.dash-card.aprobado  .dash-card-num { color: var(--verde); }
+.dash-card.entregado .dash-card-num { color: var(--azul-claro); }
+
+/* ═══════════════════════════════════════════════════
+   SPINNER
+═══════════════════════════════════════════════════ */
+.spinner {
+  width: 22px; height: 22px;
+  border: 3px solid rgba(30,58,95,.12);
+  border-top-color: var(--azul-vivo);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto;
+}
+.spinner-inline {
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px 0; gap: 10px;
+  color: var(--texto-sub); font-size: 13px;
+}
+
+/* ═══════════════════════════════════════════════════
+   LISTA VALES (Mis Vales)
+═══════════════════════════════════════════════════ */
+.lista-titulo {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin-bottom: 12px;
+}
+.lista-vales { display: flex; flex-direction: column; gap: 10px; }
+.vale-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .3s ease both;
+}
+.vale-card:active { transform: scale(.98); }
+.vale-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.vale-card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+  line-height: 1.3;
+}
+.vale-card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vale-card-fecha   { font-size: 12px; color: var(--texto-sub); }
+.vale-card-destino {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+  background: rgba(46,109,164,.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.vale-card-sync { font-size: 11px; color: var(--naranja); display: flex; align-items: center; gap: 3px; }
+.vale-card-sync.ok { color: var(--verde); }
+
+/* ═══════════════════════════════════════════════════
+   BADGES ESTADO
+═══════════════════════════════════════════════════ */
+.badge-estado {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.badge-BORRADOR        { background: rgba(174,174,178,.2); color: var(--gris); }
+.badge-ENVIADO         { background: rgba(46,109,164,.15); color: var(--azul-vivo); }
+.badge-APROBADO        { background: rgba(46,125,82,.15);  color: var(--verde); }
+.badge-RECHAZADO       { background: rgba(192,57,43,.12);  color: var(--rojo); }
+.badge-PENDIENTE       { background: rgba(74,144,217,.15); color: var(--azul-claro); }
+.badge-ENTREGADO       { background: rgba(46,125,82,.12);  color: var(--verde); }
+.badge-ENTREGA_PARCIAL { background: rgba(212,102,10,.15); color: var(--naranja); }
+.badge-CANCELADO       { background: rgba(192,57,43,.12);  color: var(--rojo); }
+.badge-ELIMINADO       { background: rgba(174,174,178,.15); color: var(--gris-claro); }
+
+.lista-vacia {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--texto-sub);
+  font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════════════
+   FAB
+═══════════════════════════════════════════════════ */
+.fab {
+  position: fixed;
+  bottom: 28px;
+  right: 20px;
+  width: 58px; height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  color: #fff;
+  font-size: 28px;
+  font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 20px rgba(46,109,164,.45);
+  transition: var(--trans);
+  z-index: 90;
+  line-height: 1;
+}
+.fab:active { transform: scale(.93); box-shadow: 0 3px 10px rgba(46,109,164,.35); }
+@media (min-width: 640px) { .fab { display: none !important; } }
+
+/* ═══════════════════════════════════════════════════
+   PANEL APROBACIÓN
+═══════════════════════════════════════════════════ */
+#panel-aprobacion {
+  padding: 20px 16px 40px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Card pendiente de aprobación */
+.aprob-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .3s ease both;
+  margin-bottom: 10px;
+}
+.aprob-card:active { transform: scale(.98); }
+.aprob-card.selected {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 2px rgba(46,109,164,.2), var(--sombra);
+}
+.aprob-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.aprob-card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+  line-height: 1.3;
+}
+.aprob-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.aprob-card-solicitante {
+  font-size: 12px;
+  color: var(--texto-sub);
+  font-weight: 500;
+}
+.aprob-card-fecha { font-size: 12px; color: var(--texto-sub); }
+.aprob-card-destino {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+  background: rgba(46,109,164,.1);
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+/* Detalle aprobación (desktop: columna derecha / mobile: en modal) */
+.aprob-detalle-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  color: var(--texto-sub);
+  font-size: 14px;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.aprob-detalle-placeholder span { font-size: 32px; }
+
+.aprob-detalle-inner { padding: 0; }
+.aprob-detalle-campo { margin-bottom: 14px; }
+.aprob-detalle-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--texto-sub);
+  margin-bottom: 3px;
+}
+.aprob-detalle-valor { font-size: 14px; color: var(--texto); }
+.aprob-detalle-contenido {
+  font-size: 14px;
+  color: var(--texto);
+  line-height: 1.6;
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 12px;
+  background: var(--fondo);
+}
+.aprob-detalle-contenido p { margin-bottom: 4px; }
+.aprob-detalle-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ═══════════════════════════════════════════════════
+   MODAL BASE
+═══════════════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; animation: fadeIn .2s ease both; }
+.modal {
+  background: var(--fondo-card);
+  border-radius: 22px 22px 0 0;
+  width: 100%;
+  max-width: 600px;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp .3s cubic-bezier(.4,0,.2,1) both;
+  overflow: hidden;
+}
+.modal-header {
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--gris-borde);
+  flex-shrink: 0;
+}
+.modal-titulo {
+  font-size: 17px;
+  font-weight: 700;
+  flex: 1;
+  color: var(--texto);
+}
+.modal-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--fondo);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  color: var(--gris);
+  transition: var(--trans);
+}
+.modal-close:hover { background: var(--gris-borde); }
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-footer {
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--gris-borde);
+  flex-shrink: 0;
+  background: var(--fondo-card);
+}
+
+/* ═══════════════════════════════════════════════════
+   FORMULARIO VALE
+═══════════════════════════════════════════════════ */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 5px;
+}
+.form-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  background: var(--fondo);
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 8px 12px;
+}
+.form-meta-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.form-meta-item:not(:last-child) {
+  border-right: 1px solid var(--gris-borde);
+  padding-right: 10px;
+  margin-right: 4px;
+}
+.form-meta-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 2px;
+}
+.form-meta-value {
+  font-size: 13px;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.destino-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+.destino-btn {
+  flex: 1;
+  padding: 12px 8px;
+  border: 2px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  background: var(--fondo);
+  color: var(--texto-sub);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--trans);
+  text-align: center;
+}
+.destino-btn.active {
+  border-color: var(--azul-vivo);
+  background: rgba(46,109,164,.08);
+  color: var(--azul-vivo);
+}
+.destino-btn:hover:not(.active) {
+  border-color: var(--gris);
+  background: var(--fondo-card);
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 10px 12px;
+  transition: var(--trans);
+  outline: none;
+  appearance: none;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--azul-vivo);
+  background: var(--fondo-card);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
+.form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236C6C70' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+/* Quill */
+.quill-wrapper {
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  overflow: hidden;
+  transition: var(--trans);
+}
+.quill-wrapper:focus-within {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.quill-wrapper .ql-toolbar {
+  border: none;
+  border-bottom: 1px solid var(--gris-borde);
+  background: var(--fondo);
+  padding: 8px 10px;
+}
+.quill-wrapper .ql-container { border: none; font-size: 15px; min-height: 200px; }
+.quill-wrapper .ql-editor { min-height: 200px; padding: 12px; }
+
+/* ═══════════════════════════════════════════════════
+   BOTONES
+═══════════════════════════════════════════════════ */
+.btn {
+  flex: 1;
+  padding: 13px 16px;
+  border-radius: var(--radio-sm);
+  font-size: 15px;
+  font-weight: 600;
+  transition: var(--trans);
+  text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary {
+  background: linear-gradient(135deg, var(--azul-vivo), var(--azul-claro));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(46,109,164,.3);
+}
+.btn-primary:hover { opacity: .92; }
+.btn-secondary {
+  background: var(--fondo);
+  color: var(--azul-vivo);
+  border: 1.5px solid var(--gris-borde);
+}
+.btn-secondary:hover { background: rgba(46,109,164,.06); }
+.btn-danger {
+  background: rgba(192,57,43,.08);
+  color: var(--rojo);
+  border: 1.5px solid rgba(192,57,43,.2);
+}
+.btn-danger:hover { background: rgba(192,57,43,.14); }
+.btn-success {
+  background: linear-gradient(135deg, var(--verde), #3DA068);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(46,125,82,.3);
+}
+.btn-success:hover { opacity: .92; }
+.btn:disabled { opacity: .45; cursor: not-allowed; transform: none !important; }
+
+/* ═══════════════════════════════════════════════════
+   MODAL DETALLE (Mis Vales)
+═══════════════════════════════════════════════════ */
+/* Meta strip — igual que en formulario crear */
+.detalle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 16px;
+  background: var(--fondo);
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  overflow: hidden;
+}
+.detalle-meta-item {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 8px 12px;
+  min-width: 80px;
+}
+.detalle-meta-item:not(:last-child) { border-right: 1px solid var(--gris-borde); }
+.detalle-meta-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 3px;
+}
+.detalle-meta-val {
+  font-size: 13px;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Estado + destino row */
+.detalle-estado-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.detalle-destino-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  background: rgba(46,109,164,.1);
+  color: var(--azul-vivo);
+  font-size: 12px;
+  font-weight: 700;
+}
+.detalle-aprobacion-info { font-size: 12px; color: var(--texto-sub); }
+/* Título del vale en detalle */
+.detalle-titulo-val {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 14px;
+  line-height: 1.3;
+}
+/* Etiqueta de sección */
+.detalle-section-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+/* Contenido HTML */
+/* Listas en contenido HTML (Quill) — todas las vistas */
+.detalle-contenido ol, .detalle-contenido ul,
+.aprob-detalle-contenido ol, .aprob-detalle-contenido ul,
+.pizarron-card-contenido ol, .pizarron-card-contenido ul {
+  padding-left: 1.5em;
+  margin: 4px 0;
+}
+.detalle-contenido ol, .aprob-detalle-contenido ol, .pizarron-card-contenido ol { list-style: decimal; }
+.detalle-contenido ul, .aprob-detalle-contenido ul, .pizarron-card-contenido ul { list-style: disc; }
+.detalle-contenido li, .aprob-detalle-contenido li, .pizarron-card-contenido li { margin-bottom: 2px; }
+
+.detalle-contenido {
+  font-size: 14px;
+  color: var(--texto);
+  line-height: 1.6;
+  border: 1px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 12px;
+  background: var(--fondo);
+}
+.detalle-contenido p { margin-bottom: 4px; }
+/* Nota de rechazo */
+.detalle-rechazo {
+  background: rgba(192,57,43,.06);
+  border: 1px solid rgba(192,57,43,.2);
+  border-radius: var(--radio-sm);
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+.detalle-rechazo-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rojo);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 4px;
+}
+.detalle-rechazo-texto { font-size: 13px; color: var(--texto); line-height: 1.5; }
+
+/* ═══════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: var(--gris-oscuro);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: 30px;
+  box-shadow: var(--sombra-lg);
+  opacity: 0;
+  transition: all .25s ease;
+  z-index: 999;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--verde); }
+.toast.error   { background: var(--rojo); }
+
+/* ═══════════════════════════════════════════════════
+   CONFIRM DIALOG
+═══════════════════════════════════════════════════ */
+.confirm-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+.confirm-overlay.open { display: flex; animation: fadeIn .2s ease both; }
+.confirm-box {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  animation: scaleIn .25s cubic-bezier(.4,0,.2,1) both;
+}
+.confirm-titulo { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.confirm-texto  { font-size: 14px; color: var(--texto-sub); margin-bottom: 24px; line-height: 1.5; }
+.confirm-btns   { display: flex; gap: 10px; }
+
+/* ═══════════════════════════════════════════════════
+   ANIMACIONES
+═══════════════════════════════════════════════════ */
+@keyframes fadeUp  { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
+@keyframes spin    { to { transform: rotate(360deg); } }
+@keyframes pulse   { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE DESKTOP
+═══════════════════════════════════════════════════ */
+@media (min-width: 600px) {
+  .dashboard-grid { grid-template-columns: repeat(4, 1fr); }
+  .modal { border-radius: var(--radio) var(--radio) 0 0; }
+}
+@media (min-width: 768px) {
+  /* Panel aprobación desktop: dos columnas */
+  #panel-aprobacion {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    max-width: 100%;
+    flex: 1;
+    height: calc(100dvh - 56px - 42px); /* restar header + tabs */
+    overflow: hidden;
+  }
+  .aprob-lista-col {
+    width: 340px;
+    min-width: 260px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gris-borde);
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .aprob-detalle-col {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+  /* En desktop el modal de aprobación no se usa — se muestra inline */
+  .desktop-hide { display: none !important; }
+}
+/* ═══════════════════════════════════════════════════
+   PANEL GESTIÓN (ALMACENERO / PAÑOLERO)
+═══════════════════════════════════════════════════ */
+#panel-gestion {
+  padding: 20px 16px 100px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Sub-dashboard gestión */
+.gestion-dash {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.gestion-dash-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 12px 8px;
+  text-align: center;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+}
+.gestion-dash-num {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.gestion-dash-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.gestion-dash-card.aprobado  .gestion-dash-num { color: var(--verde); }
+.gestion-dash-card.pendiente .gestion-dash-num { color: var(--azul-vivo); }
+.gestion-dash-card.entregado .gestion-dash-num { color: var(--azul-claro); }
+
+/* Card gestión */
+.gestion-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .3s ease both;
+  margin-bottom: 10px;
+}
+.gestion-card:active { transform: scale(.98); }
+.gestion-card.selected {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 2px rgba(46,109,164,.2), var(--sombra);
+}
+.gestion-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.gestion-card-titulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+  line-height: 1.3;
+}
+.gestion-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.gestion-card-solicitante {
+  font-size: 12px;
+  color: var(--texto-sub);
+  font-weight: 500;
+}
+.gestion-card-fecha { font-size: 12px; color: var(--texto-sub); }
+
+/* Separador sección en panel gestión */
+.gestion-section {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gestion-section-badge {
+  background: var(--azul-vivo);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+/* Desktop panel gestión: dos columnas */
+@media (min-width: 768px) {
+  #panel-gestion {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    max-width: 100%;
+    flex: 1;
+    height: calc(100dvh - 56px - 42px);
+    overflow: hidden;
+  }
+  .gestion-lista-col {
+    width: 360px;
+    min-width: 260px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--gris-borde);
+    overflow-y: auto;
+    padding: 20px 16px;
+  }
+  .gestion-detalle-col {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+  }
+}
+
+
+/* Pizarron — colores de tarjeta */
+.pizarron-color-picker {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.pcolor-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.pcolor-dot:hover { transform: scale(1.2); }
+.pcolor-dot.selected { border-color: var(--texto); transform: scale(1.15); }
+
+.pizarron-slot.ocupado { border-color: var(--gris-borde); }
+.pizarron-slot[data-color="amarillo"] { background: #fffde7; border-color: #f9e04b; }
+.pizarron-slot[data-color="celeste"]  { background: #e3f2fd; border-color: #90caf9; }
+.pizarron-slot[data-color="verde"]    { background: #e8f5e9; border-color: #81c784; }
+.pizarron-slot[data-color="rosa"]     { background: #fce4ec; border-color: #f48fb1; }
+.pizarron-slot[data-color="naranja"]  { background: #fff3e0; border-color: #ffb74d; }
+.pizarron-slot[data-color="lila"]     { background: #f3e5f5; border-color: #ce93d8; }
+/* Botones de acción gestión */
+.gestion-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+.gestion-btns .btn { min-width: 120px; }
+
+
+/* ═══════════════════════════════════════════════════
+   PIZARRÓN (solo desktop, panel derecho gestión)
+═══════════════════════════════════════════════════ */
+.gestion-detalle-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--gris-borde);
+  margin-bottom: 20px;
+}
+.gestion-detalle-tab {
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gris);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--trans);
+  background: none;
+}
+.gestion-detalle-tab:hover { color: var(--texto); }
+.gestion-detalle-tab.active {
+  color: var(--azul-vivo);
+  border-bottom-color: var(--azul-vivo);
+}
+#pizarron-panel {
+  display: none;
+}
+#pizarron-panel.visible {
+  display: block;
+}
+.pizarron-hint {
+  font-size: 12px;
+  color: var(--gris);
+  margin-bottom: 16px;
+}
+.pizarron-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.pizarron-slot {
+  min-height: 180px;
+  border: 2px dashed var(--gris-borde);
+  border-radius: var(--radio);
+  background: var(--fondo);
+  transition: var(--trans);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pizarron-slot.drag-over {
+  border-color: var(--azul-vivo);
+  background: rgba(46,109,164,.06);
+}
+.pizarron-slot.ocupado {
+  border-style: solid;
+  border-color: var(--gris-borde);
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 0;
+}
+.pizarron-slot-empty {
+  font-size: 13px;
+  color: var(--gris-claro);
+  text-align: center;
+  padding: 12px;
+  pointer-events: none;
+}
+.pizarron-card {
+  width: 100%;
+  height: 100%;
+  padding: 14px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pizarron-card-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(192,57,43,.1);
+  color: var(--rojo);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  line-height: 1;
+  transition: var(--trans);
+}
+.pizarron-card-close:hover { background: rgba(192,57,43,.2); }
+.pizarron-card-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--texto);
+  padding-right: 26px;
+  line-height: 1.3;
+}
+.pizarron-card-meta {
+  font-size: 11px;
+  color: var(--gris);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pizarron-card-contenido {
+  font-size: 12px;
+  color: var(--texto);
+  line-height: 1.4;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 120px;
+  border-top: 1px solid var(--gris-borde);
+  padding-top: 8px;
+}
+.pizarron-card-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--gris-borde);
+  padding-top: 8px;
+  margin-top: auto;
+}
+.pizarron-card-btns .btn {
+  font-size: 11px;
+  padding: 5px 10px;
+  min-width: unset;
+  flex: 1;
+}
+.gestion-card[draggable="true"] {
+  cursor: grab;
+}
+.gestion-card[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+/* ═══════════════════════════════════════════════════
+   PANEL TODOS LOS VALES (JEFE_OBRA)
+═══════════════════════════════════════════════════ */
+#panel-todos {
+  padding: 20px 16px 80px;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+.todos-filtro-seccion {
+  margin-bottom: 12px;
+}
+.todos-filtro-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.todos-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid var(--gris-borde);
+  background: var(--fondo-card);
+  color: var(--texto);
+  transition: var(--trans);
+  user-select: none;
+}
+.chip:hover { border-color: var(--azul-vivo); color: var(--azul-vivo); }
+.chip.active {
+  background: var(--azul-vivo);
+  border-color: var(--azul-vivo);
+  color: #fff;
+}
+.chip.chip-todos { font-weight: 600; }
+.todos-buscador {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.todos-buscador input {
+  flex: 1;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo-card);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  padding: 10px 14px;
+  outline: none;
+  transition: var(--trans);
+}
+.todos-buscador input:focus {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.todos-buscador button {
+  padding: 10px 16px;
+  background: var(--azul-vivo);
+  color: #fff;
+  border-radius: var(--radio-sm);
+  font-size: 14px;
+  font-weight: 600;
+  transition: var(--trans);
+}
+.todos-buscador button:hover { opacity: .88; }
+.todos-filtro-activo {
+  font-size: 12px;
+  color: var(--azul-vivo);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.todos-filtro-activo button {
+  font-size: 11px;
+  color: var(--rojo);
+  font-weight: 600;
+  background: rgba(192,57,43,.08);
+  border: 1px solid rgba(192,57,43,.2);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL ADMIN
+═══════════════════════════════════════════════════════════════ */
+#panel-admin {
+  padding: 16px 16px 80px;
+  max-width: 700px;
+  margin: 0 auto;
+  width: 100%;
+}
+.admin-subtabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--gris-borde);
+  margin-bottom: 16px;
+}
+.admin-subtab {
+  flex: 1;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gris);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: var(--trans);
+  text-align: center;
+}
+.admin-subtab.active {
+  color: var(--azul-vivo);
+  border-bottom-color: var(--azul-vivo);
+}
+.admin-subpanel { display: none; }
+.admin-subpanel.active { display: block; }
+
+/* Tarjeta de admin */
+.admin-card {
+  background: var(--fondo-card);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: var(--trans);
+}
+.admin-card:hover { border-color: var(--azul-vivo); box-shadow: 0 2px 8px rgba(46,109,164,.1); }
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.admin-card-nombre {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texto);
+  flex: 1;
+}
+.admin-card-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+.admin-badge-activo   { background: rgba(39,174,96,.12); color: #1a8a48; border: 1px solid rgba(39,174,96,.25); }
+.admin-badge-inactivo { background: rgba(192,57,43,.10); color: var(--rojo); border: 1px solid rgba(192,57,43,.22); }
+.admin-card-meta {
+  font-size: 12px;
+  color: var(--gris);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.admin-card-meta span { display: flex; align-items: center; gap: 3px; }
+.admin-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+.admin-toggle-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--gris-borde);
+  color: var(--gris);
+  background: var(--fondo);
+  transition: var(--trans);
+  white-space: nowrap;
+}
+.admin-toggle-btn:hover { border-color: var(--azul-vivo); color: var(--azul-vivo); }
+
+/* FAB admin (botón + en panel admin) */
+.admin-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--azul-vivo);
+  color: #fff;
+  font-size: 26px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(46,109,164,.35);
+  z-index: 200;
+  transition: var(--trans);
+}
+.admin-fab.visible { display: flex; }
+.admin-fab:hover { transform: scale(1.07); }
+
+/* Modal admin (reutiliza estilos modal existentes) */
+#modal-admin-form .modal-body { padding: 20px 20px 8px; }
+.admin-form-group { margin-bottom: 14px; }
+.admin-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 6px;
+}
+.admin-form-input, .admin-form-select {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: var(--texto);
+  background: var(--fondo-card);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radio-sm);
+  outline: none;
+  transition: var(--trans);
+  box-sizing: border-box;
+}
+.admin-form-input:focus, .admin-form-select:focus {
+  border-color: var(--azul-vivo);
+  box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+}
+.admin-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.admin-form-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+.admin-form-check input[type="checkbox"] {
+  width: 18px; height: 18px; cursor: pointer;
+}
+.admin-form-check label { font-size: 14px; color: var(--texto); cursor: pointer; }
+
+/* Chips de obra en panel Todos — solo para ADMIN */
+#chips-obras-seccion { display: none; }
+#chips-obras-seccion.visible { display: block; }
+.todos-vale-card {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  padding: 13px 16px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(0,0,0,.04);
+  cursor: pointer;
+  transition: var(--trans);
+  animation: fadeUp .25s ease both;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.todos-vale-card:active { transform: scale(.98); }
+.todos-vale-info { flex: 1; min-width: 0; }
+.todos-vale-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.todos-vale-sub {
+  font-size: 12px;
+  color: var(--texto-sub);
+  margin-top: 2px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.todos-vale-solicitante { font-weight: 600; color: var(--azul-vivo); }
+
+/* ── BADGE NOTIFICACIONES ────────────────────────────────────── */
+.notif-btn {
+  position: relative;
+  display: none; /* se muestra solo si hay notificaciones */
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  font-size: 18px;
+  margin-right: 4px;
+  transition: var(--trans);
+  cursor: pointer;
+}
+.notif-btn.visible { display: flex; }
+.notif-btn:hover { background: rgba(255,255,255,.20); }
+.notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #1A2B45;
+  box-sizing: border-box;
+}
+
+/* ── PANEL NOTIFICACIONES (modal) ───────────────────────────────── */
+#modal-notif {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 60px 16px 0;
+  background: rgba(0,0,0,.35);
+}
+#modal-notif.open { display: flex; }
+.notif-panel {
+  background: var(--fondo-card);
+  border-radius: var(--radio);
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+  width: 100%;
+  max-width: 380px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.notif-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.notif-panel-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--texto);
+}
+.notif-panel-close {
+  font-size: 18px;
+  color: var(--gris);
+  line-height: 1;
+}
+.notif-panel-close:hover { color: var(--texto); }
+.notif-panel-lista {
+  overflow-y: auto;
+  flex: 1;
+  padding: 8px 0;
+}
+.notif-item {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item-msg {
+  font-size: 13px;
+  color: var(--texto);
+  line-height: 1.45;
+  margin-bottom: 4px;
+}
+.notif-item-fecha {
+  font-size: 11px;
+  color: var(--gris);
+}
+.notif-panel-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--gris-borde);
+  text-align: center;
+}
+.notif-panel-footer button {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+}
+.notif-vacia {
+  padding: 32px 18px;
+  text-align: center;
+  color: var(--gris);
+  font-size: 13px;
+}
+
+/* ═══════════════════════════════════════════════════
+   TIMELINE DE ESTADOS (v13)
+═══════════════════════════════════════════════════ */
+.timeline-wrap {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gris-borde);
+}
+.timeline-titulo {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--texto-sub);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 14px;
+}
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--gris-borde);
+  border-radius: 2px;
+}
+.tl-item {
+  position: relative;
+  margin-bottom: 18px;
+  animation: fadeUp .3s ease both;
+}
+.tl-item:last-child { margin-bottom: 0; }
+.tl-dot {
+  position: absolute;
+  left: -24px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--gris-borde);
+  background: var(--gris-claro);
+  z-index: 1;
+}
+.tl-dot.BORRADOR        { background: var(--gris-claro);  box-shadow: 0 0 0 2px var(--gris-claro); }
+.tl-dot.ENVIADO         { background: var(--azul-vivo);   box-shadow: 0 0 0 2px var(--azul-vivo); }
+.tl-dot.APROBADO        { background: var(--verde);       box-shadow: 0 0 0 2px var(--verde); }
+.tl-dot.RECHAZADO       { background: var(--rojo);        box-shadow: 0 0 0 2px var(--rojo); }
+.tl-dot.PENDIENTE       { background: var(--azul-claro);  box-shadow: 0 0 0 2px var(--azul-claro); }
+.tl-dot.ENTREGADO       { background: var(--verde);       box-shadow: 0 0 0 2px var(--verde); }
+.tl-dot.ENTREGA_PARCIAL { background: var(--naranja);     box-shadow: 0 0 0 2px var(--naranja); }
+.tl-dot.CANCELADO       { background: var(--gris);        box-shadow: 0 0 0 2px var(--gris); }
+.tl-dot.ELIMINADO       { background: var(--gris-claro);  box-shadow: 0 0 0 2px var(--gris-claro); }
+.tl-estado {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto);
+  margin-bottom: 2px;
+}
+.tl-actor {
+  font-size: 11px;
+  color: var(--texto-sub);
+  margin-bottom: 1px;
+}
+.tl-fecha {
+  font-size: 11px;
+  color: var(--gris-claro);
+}
+.tl-duracion {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--azul-vivo);
+  background: rgba(46,109,164,.08);
+  padding: 1px 7px;
+  border-radius: 10px;
+}
+.tl-nota {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--rojo);
+  font-style: italic;
+  line-height: 1.4;
+}
+.tl-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--texto-sub);
+  padding: 8px 0;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ PANTALLA LOGIN ═══════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    </div>
+    <div class="login-titulo">Vale Digital</div>
+    <div class="login-sub">Sistema de pedidos a almacén y pañol</div>
+    <div class="login-version" id="login-version"></div>
+    <div class="login-btn-wrap">
+      <div id="google-btn"></div>
+    </div>
+    <div id="login-error" class="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════════ PANTALLA APP ═══════════ -->
+<div id="screen-app" class="screen">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-logo">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    </div>
+    <div class="header-titulo">Vale Digital</div>
+
+    <!-- Badge conexión -->
+    <div id="badge-conexion" class="badge-conexion online">
+      <span class="badge-conexion-dot"></span>
+      <span id="badge-conexion-txt" class="badge-conexion-txt">Online</span>
+    </div>
+
+    <!-- Info usuario (solo desktop) -->
+    <div class="header-info">
+      <div id="hdr-usuario" class="header-usuario">—</div>
+      <div id="hdr-obra" class="header-obra">—</div>
+      <div id="hdr-rol" class="header-rol"></div>
+      <div id="hdr-version" class="header-version"></div>
+    </div>
+
+    <!-- Botones desktop -->
+    <button id="btn-notif" class="notif-btn" title="Notificaciones">
+      🔔
+      <span class="notif-badge" id="notif-badge-hdr">0</span>
+    </button>
+    <button id="btn-nuevo-vale" class="btn-nuevo-vale" title="Nuevo vale">+ Nuevo Vale</button>
+    <button id="btn-actualizar" class="btn-hdr-action" title="Actualizar datos">🔄 Actualizar</button>
+    <button id="btn-instalar-pwa" class="btn-hdr-action" style="display:none" title="Instalar app">📲 Instalar</button>
+    <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+    </button>
+
+    <!-- Botón 3 puntos (solo mobile) -->
+    <button class="btn-menu" id="btn-menu" title="Menú">⋮</button>
+  </header>
+
+  <!-- Backdrop para cerrar menú -->
+  <div class="menu-backdrop" id="menu-backdrop"></div>
+
+  <!-- Dropdown menú mobile -->
+  <div class="menu-dropdown" id="menu-dropdown">
+    <div class="menu-dropdown-header">
+      <div class="menu-dropdown-nombre" id="menu-nombre">—</div>
+      <div class="menu-dropdown-obra"   id="menu-obra">—</div>
+      <div class="menu-dropdown-rol"    id="menu-rol">—</div>
+      <div class="menu-dropdown-version" id="menu-version">—</div>
+    </div>
+    <button class="menu-item" id="menu-actualizar">
+      <span class="menu-item-icon">🔄</span> Actualizar
+    </button>
+    <button class="menu-item" id="menu-instalar" style="display:none">
+      <span class="menu-item-icon">📲</span> Instalar app
+    </button>
+    <button class="menu-item danger" id="menu-logout">
+      <span class="menu-item-icon">↩</span> Cerrar sesión
+    </button>
+  </div>
+
+  <!-- TABS (siempre visibles; "Por Aprobar" solo para SUPERVISOR y JEFE_OBRA) -->
+  <div id="tabs-bar" class="tabs-bar">
+    <div class="tabs-bar-inner">
+      <button class="tab-btn active" data-tab="mis-vales">Mis Vales</button>
+      <button class="tab-btn" id="tab-btn-aprobar" data-tab="por-aprobar" style="display:none">
+        Por Aprobar
+        <span class="tab-badge" id="tab-badge-pendientes" style="display:none">0</span>
+      </button>
+      <button class="tab-btn" id="tab-btn-gestionar" data-tab="por-gestionar" style="display:none">
+        Por Gestionar
+        <span class="tab-badge" id="tab-badge-gestionar" style="display:none">0</span>
+      </button>
+      <button class="tab-btn" id="tab-btn-todos" data-tab="todos-vales" style="display:none">
+        Todos
+      </button>
+      <button class="tab-btn" id="tab-btn-admin" data-tab="admin" style="display:none">
+        &#9881; Admin
+      </button>
+    </div>
+  </div>
+
+  <!-- BODY DE LA APP -->
+  <div class="app-body">
+
+    <!-- TAB: MIS VALES -->
+    <div id="tab-mis-vales" class="tab-panel active">
+      <main class="main">
+        <div class="dashboard-titulo">Mis pedidos</div>
+        <div class="dashboard-grid" id="dashboard-grid">
+          <div class="dash-card borrador">
+            <div class="dash-card-num" id="cnt-borrador">—</div>
+            <div class="dash-card-label">Borrador</div>
+          </div>
+          <div class="dash-card enviado">
+            <div class="dash-card-num" id="cnt-enviado">—</div>
+            <div class="dash-card-label">Enviado</div>
+          </div>
+          <div class="dash-card aprobado">
+            <div class="dash-card-num" id="cnt-aprobado">—</div>
+            <div class="dash-card-label">Aprobado</div>
+          </div>
+          <div class="dash-card entregado">
+            <div class="dash-card-num" id="cnt-entregado">—</div>
+            <div class="dash-card-label">Entregado</div>
+          </div>
+        </div>
+
+        <div class="lista-titulo">Últimos 30 días</div>
+        <div id="lista-vales" class="lista-vales">
+          <div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>
+        </div>
+      </main>
+    </div>
+
+    <!-- TAB: POR APROBAR -->
+    <div id="tab-por-aprobar" class="tab-panel">
+      <div id="panel-aprobacion">
+        <!-- Columna lista (mobile: full width / desktop: izquierda) -->
+        <div class="aprob-lista-col" id="aprob-lista-col">
+          <div class="lista-titulo">Pendientes de aprobación</div>
+          <div id="lista-pendientes">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+          </div>
+        </div>
+        <!-- Columna detalle (solo desktop; mobile usa modal) -->
+        <div class="aprob-detalle-col" id="aprob-detalle-col">
+          <div class="aprob-detalle-placeholder" id="aprob-detalle-placeholder">
+            <span>📋</span>
+            Seleccioná un vale para ver el detalle
+          </div>
+          <div id="aprob-detalle-inner" class="aprob-detalle-inner" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: POR GESTIONAR (ALMACENERO / PAÑOLERO) -->
+    <div id="tab-por-gestionar" class="tab-panel">
+      <div id="panel-gestion">
+        <!-- Columna lista -->
+        <div class="gestion-lista-col" id="gestion-lista-col">
+          <!-- Sub-dashboard -->
+          <div class="gestion-dash" id="gestion-dash">
+            <div class="gestion-dash-card aprobado">
+              <div class="gestion-dash-num" id="gcnt-aprobado">—</div>
+              <div class="gestion-dash-lbl">Por iniciar</div>
+            </div>
+            <div class="gestion-dash-card pendiente">
+              <div class="gestion-dash-num" id="gcnt-pendiente">—</div>
+              <div class="gestion-dash-lbl">Preparando</div>
+            </div>
+            <div class="gestion-dash-card entregado">
+              <div class="gestion-dash-num" id="gcnt-entregado">—</div>
+              <div class="gestion-dash-lbl">Entregados hoy</div>
+            </div>
+          </div>
+          <!-- Cola APROBADO -->
+          <div class="gestion-section">
+            Cola de trabajo
+            <span class="gestion-section-badge" id="badge-cola">0</span>
+          </div>
+          <div id="lista-por-gestionar">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+          </div>
+          <!-- En preparación PENDIENTE -->
+          <div class="gestion-section" style="margin-top:24px">
+            En preparación
+            <span class="gestion-section-badge" id="badge-prep">0</span>
+          </div>
+          <div id="lista-en-preparacion">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+          </div>
+        </div>
+        <!-- Columna detalle (solo desktop) -->
+        <!-- Columna detalle (solo desktop) -->
+        <div class="gestion-detalle-col" id="gestion-detalle-col">
+          <!-- Tabs Detalle / Pizarron -->
+          <div class="gestion-detalle-tabs" id="gestion-detalle-tabs">
+            <button class="gestion-detalle-tab active" id="tab-btn-detalle-g">Detalle</button>
+            <button class="gestion-detalle-tab" id="tab-btn-pizarron">&#127963; Pizarrón</button>
+          </div>
+          <!-- Panel Detalle -->
+          <div id="detalle-panel">
+            <div class="aprob-detalle-placeholder" id="gestion-detalle-placeholder">
+              <span>📦</span>
+              Seleccióná un vale para gestionar
+            </div>
+            <div id="gestion-detalle-inner" style="display:none"></div>
+          </div>
+          <!-- Panel Pizarron -->
+          <div id="pizarron-panel">
+            <div class="pizarron-hint">Arrastrá vales en preparación hacia los slots. Máximo 4.</div>
+            <div class="pizarron-grid" id="pizarron-grid">
+              <div class="pizarron-slot" id="pslot-0" data-slot="0"></div>
+              <div class="pizarron-slot" id="pslot-1" data-slot="1"></div>
+              <div class="pizarron-slot" id="pslot-2" data-slot="2"></div>
+              <div class="pizarron-slot" id="pslot-3" data-slot="3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TODOS LOS VALES (JEFE_OBRA) -->
+    <div id="tab-todos-vales" class="tab-panel">
+      <div id="panel-todos">
+
+        <!-- Filtro obra (solo ADMIN) -->
+        <div class="todos-filtro-seccion" id="chips-obras-seccion">
+          <div class="todos-filtro-label">Obra</div>
+          <div class="todos-chips" id="chips-obras"></div>
+        </div>
+
+        <!-- Filtro usuarios -->
+        <div class="todos-filtro-seccion">
+          <div class="todos-filtro-label">Solicitante</div>
+          <div class="todos-chips" id="chips-usuarios"></div>
+        </div>
+
+        <!-- Filtro estados -->
+        <div class="todos-filtro-seccion">
+          <div class="todos-filtro-label">Estado</div>
+          <div class="todos-chips" id="chips-estados"></div>
+        </div>
+
+        <!-- Busqueda en contenido -->
+        <div class="todos-buscador">
+          <input id="todos-buscar-input" type="text" placeholder="Buscar en título o contenido…" maxlength="100">
+          <button id="todos-buscar-btn">&#128269;</button>
+        </div>
+
+        <!-- Contador resultados -->
+        <div id="todos-resultado-info" style="font-size:12px;color:var(--gris);margin-bottom:8px;display:none"></div>
+
+        <!-- Lista -->
+        <div id="lista-todos-vales">
+          <div class="spinner-inline"><div class="spinner"></div>Cargando…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: ADMIN -->
+    <div id="tab-admin" class="tab-panel">
+      <div id="panel-admin">
+
+        <!-- Sub-tabs Usuarios / Obras -->
+        <div class="admin-subtabs">
+          <button class="admin-subtab active" id="admin-subtab-usuarios" data-subtab="usuarios">Usuarios</button>
+          <button class="admin-subtab" id="admin-subtab-obras" data-subtab="obras">Obras</button>
+        </div>
+
+        <!-- Panel Usuarios -->
+        <div id="admin-panel-usuarios" class="admin-subpanel active">
+          <div id="admin-lista-usuarios">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando...</div>
+          </div>
+        </div>
+
+        <!-- Panel Obras -->
+        <div id="admin-panel-obras" class="admin-subpanel">
+          <div id="admin-lista-obras">
+            <div class="spinner-inline"><div class="spinner"></div>Cargando...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /app-body -->
+
+  <!-- FAB principal -->
+  <button class="fab" id="fab-nuevo" title="Nuevo vale">+</button>
+
+  <!-- FAB Admin -->
+  <button class="admin-fab" id="admin-fab" title="Nuevo">+</button>
+
+  <!-- MODAL ADMIN FORM -->
+  <div class="modal-overlay" id="modal-admin-form" style="display:none">
+    <div class="modal" style="max-width:560px;width:95%">
+      <div class="modal-header">
+        <span id="admin-form-titulo">Nuevo usuario</span>
+        <button class="modal-close" onclick="cerrarModalAdmin()">&#10005;</button>
+      </div>
+      <div class="modal-body" id="admin-form-body">
+        <!-- Generado dinámicamente -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="admin-form-btn-cancelar" onclick="cerrarModalAdmin()">Cancelar</button>
+        <button class="btn btn-primary" id="admin-form-btn-guardar" onclick="guardarFormAdmin()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NOTIFICACIONES -->
+  <div id="modal-notif">
+    <div class="notif-panel">
+      <div class="notif-panel-header">
+        <span class="notif-panel-titulo">🔔 Notificaciones</span>
+        <button class="notif-panel-close" onclick="cerrarPanelNotif()">✕</button>
+      </div>
+      <div class="notif-panel-lista" id="notif-panel-lista">
+        <div class="notif-vacia">Sin notificaciones nuevas.</div>
+      </div>
+      <div class="notif-panel-footer">
+        <button onclick="marcarTodasLeidas()">Marcar todas como leídas</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /screen-app -->
+
+<!-- ═══════════ MODAL: DETALLE GESTIÓN (mobile) ═══════════ -->
+<div id="modal-gestion-detalle" class="modal-overlay desktop-hide">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-gestion-titulo">Detalle del Vale</div>
+      <button class="modal-close" id="modal-gestion-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-gestion-body"></div>
+    <div class="modal-footer" id="modal-gestion-footer"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: NOTA CIERRE (entrega parcial / cancelar) ═══════════ -->
+<div id="modal-nota-cierre" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-nota-titulo">Nota de cierre</div>
+      <button class="modal-close" id="modal-nota-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px; color:var(--texto-sub); margin-bottom:14px; line-height:1.5" id="modal-nota-desc">
+        Ingresá una nota para registrar el motivo.
+      </p>
+      <div class="form-group">
+        <label class="form-label">
+          Nota <span id="modal-nota-req" style="color:var(--rojo)">*</span>
+        </label>
+        <textarea id="nota-cierre-txt" class="form-textarea" maxlength="500"
+          placeholder="Ej: Se entregó parcialmente por falta de stock en ítem 3…"></textarea>
+        <div style="font-size:11px; color:var(--gris); margin-top:4px; text-align:right">
+          <span id="nota-cierre-chars">0</span>/500
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-nota-cancel">Cancelar</button>
+      <button class="btn btn-primary"   id="modal-nota-confirm">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: NUEVO / EDITAR VALE ═══════════ -->
+<div id="modal-vale" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-vale-titulo">Nuevo Vale</div>
+      <button class="modal-close" id="modal-vale-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-meta">
+        <div class="form-meta-item">
+          <span class="form-meta-label">Fecha</span>
+          <span class="form-meta-value" id="form-fecha-hora">—</span>
+        </div>
+        <div class="form-meta-item">
+          <span class="form-meta-label">Usuario</span>
+          <span class="form-meta-value" id="form-usuario">—</span>
+        </div>
+        <div class="form-meta-item">
+          <span class="form-meta-label">Obra</span>
+          <span class="form-meta-value" id="form-obra">—</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Destino <span style="color:var(--rojo)">*</span></label>
+        <div class="destino-toggle">
+          <button type="button" class="destino-btn" id="destino-almacen" data-value="ALMACEN">🏭 Almacén</button>
+          <button type="button" class="destino-btn" id="destino-pañol"   data-value="PAÑOL">🔧 Pañol</button>
+        </div>
+        <input type="hidden" id="form-destino" value="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título <span style="color:var(--gris-claro);font-weight:400">(opcional)</span></label>
+        <input id="form-titulo" class="form-input" type="text" placeholder="Ej: Materiales eléctricos tablero T3" maxlength="120">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Detalle del pedido <span style="color:var(--rojo)">*</span></label>
+        <div class="quill-wrapper">
+          <div id="quill-editor"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="btn-eliminar-vale" style="display:none">🗑 Eliminar</button>
+      <button class="btn btn-secondary" id="btn-guardar-borrador">Guardar</button>
+      <button class="btn btn-primary"   id="btn-enviar-vale">Enviar ↗</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: DETALLE VALE (Mis Vales) ═══════════ -->
+<div id="modal-detalle" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">Detalle del Vale</div>
+      <button class="modal-close" id="modal-detalle-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-detalle-body"></div>
+    <div class="modal-footer" id="modal-detalle-footer"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: DETALLE APROBACIÓN (solo mobile) ═══════════ -->
+<div id="modal-aprob-detalle" class="modal-overlay desktop-hide">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modal-aprob-titulo">Detalle del Vale</div>
+      <button class="modal-close" id="modal-aprob-close">✕</button>
+    </div>
+    <div class="modal-body" id="modal-aprob-body"></div>
+    <div class="modal-footer" id="modal-aprob-footer"></div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: NOTA DE RECHAZO ═══════════ -->
+<div id="modal-rechazo" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo">Motivo de rechazo</div>
+      <button class="modal-close" id="modal-rechazo-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px; color:var(--texto-sub); margin-bottom:14px; line-height:1.5">
+        Ingresá el motivo del rechazo. Esta nota quedará registrada en el vale.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Nota de rechazo <span style="color:var(--rojo)">*</span></label>
+        <textarea id="rechazo-nota" class="form-textarea" placeholder="Ej: Falta especificación de materiales. Completar con referencia de catálogo." maxlength="500"></textarea>
+        <div style="font-size:11px; color:var(--gris); margin-top:4px; text-align:right">
+          <span id="rechazo-chars">0</span>/500 — mínimo 5 caracteres
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="modal-rechazo-cancel">Cancelar</button>
+      <button class="btn btn-danger"    id="modal-rechazo-confirm">✕ Confirmar rechazo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CONFIRM DIALOG ═══════════ -->
+<div id="confirm-overlay" class="confirm-overlay">
+  <div class="confirm-box">
+    <div class="confirm-titulo" id="confirm-titulo">¿Confirmar acción?</div>
+    <div class="confirm-texto"  id="confirm-texto">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="btn btn-secondary" id="confirm-cancelar" style="flex:1">Cancelar</button>
+      <button class="btn btn-danger"    id="confirm-ok"       style="flex:1">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// Vale Digital — UI v4.0  (Etapa 2: Panel de Aprobación)
+// ═══════════════════════════════════════════════════════════════
+
+// ── CONFIGURACIÓN ───────────────────────────────────────────────
+const CONFIG = {
+  CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
+  GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
+  VERSION_UI : 'v14.4'
+};
+
+// Roles que pueden aprobar vales
+const ROLES_APROBADOR = ['SUPERVISOR', 'JEFE_OBRA'];
+// Roles que gestionan almacén/pañol
+const ROLES_GESTOR = ['ALMACENERO', 'PAÑOLERO'];
+// Roles que ven todos los vales de la obra
+const ROLES_VER_TODOS = ['JEFE_OBRA', 'ALMACENERO', 'PAÑOLERO', 'SUPERVISOR', 'ADMIN'];
+
+// ── ESTADO GLOBAL ───────────────────────────────────────────────
+const APP = {
+  perfil         : null,
+  vales          : [],
+  pendientes     : [],
+  porGestionar   : [],   // vales APROBADO para almacenero/pañolero
+  enPreparacion  : [],   // vales PENDIENTE en preparación
+  entregadosHoy  : 0,    // cantidad entregados hoy (ENTREGADO + ENTREGA_PARCIAL)
+  todosVales     : [],   // vista JEFE_OBRA
+  valeEdit       : null,
+  valeAprob      : null,
+  valeGestion    : null, // vale seleccionado en panel gestión
+  quill          : null,
+  online         : navigator.onLine,
+  tabActual      : 'mis-vales',
+  isDesktop      : () => window.innerWidth >= 768
+};
+
+// ── HELPERS ─────────────────────────────────────────────────────
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function formatFecha(isoStr) {
+  if (!isoStr) return '—';
+  const d = new Date(isoStr);
+  return d.toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' })
+       + ' ' + d.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
+}
+function toast(msg, tipo = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + tipo;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'toast'; }, 2800);
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function confirmar(titulo, texto) {
+  return new Promise(res => {
+    document.getElementById('confirm-titulo').textContent = titulo;
+    document.getElementById('confirm-texto').textContent  = texto;
+    openModal('confirm-overlay');
+    const ok  = document.getElementById('confirm-ok');
+    const can = document.getElementById('confirm-cancelar');
+    const cleanup = r => { closeModal('confirm-overlay'); ok.onclick = null; can.onclick = null; res(r); };
+    ok.onclick  = () => cleanup(true);
+    can.onclick = () => cleanup(false);
+  });
+}
+function puedeAprobar()   { return APP.perfil && ROLES_APROBADOR.includes(APP.perfil.rol); }
+function puedeGestionar() { return APP.perfil && ROLES_GESTOR.includes(APP.perfil.rol); }
+function puedeVerTodos()  { return APP.perfil && ROLES_VER_TODOS.includes(APP.perfil.rol); }
+function esAdmin()        { return APP.perfil && APP.perfil.rol === 'ADMIN'; }
+
+// ── LOCAL STORAGE ───────────────────────────────────────────────
+const LS = {
+  KEY: 'vale_digital_vales',
+  KEY_PERFIL: 'vale_digital_perfil',
+  get()        { try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { return []; } },
+  set(vales)   { localStorage.setItem(this.KEY, JSON.stringify(vales)); },
+  upsert(vale) {
+    const lista = this.get();
+    const idx   = lista.findIndex(v => v.id_vale === vale.id_vale);
+    if (idx >= 0) lista[idx] = vale; else lista.unshift(vale);
+    this.set(lista);
+  },
+  remove(id)   { this.set(this.get().filter(v => v.id_vale !== id)); },
+  getPerfil()  { try { return JSON.parse(localStorage.getItem(this.KEY_PERFIL) || 'null'); } catch { return null; } },
+  setPerfil(p) { localStorage.setItem(this.KEY_PERFIL, JSON.stringify(p)); },
+  clearPerfil(){ localStorage.removeItem(this.KEY_PERFIL); }
+};
+
+// ── PWA INSTALL ─────────────────────────────────────────────────
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('btn-instalar-pwa').style.display = 'flex';
+  document.getElementById('menu-instalar').style.display    = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  document.getElementById('btn-instalar-pwa').style.display = 'none';
+  document.getElementById('menu-instalar').style.display    = 'none';
+  toast('¡App instalada!', '');
+});
+
+// ── API GAS ─────────────────────────────────────────────────────
+async function gasGet(params) {
+  const url = new URL(CONFIG.GAS_URL);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== null && v !== undefined) url.searchParams.set(k, String(v));
+  });
+  const r = await fetch(url.toString());
+  return r.json();
+}
+// GAS hace redirect 302 y pierde el body del POST → todo por GET
+async function gasPost(body) {
+  return gasGet(body);
+}
+
+// ── CONECTIVIDAD ────────────────────────────────────────────────
+function actualizarBadge(online) {
+  APP.online = online;
+  const badge = document.getElementById('badge-conexion');
+  const txt   = document.getElementById('badge-conexion-txt');
+  badge.className = 'badge-conexion ' + (online ? 'online' : 'offline');
+  txt.textContent  = online ? 'Online' : 'Offline';
+}
+window.addEventListener('online',  () => { actualizarBadge(true); sincronizarPendientes(); });
+window.addEventListener('offline', () => actualizarBadge(false));
+
+// ── SINCRONIZACIÓN ──────────────────────────────────────────────
+async function sincronizarPendientes() {
+  const pendientes = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
+  for (const v of pendientes) {
+    try {
+      const res = await gasPost({ accion: 'guardarVale', ...v });
+      if (res.ok) { v._sync = true; LS.upsert(v); }
+    } catch (_) { }
+  }
+  const porEliminar = LS.get().filter(v => !v._sync && v.estado === 'ELIMINADO');
+  for (const v of porEliminar) {
+    try {
+      const res = await gasPost({ accion: 'eliminarVale', id_vale: v.id_vale, usuario_email: APP.perfil.email });
+      if (res.ok) LS.remove(v.id_vale);
+    } catch (_) { }
+  }
+  if (APP.perfil) cargarVales();
+}
+
+// ── TABS ────────────────────────────────────────────────────────
+function inicializarTabs() {
+  // Resetear visibilidad de tabs opcionales segun rol
+  document.getElementById('tab-btn-aprobar').style.display   = puedeAprobar()   ? 'flex' : 'none';
+  document.getElementById('tab-btn-gestionar').style.display = puedeGestionar() ? 'flex' : 'none';
+  document.getElementById('tab-btn-todos').style.display     = puedeVerTodos()  ? 'flex' : 'none';
+  document.getElementById('tab-btn-admin').style.display     = esAdmin()        ? 'flex' : 'none';
+
+  // FAB + btn header nuevo vale: ocultar si es gestor puro o admin
+  const _puedeCrear = !((puedeGestionar() && !puedeAprobar()) || esAdmin());
+  document.getElementById('fab-nuevo').style.display = _puedeCrear ? 'flex' : 'none';
+  document.getElementById('btn-nuevo-vale').classList.toggle('visible', _puedeCrear);
+
+  // Re-adjuntar listeners sin duplicar (clonar cada boton)
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const nuevo = btn.cloneNode(true);
+    btn.parentNode.replaceChild(nuevo, btn);
+    nuevo.addEventListener('click', () => cambiarTab(nuevo.dataset.tab));
+  });
+
+  // Si el tab activo ya no es visible con el nuevo rol, volver a mis-vales
+  const tabActualBtn = document.querySelector('.tab-btn[data-tab="' + APP.tabActual + '"]');
+  if (!tabActualBtn || tabActualBtn.style.display === 'none') {
+    cambiarTab('mis-vales');
+  }
+}
+
+function cambiarTab(tabId, forzar = false) {
+  APP.tabActual = tabId;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+
+  const fab = document.getElementById('fab-nuevo');
+  if (tabId === 'por-aprobar') {
+    fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
+    // Recargar solo si no hay datos o si se forzó
+    if (forzar || !APP.pendientes.length) cargarPendientes();
+    else renderizarPendientes();
+  } else if (tabId === 'por-gestionar') {
+    fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
+    cargarGestion(); // siempre fresco (estado cambia frecuentemente)
+  } else if (tabId === 'todos-vales') {
+    fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
+    if (forzar || !APP.todosVales.length) cargarTodosVales();
+    else { construirChips(); aplicarFiltrosTodos(); }
+  } else if (tabId === 'admin') {
+    fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
+    document.getElementById('admin-fab').classList.add('visible');
+    if (forzar || (!_admin.usuarios.length && !_admin.obras.length)) cargarAdmin();
+    else { renderAdminUsuarios(); renderAdminObras(); }
+  } else {
+    // mis-vales — FAB solo si no es gestor puro ni admin
+    document.getElementById('admin-fab').classList.remove('visible');
+    if (!puedeGestionar() || puedeAprobar()) {
+      fab.style.display = 'flex';
+      document.getElementById('btn-nuevo-vale').classList.add('visible');
+    }
+    if (forzar || !APP.vales.length) cargarVales();
+    else { actualizarDashboard(APP.vales); renderizarLista(APP.vales); }
+  }
+  // Ocultar admin-fab cuando salimos del tab admin
+  if (tabId !== 'admin') document.getElementById('admin-fab').classList.remove('visible');
+}
+
+// ── LOGIN ────────────────────────────────────────────────────────
+function inicializarGoogle() {
+  google.accounts.id.initialize({
+    client_id: CONFIG.CLIENT_ID,
+    callback : handleCredential,
+    auto_select: false
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-btn'),
+    { theme:'filled_blue', size:'large', shape:'pill', text:'signin_with', locale:'es_AR' }
+  );
+}
+
+async function handleCredential(response) {
+  const payload = parseJwt(response.credential);
+  const email   = payload.email;
+  mostrarLoginError('');
+  try {
+    const res = await gasGet({ accion: 'login', email });
+    if (!res.ok) { mostrarLoginError(res.error || 'Acceso denegado.'); return; }
+    APP.perfil = res.data;
+    LS.setPerfil(res.data);
+    iniciarApp();
+  } catch (e) {
+    mostrarLoginError('Sin conexión. Intentá de nuevo.');
+  }
+}
+
+function parseJwt(token) {
+  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  return JSON.parse(atob(base64));
+}
+function mostrarLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.className = 'login-error' + (msg ? ' visible' : '');
+}
+
+// ── INICIO APP ──────────────────────────────────────────────────
+function actualizarHeaderPerfil() {
+  const p = APP.perfil;
+  // Desktop
+  document.getElementById('hdr-usuario').textContent = p.nombre;
+  document.getElementById('hdr-obra').textContent    = p.obra_codigo + ' — ' + p.obra_desc;
+  document.getElementById('hdr-rol').textContent     = p.rol;
+  // Dropdown mobile
+  document.getElementById('menu-nombre').textContent  = p.nombre;
+  document.getElementById('menu-obra').textContent    = p.obra_codigo + ' — ' + p.obra_desc;
+  document.getElementById('menu-rol').textContent     = p.rol;
+  document.getElementById('menu-version').textContent = CONFIG.VERSION_UI;
+}
+
+function iniciarApp() {
+  showScreen('screen-app');
+  actualizarHeaderPerfil();
+  actualizarBadge(navigator.onLine);
+  inicializarTabs();
+  iniciarPollingNotificaciones(); // E5 — ahora llama recargarContexto()
+  initPizarronTabs();
+  initSlotsDrop();
+  // Carga inicial: una sola call GAS (getContexto) trae todo
+  if (APP.online) {
+    recargarContexto({ esInicio: true });
+  } else {
+    // Sin conexión: cargar desde localStorage
+    const valesLS = obtenerValesLocales();
+    APP.vales = valesLS.filter(v => v.estado !== 'ELIMINADO');
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+    redirigirPorRol();
+  }
+}
+
+// ── Redirigir a tab inicial según rol ────────────────────────────
+function redirigirPorRol() {
+  if (esAdmin()) {
+    cambiarTab('admin');
+  } else if (puedeGestionar() && !puedeAprobar()) {
+    cambiarTab('por-gestionar');
+  } else {
+    cambiarTab('mis-vales');
+  }
+}
+
+// ── getContexto: carga toda la app en una sola call GAS ──────────
+// Llamado en: inicio de sesión, polling 5min, botón Actualizar.
+// esInicio=true → redirige al tab por rol.
+// esInicio=false → mantiene el tab actual y lo re-renderiza.
+async function recargarContexto({ esInicio = false } = {}) {
+  if (!APP.online || !APP.perfil) return;
+  try {
+    const res = await gasGet({ accion: 'getContexto', email: APP.perfil.email });
+    if (!res.ok) {
+      console.warn('getContexto error:', res.error);
+      return;
+    }
+    const ctx = res.data;
+
+    // Poblar estado global
+    APP.vales         = (ctx.misVales      || []).map(v => ({ ...v, _sync: true }));
+    APP.pendientes    = ctx.porAprobar     || [];
+    APP.porGestionar  = ctx.porGestionar   || [];
+    APP.enPreparacion = ctx.enPreparacion  || [];
+    APP.entregadosHoy = ctx.entregadosHoy  ?? 0;
+    APP.todosVales    = ctx.todosVales     || [];
+
+    // Notificaciones
+    const noLeidas = ctx.notificaciones || [];
+    _notif.noLeidas = noLeidas;
+    actualizarBadgeNotif(noLeidas.length);
+    if (noLeidas.length > 0 && !esInicio) {
+      const msg = mensajeContextualNotif(noLeidas);
+      if (msg) toast(msg, '');
+    }
+
+    // Actualizar badges tabs
+    actualizarBadgePendientes(APP.pendientes.length);
+    actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
+
+    // Sincronizar vales locales pendientes
+    const locales = LS.get().filter(v => !v._sync && v.estado !== 'ELIMINADO');
+    locales.forEach(lv => {
+      if (!APP.vales.find(rv => rv.id_vale === lv.id_vale)) APP.vales.unshift(lv);
+    });
+    APP.vales = APP.vales.filter(v => v.estado !== 'ELIMINADO');
+
+    // Guardar en localStorage
+    APP.vales.forEach(v => LS.upsert(v));
+
+    if (esInicio) {
+      redirigirPorRol();
+    } else {
+      // Re-renderizar el tab activo con datos frescos
+      renderizarTabActual();
+    }
+
+  } catch (e) {
+    console.warn('recargarContexto excepción:', e.message);
+  }
+}
+
+// ── Re-renderizar el tab activo sin nueva call GAS ───────────────
+function renderizarTabActual() {
+  const tab = APP.tabActual;
+  if (tab === 'mis-vales') {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+  } else if (tab === 'por-aprobar') {
+    renderizarPendientes();
+  } else if (tab === 'por-gestionar') {
+    renderizarGestion();
+  } else if (tab === 'todos-vales') {
+    construirChips();
+    aplicarFiltrosTodos();
+  } else if (tab === 'admin') {
+    renderAdminUsuarios();
+    renderAdminObras();
+  }
+}
+
+// ── CARGAR MIS VALES ────────────────────────────────────────────
+// v13: APP.vales ya viene populado por recargarContexto().
+// Esta función solo renderiza. Si está vacío y hay red, fuerza refresh.
+async function cargarVales() {
+  const lista = document.getElementById('lista-vales');
+
+  if (!APP.online) {
+    const valesLS = obtenerValesLocales();
+    APP.vales = valesLS.filter(v => v.estado !== 'ELIMINADO');
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+    return;
+  }
+
+  // Si hay datos en APP.vales, renderizar directo (ya vienen de getContexto)
+  if (APP.vales.length > 0) {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+    return;
+  }
+
+  // Fallback: si por alguna razón APP.vales está vacío, pedir contexto
+  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando vales…</div>';
+  await recargarContexto({ esInicio: false });
+}
+
+function obtenerValesLocales() {
+  const hace30 = new Date();
+  hace30.setDate(hace30.getDate() - 30);
+  return LS.get().filter(v => {
+    if (v.estado === 'ELIMINADO') return false;
+    return new Date(v.fecha_hora) >= hace30;
+  });
+}
+
+function actualizarDashboard(vales) {
+  const cnt = { BORRADOR:0, ENVIADO:0, APROBADO:0, PENDIENTE:0, ENTREGADO:0, ENTREGA_PARCIAL:0, CANCELADO:0 };
+  vales.forEach(v => { if (cnt[v.estado] !== undefined) cnt[v.estado]++; });
+  document.getElementById('cnt-borrador').textContent  = cnt.BORRADOR;
+  document.getElementById('cnt-enviado').textContent   = cnt.ENVIADO;
+  document.getElementById('cnt-aprobado').textContent  = cnt.APROBADO + cnt.PENDIENTE;
+  document.getElementById('cnt-entregado').textContent = cnt.ENTREGADO + cnt.ENTREGA_PARCIAL;
+}
+
+function renderizarLista(vales) {
+  const lista = document.getElementById('lista-vales');
+  if (!vales.length) {
+    lista.innerHTML = esAdmin()
+      ? '<div class="lista-vacia">El rol ADMIN no genera vales propios.<br>Usá el tab <strong>Todos</strong> para consultar vales.</div>'
+      : '<div class="lista-vacia">No tenés vales en los últimos 30 días.<br>Usá el botón + para crear uno.</div>';
+    return;
+  }
+  lista.innerHTML = vales.map(v => `
+    <div class="vale-card" data-id="${v.id_vale}">
+      <div class="vale-card-top">
+        <div class="vale-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
+      </div>
+      <div class="vale-card-bottom">
+        <span class="vale-card-fecha">${formatFecha(v.fecha_hora)}</span>
+        <span class="vale-card-destino">${v.destino}</span>
+        ${!(LS.get().find(lv=>lv.id_vale===v.id_vale)||v)._sync
+          ? '<span class="vale-card-sync">⬆ Pendiente</span>'
+          : '<span class="vale-card-sync ok">✓ Sync</span>'}
+      </div>
+    </div>
+  `).join('');
+  lista.querySelectorAll('.vale-card').forEach(el =>
+    el.addEventListener('click', () => abrirDetalle(el.dataset.id))
+  );
+}
+
+// ── CARGAR PENDIENTES DE APROBACIÓN ─────────────────────────────
+// v13: APP.pendientes ya viene de recargarContexto().
+// Esta función renderiza directamente.
+async function cargarPendientes() {
+  resetDetalleAprobacion();
+  if (!APP.online) {
+    document.getElementById('lista-pendientes').innerHTML =
+      '<div class="lista-vacia">Sin conexión. Conectate para ver los pendientes.</div>';
+    return;
+  }
+  renderizarPendientes();
+  actualizarBadgePendientes(APP.pendientes.length);
+}
+
+function actualizarBadgePendientes(cant) {
+  const badge = document.getElementById('tab-badge-pendientes');
+  if (cant > 0) {
+    badge.textContent = cant;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderizarPendientes() {
+  const lista = document.getElementById('lista-pendientes');
+  if (!APP.pendientes.length) {
+    lista.innerHTML = '<div class="lista-vacia">No hay vales pendientes de aprobación.</div>';
+    return;
+  }
+  lista.innerHTML = APP.pendientes.map(v => `
+    <div class="aprob-card" data-id="${v.id_vale}">
+      <div class="aprob-card-top">
+        <div class="aprob-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <span class="badge-estado badge-ENVIADO">ENVIADO</span>
+      </div>
+      <div class="aprob-card-meta">
+        <span class="aprob-card-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
+        <span class="aprob-card-destino">${v.destino}</span>
+        <span class="aprob-card-fecha">${formatFecha(v.fecha_hora)}</span>
+      </div>
+    </div>
+  `).join('');
+
+  lista.querySelectorAll('.aprob-card').forEach(el => {
+    el.addEventListener('click', () => seleccionarValeAprobacion(el.dataset.id));
+  });
+}
+
+// ── SELECCIONAR VALE EN PANEL APROBACIÓN ────────────────────────
+function seleccionarValeAprobacion(id) {
+  const vale = APP.pendientes.find(v => v.id_vale === id);
+  if (!vale) return;
+  APP.valeAprob = vale;
+
+  // Marcar card como seleccionada
+  document.querySelectorAll('.aprob-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`.aprob-card[data-id="${id}"]`);
+  if (card) card.classList.add('selected');
+
+  if (APP.isDesktop()) {
+    mostrarDetalleDesktop(vale);
+  } else {
+    mostrarDetalleModalMobile(vale);
+  }
+}
+
+function resetDetalleAprobacion() {
+  document.getElementById('aprob-detalle-placeholder').style.display = 'flex';
+  document.getElementById('aprob-detalle-inner').style.display = 'none';
+  APP.valeAprob = null;
+}
+
+function buildDetalleHTML(vale) {
+  return `
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Solicitante</div>
+      <div class="aprob-detalle-valor">${vale.solicitante_nombre || vale.usuario_email} <span style="color:var(--gris);font-size:12px">(${vale.solicitante_rol || ''})</span></div>
+    </div>
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Fecha</div>
+      <div class="aprob-detalle-valor">${formatFecha(vale.fecha_hora)}</div>
+    </div>
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Obra</div>
+      <div class="aprob-detalle-valor">${vale.obra_codigo}</div>
+    </div>
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Destino</div>
+      <div class="aprob-detalle-valor">${vale.destino}</div>
+    </div>
+    ${vale.titulo ? `
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Título</div>
+      <div class="aprob-detalle-valor">${vale.titulo}</div>
+    </div>` : ''}
+    <div class="aprob-detalle-campo">
+      <div class="aprob-detalle-label">Detalle del pedido</div>
+      <div class="aprob-detalle-contenido">${vale.contenido_html || '—'}</div>
+    </div>
+  `;
+}
+
+// Desktop: muestra detalle en columna derecha
+function mostrarDetalleDesktop(vale) {
+  document.getElementById('aprob-detalle-placeholder').style.display = 'none';
+  const inner = document.getElementById('aprob-detalle-inner');
+  inner.style.display = 'block';
+  inner.innerHTML = buildDetalleHTML(vale) + `
+    <div class="aprob-detalle-btns">
+      <button class="btn btn-danger"   id="desk-btn-rechazar">✕ Rechazar</button>
+      <button class="btn btn-success"  id="desk-btn-aprobar">✓ Aprobar</button>
+    </div>
+  `;
+  inner.querySelector('#desk-btn-aprobar').addEventListener('click', () => {
+    setBotonesAprobacion(true);
+    confirmarAprobacion(vale).finally(() => setBotonesAprobacion(false));
+  });
+  inner.querySelector('#desk-btn-rechazar').addEventListener('click', () => abrirModalRechazo(vale));
+}
+
+// Mobile: muestra detalle en modal
+function mostrarDetalleModalMobile(vale) {
+  document.getElementById('modal-aprob-titulo').textContent = vale.titulo || 'Detalle del Vale';
+  const body   = document.getElementById('modal-aprob-body');
+  const footer = document.getElementById('modal-aprob-footer');
+  body.innerHTML = buildDetalleHTML(vale);
+  footer.innerHTML = `
+    <button class="btn btn-danger"   id="mob-btn-rechazar">✕ Rechazar</button>
+    <button class="btn btn-success"  id="mob-btn-aprobar">✓ Aprobar</button>
+  `;
+  footer.querySelector('#mob-btn-aprobar').addEventListener('click', () => {
+    closeModal('modal-aprob-detalle');
+    confirmarAprobacion(vale);
+  });
+  footer.querySelector('#mob-btn-rechazar').addEventListener('click', () => {
+    closeModal('modal-aprob-detalle');
+    abrirModalRechazo(vale);
+  });
+  openModal('modal-aprob-detalle');
+}
+
+// Habilita/deshabilita los botones del panel aprobación (desktop)
+function setBotonesAprobacion(disabled) {
+  ['desk-btn-aprobar', 'desk-btn-rechazar'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
+// ── APROBAR VALE ─────────────────────────────────────────────────
+async function confirmarAprobacion(vale) {
+  const ok = await confirmar('¿Aprobar este vale?', `"${vale.titulo || 'Sin título'}" de ${vale.solicitante_nombre || vale.usuario_email}`);
+  if (!ok) return;
+
+  try {
+    const res = await gasGet({
+      accion      : 'aprobarVale',
+      id_vale     : vale.id_vale,
+      aprobado_por: APP.perfil.email
+    });
+    if (res.ok) {
+      toast('Vale aprobado ✓', 'success');
+      quitarPendiente(vale.id_vale);
+    } else {
+      toast('Error: ' + res.error, 'error');
+    }
+  } catch (_) {
+    toast('Sin conexión. Intentá de nuevo.', 'error');
+  }
+}
+
+// ── RECHAZAR VALE ────────────────────────────────────────────────
+let _rechazarValeCallback = null;
+
+function abrirModalRechazo(vale) {
+  document.getElementById('rechazo-nota').value = '';
+  document.getElementById('rechazo-chars').textContent = '0';
+  openModal('modal-rechazo');
+  _rechazarValeCallback = vale;
+}
+
+document.getElementById('rechazo-nota').addEventListener('input', function() {
+  document.getElementById('rechazo-chars').textContent = this.value.length;
+});
+
+document.getElementById('modal-rechazo-close').addEventListener('click', () => closeModal('modal-rechazo'));
+document.getElementById('modal-rechazo-cancel').addEventListener('click', () => closeModal('modal-rechazo'));
+
+document.getElementById('modal-rechazo-confirm').addEventListener('click', async () => {
+  const nota = document.getElementById('rechazo-nota').value.trim();
+  if (nota.length < 5) {
+    toast('La nota de rechazo debe tener al menos 5 caracteres', 'error');
+    return;
+  }
+  const vale    = _rechazarValeCallback;
+  const btnConf = document.getElementById('modal-rechazo-confirm');
+  const btnCan  = document.getElementById('modal-rechazo-cancel');
+
+  // Deshabilitar botones mientras procesa
+  btnConf.disabled = true;
+  btnCan.disabled  = true;
+  btnConf.textContent = 'Procesando…';
+
+  try {
+    const res = await gasGet({
+      accion        : 'rechazarVale',
+      id_vale       : vale.id_vale,
+      rechazado_por : APP.perfil.email,
+      nota_rechazo  : nota
+    });
+    closeModal('modal-rechazo');
+    if (res.ok) {
+      toast('Vale rechazado', '');
+      quitarPendiente(vale.id_vale);
+    } else {
+      toast('Error: ' + res.error, 'error');
+    }
+  } catch (_) {
+    toast('Sin conexión. Intentá de nuevo.', 'error');
+  } finally {
+    btnConf.disabled = false;
+    btnCan.disabled  = false;
+    btnConf.textContent = '✕ Confirmar rechazo';
+  }
+});
+
+// Quita un vale de la lista de pendientes y recarga contexto completo
+async function quitarPendiente(id) {
+  APP.pendientes = APP.pendientes.filter(v => v.id_vale !== id);
+  actualizarBadgePendientes(APP.pendientes.length);
+  renderizarPendientes();
+  resetDetalleAprobacion();
+  // v13: recargar contexto para refrescar todos los datos y badges
+  if (APP.online) await recargarContexto({ esInicio: false });
+}
+
+// ── MODAL NUEVO VALE ─────────────────────────────────────────────
+document.getElementById('fab-nuevo').addEventListener('click', abrirNuevoVale);
+document.getElementById('btn-nuevo-vale').addEventListener('click', abrirNuevoVale);
+
+function abrirNuevoVale() {
+  APP.valeEdit = null;
+  document.getElementById('modal-vale-titulo').textContent = 'Nuevo Vale';
+  document.getElementById('form-fecha-hora').textContent   = formatFecha(new Date().toISOString());
+  document.getElementById('form-usuario').textContent      = APP.perfil.nombre;
+  document.getElementById('form-obra').textContent         = APP.perfil.obra_codigo + ' — ' + APP.perfil.obra_desc;
+  document.getElementById('form-destino').value = '';
+  document.querySelectorAll('.destino-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('form-titulo').value = '';
+  if (APP.quill) APP.quill.setContents([]);
+  document.getElementById('btn-eliminar-vale').style.display = 'none';
+  openModal('modal-vale');
+  setTimeout(() => initQuill(), 100);
+}
+
+function abrirEditarVale(vale) {
+  APP.valeEdit = vale;
+  document.getElementById('modal-vale-titulo').textContent = 'Editar Borrador';
+  document.getElementById('form-fecha-hora').textContent   = formatFecha(vale.fecha_hora);
+  document.getElementById('form-usuario').textContent      = vale.usuario_nombre;
+  document.getElementById('form-obra').textContent         = vale.obra_codigo;
+  document.getElementById('form-destino').value = vale.destino || '';
+  document.querySelectorAll('.destino-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.value === vale.destino);
+  });
+  document.getElementById('form-titulo').value = vale.titulo || '';
+  document.getElementById('btn-eliminar-vale').style.display = 'flex';
+  openModal('modal-vale');
+  setTimeout(() => {
+    initQuill();
+    if (vale.contenido_html && APP.quill) {
+      APP.quill.clipboard.dangerouslyPasteHTML(vale.contenido_html);
+    }
+  }, 100);
+}
+
+function initQuill() {
+  if (APP.quill) return;
+  APP.quill = new Quill('#quill-editor', {
+    theme: 'snow',
+    modules: { toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['clean']
+    ]},
+    placeholder: 'Describí el pedido: materiales, cantidades, referencia…'
+  });
+}
+
+document.getElementById('modal-vale-close').addEventListener('click', () => closeModal('modal-vale'));
+
+document.querySelectorAll('.destino-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.destino-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('form-destino').value = btn.dataset.value;
+  });
+});
+
+document.getElementById('btn-guardar-borrador').addEventListener('click', () => guardarVale('BORRADOR'));
+document.getElementById('btn-enviar-vale').addEventListener('click',      () => guardarVale('ENVIADO'));
+
+async function guardarVale(estado) {
+  const destino  = document.getElementById('form-destino').value;
+  const contenido      = APP.quill ? APP.quill.root.innerHTML.trim() : '';
+  const contenidoTexto = APP.quill ? APP.quill.getText().trim()      : '';
+
+  if (!destino)        { toast('Seleccioná un destino (Almacén o Pañol)', 'error'); return; }
+  if (!contenidoTexto) { toast('Escribí el detalle del pedido', 'error'); return; }
+
+  const ahora = new Date().toISOString();
+  const vale  = {
+    id_vale         : APP.valeEdit?.id_vale || uuid(),
+    fecha_hora      : APP.valeEdit?.fecha_hora || ahora,
+    usuario_email   : APP.perfil.email,
+    usuario_nombre  : APP.perfil.nombre,
+    obra_codigo     : APP.perfil.obra_codigo,
+    destino,
+    titulo          : document.getElementById('form-titulo').value.trim(),
+    contenido_html  : contenido,
+    estado,
+    estado_anterior : APP.valeEdit?.estado || '',  // v13: para registrar transición en HISTORIAL
+    eliminado       : false,
+    _sync           : false
+  };
+
+  LS.upsert(vale);
+  closeModal('modal-vale');
+
+  // Toast diferenciado: JEFE_OBRA envía → queda APROBADO automáticamente
+  if (estado === 'ENVIADO' && APP.perfil.rol === 'JEFE_OBRA') {
+    toast('Vale enviado y aprobado automáticamente ✓', 'success');
+  } else {
+    toast(estado === 'ENVIADO' ? 'Vale enviado ↗' : 'Borrador guardado', 'success');
+  }
+
+  if (APP.online) {
+    try {
+      const res = await gasPost({ accion: 'guardarVale', ...vale });
+      if (res.ok) {
+        vale._sync = true;
+        // Si GAS confirmó auto-aprobación, actualizar estado local
+        if (res.data && res.data.auto_aprobado) {
+          vale.estado = 'APROBADO';
+        }
+        LS.upsert(vale);
+      } else {
+        toast('Error al sincronizar: ' + res.error, 'error');
+      }
+    } catch (_) {
+      toast('Sin conexión — se sincronizará al reconectar', '');
+    }
+  }
+  // v13: recargar contexto completo para actualizar todas las listas
+  if (APP.online) {
+    await recargarContexto({ esInicio: false });
+  } else {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+  }
+}
+
+// ELIMINAR BORRADOR (desde modal editar)
+document.getElementById('btn-eliminar-vale').addEventListener('click', async () => {
+  const ok = await confirmar('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
+  if (!ok) return;
+  const vale = APP.valeEdit;
+  closeModal('modal-vale');
+  await eliminarValeById(vale);
+});
+
+// ── MODAL DETALLE (Mis Vales) ─────────────────────────────────────
+document.getElementById('modal-detalle-close').addEventListener('click', () => closeModal('modal-detalle'));
+document.getElementById('modal-aprob-close').addEventListener('click',   () => closeModal('modal-aprob-detalle'));
+
+function abrirDetalle(id) {
+  const vale = APP.vales.find(v => v.id_vale === id);
+  if (!vale) return;
+
+  const body   = document.getElementById('modal-detalle-body');
+  const footer = document.getElementById('modal-detalle-footer');
+
+  // Destino icon
+  const destinoIcon = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
+
+  // Info aprobación / rechazo
+  const infoAprobacion = (vale.aprobado_por && ['APROBADO','RECHAZADO'].includes(vale.estado))
+    ? `<div class="detalle-aprobacion-info">
+        ${vale.estado === 'APROBADO' ? '✓ Aprobado' : '✕ Rechazado'} por
+        <strong>${vale.aprobado_por}</strong> — ${formatFecha(vale.fecha_aprobacion)}
+       </div>`
+    : '';
+
+  // Nota de rechazo
+  const notaRechazo = (vale.estado === 'RECHAZADO' && vale.nota_cierre)
+    ? `<div class="detalle-rechazo">
+        <div class="detalle-rechazo-label">⚠ Motivo de rechazo</div>
+        <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
+       </div>`
+    : '';
+
+  // Nota de cierre (entrega / entrega parcial / cancelación)
+  const notaCierre = (vale.nota_cierre && !['RECHAZADO','BORRADOR','ENVIADO','APROBADO','PENDIENTE'].includes(vale.estado))
+    ? `<div class="detalle-rechazo" style="border-left-color:var(--verde)">
+        <div class="detalle-rechazo-label" style="color:var(--verde)">📋 Nota del almacén/pañol</div>
+        <div class="detalle-rechazo-texto">${vale.nota_cierre}</div>
+       </div>`
+    : '';
+
+  body.innerHTML = `
+    <!-- Estado + destino -->
+    <div class="detalle-estado-row">
+      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
+      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
+      ${!vale._sync ? '<span style="font-size:12px;color:var(--naranja)">⬆ Pendiente sync</span>' : ''}
+    </div>
+
+    <!-- Meta strip: fecha / usuario / obra -->
+    <div class="detalle-meta">
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Fecha</span>
+        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Usuario</span>
+        <span class="detalle-meta-val">${vale.usuario_nombre}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Obra</span>
+        <span class="detalle-meta-val">${vale.obra_codigo}</span>
+      </div>
+    </div>
+
+    <!-- Título -->
+    ${vale.titulo
+      ? `<div class="detalle-titulo-val">${vale.titulo}</div>`
+      : `<div class="detalle-titulo-val" style="color:var(--gris-claro);font-style:italic;font-weight:400">Sin título</div>`}
+
+    <!-- Detalle del pedido -->
+    <div class="detalle-section-lbl">Detalle del pedido</div>
+    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
+
+    <!-- Info aprobación + nota rechazo + nota cierre -->
+    ${infoAprobacion}
+    ${notaRechazo}
+    ${notaCierre}
+
+    <!-- Timeline v13 -->
+    <div class="timeline-wrap" id="timeline-detalle">
+      <div class="timeline-titulo">Historial del vale</div>
+      <div class="tl-loading"><div class="spinner"></div> Cargando historial…</div>
+    </div>
+  `;
+
+  footer.innerHTML = '';
+  // Cargar timeline en background (call separada, bajo demanda)
+  cargarTimeline(vale.id_vale, 'timeline-detalle');
+
+  if (vale.estado === 'BORRADOR') {
+    footer.innerHTML = `
+      <button class="btn btn-danger"  id="det-btn-eliminar">🗑 Eliminar</button>
+      <button class="btn btn-primary" id="det-btn-editar"  >✏ Editar</button>
+    `;
+    footer.querySelector('#det-btn-editar').addEventListener('click', () => {
+      closeModal('modal-detalle');
+      abrirEditarVale(vale);
+    });
+    footer.querySelector('#det-btn-eliminar').addEventListener('click', async () => {
+      const ok = await confirmar('¿Eliminar este borrador?', 'Esta acción no se puede deshacer.');
+      if (!ok) return;
+      closeModal('modal-detalle');
+      await eliminarValeById(vale);
+    });
+  }
+
+  openModal('modal-detalle');
+}
+
+async function eliminarValeById(vale) {
+  if (vale._sync && APP.online) {
+    try {
+      const res = await gasPost({ accion: 'eliminarVale', id_vale: vale.id_vale, usuario_email: APP.perfil.email });
+      if (res.ok) { LS.remove(vale.id_vale); toast('Vale eliminado', 'success'); }
+      else toast('Error: ' + res.error, 'error');
+    } catch (_) {
+      LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
+      toast('Se eliminará al reconectar', '');
+    }
+  } else if (vale._sync && !APP.online) {
+    LS.upsert({ ...vale, estado: 'ELIMINADO', _sync: false });
+    toast('Se eliminará al reconectar', '');
+  } else {
+    LS.remove(vale.id_vale);
+    toast('Vale eliminado', 'success');
+  }
+  if (APP.online) {
+    await recargarContexto({ esInicio: false });
+  } else {
+    actualizarDashboard(APP.vales);
+    renderizarLista(APP.vales);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// ETAPA 3 — PANEL GESTIÓN (ALMACENERO / PAÑOLERO)
+// ════════════════════════════════════════════════════════════════
+
+function actualizarBadgeGestionar(cant) {
+  const badge = document.getElementById('tab-badge-gestionar');
+  if (cant > 0) { badge.textContent = cant; badge.style.display = 'inline-flex'; }
+  else badge.style.display = 'none';
+}
+
+// v13: APP.porGestionar, enPreparacion, entregadosHoy ya vienen de recargarContexto.
+// cargarGestion() solo renderiza. Luego de una acción de gestión, se llama
+// recargarContexto() para refrescar todo en una sola call.
+async function cargarGestion() {
+  resetDetalleGestion();
+  if (!APP.online) {
+    const msg = '<div class="lista-vacia">Sin conexión.</div>';
+    document.getElementById('lista-por-gestionar').innerHTML  = msg;
+    document.getElementById('lista-en-preparacion').innerHTML = msg;
+    return;
+  }
+  if (APP.porGestionar.length > 0 || APP.enPreparacion.length > 0) {
+    renderizarGestion();
+    return;
+  }
+  // Fallback: si no hay datos aún, pedir contexto
+  document.getElementById('lista-por-gestionar').innerHTML  = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  document.getElementById('lista-en-preparacion').innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando…</div>';
+  await recargarContexto({ esInicio: false });
+}
+
+function renderizarGestion() {
+  // Badge tab
+  actualizarBadgeGestionar(APP.porGestionar.length + APP.enPreparacion.length);
+
+  // Sub-dashboard
+  document.getElementById('gcnt-aprobado').textContent = APP.porGestionar.length;
+  document.getElementById('gcnt-pendiente').textContent = APP.enPreparacion.length;
+  document.getElementById('badge-cola').textContent = APP.porGestionar.length;
+  document.getElementById('badge-prep').textContent = APP.enPreparacion.length;
+
+  // Conteo entregados hoy
+  document.getElementById('gcnt-entregado').textContent = APP.entregadosHoy ?? '—';
+
+  // Cola APROBADO
+  const listaCola = document.getElementById('lista-por-gestionar');
+  if (!APP.porGestionar.length) {
+    listaCola.innerHTML = '<div class="lista-vacia">No hay vales en cola.</div>';
+  } else {
+    listaCola.innerHTML = APP.porGestionar.map(v => buildGestionCard(v, 'APROBADO')).join('');
+    listaCola.querySelectorAll('.gestion-card').forEach(el =>
+      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'cola'))
+    );
+  }
+
+  // En preparación PENDIENTE
+  const listaPrep = document.getElementById('lista-en-preparacion');
+  if (!APP.enPreparacion.length) {
+    listaPrep.innerHTML = '<div class="lista-vacia">No hay vales en preparación.</div>';
+  } else {
+    listaPrep.innerHTML = APP.enPreparacion.map(v => buildGestionCard(v, 'PENDIENTE')).join('');
+    listaPrep.querySelectorAll('.gestion-card').forEach(el => {
+      el.addEventListener('click', () => seleccionarValeGestion(el.dataset.id, 'prep'));
+      // Habilitar drag hacia el pizarron (solo desktop)
+      if (window.innerWidth >= 768) habilitarDragGestionCard(el, el.dataset.id);
+    });
+  }
+  // Limpiar pizarron al recargar datos
+  resetPizarron();
+}
+
+function buildGestionCard(v, tipo) {
+  return `
+    <div class="gestion-card" data-id="${v.id_vale}" data-tipo="${tipo}">
+      <div class="gestion-card-top">
+        <div class="gestion-card-titulo">${v.titulo || '<em style="color:var(--gris-claro)">Sin título</em>'}</div>
+        <span class="badge-estado badge-${v.estado}">${v.estado.replace('_',' ')}</span>
+      </div>
+      <div class="gestion-card-meta">
+        <span class="gestion-card-solicitante">👤 ${v.solicitante_nombre || v.usuario_email}</span>
+        <span class="aprob-card-destino">${v.destino}</span>
+        <span class="gestion-card-fecha">${formatFecha(v.fecha_hora)}</span>
+      </div>
+    </div>`;
+}
+
+function resetDetalleGestion() {
+  document.getElementById('gestion-detalle-placeholder').style.display = 'flex';
+  document.getElementById('gestion-detalle-inner').style.display = 'none';
+  APP.valeGestion = null;
+  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
+}
+
+function seleccionarValeGestion(id, lista) {
+  const fuente = lista === 'cola' ? APP.porGestionar : APP.enPreparacion;
+  const vale   = fuente.find(v => v.id_vale === id);
+  if (!vale) return;
+  APP.valeGestion = vale;
+
+  document.querySelectorAll('.gestion-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`.gestion-card[data-id="${id}"]`);
+  if (card) card.classList.add('selected');
+
+  if (APP.isDesktop()) {
+    mostrarDetalleGestionDesktop(vale);
+  } else {
+    mostrarDetalleGestionMobile(vale);
+  }
+}
+
+function buildDetalleGestionHTML(vale) {
+  const destinoIcon  = vale.destino === 'ALMACEN' ? '🏭' : '🔧';
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacén' : 'Pañol';
+  return `
+    <div class="detalle-estado-row">
+      <span class="badge-estado badge-${vale.estado}">${vale.estado.replace('_',' ')}</span>
+      <span class="detalle-destino-badge">${destinoIcon} ${destinoLabel}</span>
+    </div>
+    <div class="detalle-meta">
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Solicitante</span>
+        <span class="detalle-meta-val">${vale.solicitante_nombre || vale.usuario_email}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Fecha</span>
+        <span class="detalle-meta-val">${formatFecha(vale.fecha_hora)}</span>
+      </div>
+      <div class="detalle-meta-item">
+        <span class="detalle-meta-lbl">Obra</span>
+        <span class="detalle-meta-val">${vale.obra_codigo}</span>
+      </div>
+    </div>
+    ${vale.titulo ? `<div class="detalle-titulo-val">${vale.titulo}</div>` : ''}
+    <div class="detalle-section-lbl">Detalle del pedido</div>
+    <div class="detalle-contenido">${vale.contenido_html || '—'}</div>
+  `;
+}
+
+function buildBotonesGestion(vale, prefijo) {
+  if (vale.estado === 'APROBADO') {
+    return `<div class="gestion-btns">
+      <button class="btn btn-secondary" id="${prefijo}-btn-cancelar">✕ Cancelar</button>
+      <button class="btn btn-primary"   id="${prefijo}-btn-iniciar" >▶ Iniciar preparación</button>
+    </div>`;
+  }
+  if (vale.estado === 'PENDIENTE') {
+    return `<div class="gestion-btns">
+      <button class="btn btn-secondary"  id="${prefijo}-btn-cancelar" >✕ Cancelar</button>
+      <button class="btn btn-danger"     id="${prefijo}-btn-parcial"  >⚠ Entrega parcial</button>
+      <button class="btn btn-success"    id="${prefijo}-btn-entregar" >✓ Entregar</button>
+    </div>`;
+  }
+  return '';
+}
+
+function attachBotonesGestion(vale, prefijo, cerrarModal) {
+  const btn = id => document.getElementById(prefijo + id);
+
+  if (vale.estado === 'APROBADO') {
+    btn('-btn-iniciar')?.addEventListener('click', async () => {
+      setGestionBtns(prefijo, true);
+      await accionGestion('iniciarPreparacion', vale, null, false);
+      if (cerrarModal) cerrarModal();
+    });
+    btn('-btn-cancelar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('cancelarVale', vale, nota, false);
+      });
+    });
+  }
+
+  if (vale.estado === 'PENDIENTE') {
+    btn('-btn-entregar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional antes de confirmar.', false, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('entregarVale', vale, nota, true);
+      });
+    });
+    btn('-btn-parcial')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('entregaParcialVale', vale, nota, true);
+      });
+    });
+    btn('-btn-cancelar')?.addEventListener('click', () => {
+      if (cerrarModal) cerrarModal();
+      abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
+        setGestionBtns(prefijo, true);
+        accionGestion('cancelarVale', vale, nota, false);
+      });
+    });
+  }
+}
+
+function setGestionBtns(prefijo, disabled) {
+  ['iniciar','cancelar','entregar','parcial'].forEach(id => {
+    const btn = document.getElementById(prefijo + '-btn-' + id);
+    if (btn) btn.disabled = disabled;
+  });
+}
+
+async function accionGestion(accion, vale, nota, esEntrega) {
+  const params = {
+    accion,
+    id_vale       : vale.id_vale,
+    gestionado_por: APP.perfil.email
+  };
+  if (nota) params.nota_cierre = nota;
+
+  try {
+    const res = await gasGet(params);
+    if (res.ok) {
+      const msgs = {
+        iniciarPreparacion : 'Preparación iniciada ▶',
+        entregarVale       : 'Vale entregado ✓',
+        entregaParcialVale : 'Entrega parcial registrada',
+        cancelarVale       : 'Vale cancelado'
+      };
+      toast(msgs[accion] || 'Acción realizada', 'success');
+      resetDetalleGestion();
+      // v13: recargar contexto completo (una sola call actualiza todo)
+      await recargarContexto({ esInicio: false });
+    } else {
+      toast('Error: ' + res.error, 'error');
+    }
+  } catch (_) {
+    toast('Sin conexión. Intentá de nuevo.', 'error');
+  }
+}
+
+function mostrarDetalleGestionDesktop(vale) {
+  document.getElementById('gestion-detalle-placeholder').style.display = 'none';
+  const inner = document.getElementById('gestion-detalle-inner');
+  inner.style.display = 'block';
+  inner.innerHTML = buildDetalleGestionHTML(vale) + buildBotonesGestion(vale, 'desk-g');
+  attachBotonesGestion(vale, 'desk-g', null);
+}
+
+function mostrarDetalleGestionMobile(vale) {
+  document.getElementById('modal-gestion-titulo').textContent = vale.titulo || 'Detalle del Vale';
+  document.getElementById('modal-gestion-body').innerHTML    = buildDetalleGestionHTML(vale);
+  document.getElementById('modal-gestion-footer').innerHTML  = buildBotonesGestion(vale, 'mob-g');
+  attachBotonesGestion(vale, 'mob-g', () => closeModal('modal-gestion-detalle'));
+  openModal('modal-gestion-detalle');
+}
+
+// ── Modal nota de cierre ──────────────────────────────────────────
+let _notaCierreCallback = null;
+let _notaCierreCallbackCancel = null;
+let _notaCierreObligatoria = false;
+
+// onCancel (opcional): se llama si el usuario cancela el modal sin confirmar
+function abrirNotaCierre(titulo, desc, obligatoria, callback, onCancel) {
+  _notaCierreCallback   = callback;
+  _notaCierreCallbackCancel = onCancel || null;
+  _notaCierreObligatoria = obligatoria;
+  document.getElementById('modal-nota-titulo').textContent = titulo;
+  document.getElementById('modal-nota-desc').textContent   = desc;
+  document.getElementById('modal-nota-req').style.display  = obligatoria ? 'inline' : 'none';
+  document.getElementById('nota-cierre-txt').value  = '';
+  document.getElementById('nota-cierre-chars').textContent = '0';
+  openModal('modal-nota-cierre');
+}
+
+document.getElementById('nota-cierre-txt').addEventListener('input', function() {
+  document.getElementById('nota-cierre-chars').textContent = this.value.length;
+});
+document.getElementById('modal-nota-close').addEventListener('click',  () => {
+  closeModal('modal-nota-cierre');
+  if (_notaCierreCallbackCancel) { _notaCierreCallbackCancel(); _notaCierreCallbackCancel = null; }
+});
+document.getElementById('modal-nota-cancel').addEventListener('click', () => {
+  closeModal('modal-nota-cierre');
+  if (_notaCierreCallbackCancel) { _notaCierreCallbackCancel(); _notaCierreCallbackCancel = null; }
+});
+document.getElementById('modal-nota-confirm').addEventListener('click', async () => {
+  const nota    = document.getElementById('nota-cierre-txt').value.trim();
+  const btnConf = document.getElementById('modal-nota-confirm');
+  const btnCan  = document.getElementById('modal-nota-cancel');
+  if (_notaCierreObligatoria && nota.length < 5) {
+    toast('La nota debe tener al menos 5 caracteres', 'error');
+    return;
+  }
+  btnConf.disabled = true; btnCan.disabled = true;
+  btnConf.textContent = 'Procesando…';
+  closeModal('modal-nota-cierre');
+  _notaCierreCallbackCancel = null; // ya confirmó, no ejecutar onCancel
+  if (_notaCierreCallback) await _notaCierreCallback(nota || null);
+  btnConf.disabled = false; btnCan.disabled = false;
+  btnConf.textContent = 'Confirmar';
+});
+
+document.getElementById('modal-gestion-close').addEventListener('click', () => closeModal('modal-gestion-detalle'));
+
+// ═════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+// TODOS LOS VALES — filtrado guiado (usuarios + estados + contenido)
+// ════════════════════════════════════════════════════════════════
+
+const TODOS_ESTADOS = [
+  'BORRADOR','ENVIADO','APROBADO','PENDIENTE',
+  'ENTREGADO','ENTREGA_PARCIAL','CANCELADO','RECHAZADO'
+];
+
+// Estado de filtros en memoria
+const _filtrosTodos = {
+  usuarios : new Set(),
+  estados  : new Set(),
+  obras    : new Set(),
+  texto    : ''
+};
+
+// Cargar datos desde GAS sin filtros — filtramos en frontend
+async function cargarTodosVales() {
+  const lista = document.getElementById('lista-todos-vales');
+  lista.innerHTML = '<div class="spinner-inline"><div class="spinner"></div>Cargando...</div>';
+  document.getElementById('todos-resultado-info').style.display = 'none';
+
+  // Subtitulo segun rol
+  let subtitulo = document.getElementById('todos-subtitulo');
+  if (!subtitulo) {
+    subtitulo = document.createElement('div');
+    subtitulo.id = 'todos-subtitulo';
+    subtitulo.style.cssText = 'font-size:12px;color:var(--gris);padding:4px 0 8px;';
+    const panelTodos = document.getElementById('panel-todos');
+    if (panelTodos) panelTodos.insertBefore(subtitulo, panelTodos.firstChild);
+  }
+  if (APP.perfil.rol === 'SUPERVISOR') {
+    subtitulo.textContent = 'Solo los vales que vos aprobaste.';
+    subtitulo.style.display = 'block';
+  } else if (esAdmin()) {
+    subtitulo.textContent = 'Todos los vales de todas las obras — últimos 30 días.';
+    subtitulo.style.display = 'block';
+  } else {
+    subtitulo.style.display = 'none';
+  }
+
+  if (!APP.online) { lista.innerHTML = '<div class="lista-vacia">Sin conexion.</div>'; return; }
+
+  // v13: APP.todosVales ya viene de recargarContexto — solo renderizar
+  _filtrosTodos.usuarios.clear();
+  _filtrosTodos.estados.clear();
+  _filtrosTodos.obras.clear();
+  _filtrosTodos.texto = '';
+  document.getElementById('todos-buscar-input').value = '';
+  construirChips();
+  aplicarFiltrosTodos();
+}
+
+// Construir chips de usuarios, estados y obras (obras solo para ADMIN)
+function construirChips() {
+  const nombresMap = new Map();
+  const obrasSet   = new Set();
+  APP.todosVales.forEach(v => {
+    const email = v.usuario_email;
+    const nombre = v.solicitante_nombre || email;
+    if (!nombresMap.has(email)) nombresMap.set(email, nombre);
+    if (v.obra_codigo) obrasSet.add(v.obra_codigo);
+  });
+
+  // Chips obra (solo ADMIN, y solo si hay más de una obra)
+  const seccionObras = document.getElementById('chips-obras-seccion');
+  if (esAdmin() && obrasSet.size > 1) {
+    seccionObras.classList.add('visible');
+    const contObras = document.getElementById('chips-obras');
+    contObras.innerHTML = '';
+    const chipTodosO = crearChip('Todas', true, () => {
+      _filtrosTodos.obras.clear();
+      actualizarChipsActivos('chips-obras', null);
+      aplicarFiltrosTodos();
+    });
+    chipTodosO.classList.add('chip-todos');
+    contObras.appendChild(chipTodosO);
+    [...obrasSet].sort().forEach(obra => {
+      const chip = crearChip(obra, false, () => {
+        if (_filtrosTodos.obras.has(obra)) {
+          _filtrosTodos.obras.delete(obra);
+        } else {
+          _filtrosTodos.obras.add(obra);
+        }
+        actualizarChipsActivos('chips-obras', _filtrosTodos.obras.size ? [..._filtrosTodos.obras] : null);
+        aplicarFiltrosTodos();
+      });
+      chip.dataset.val = obra;
+      contObras.appendChild(chip);
+    });
+  } else {
+    seccionObras.classList.remove('visible');
+    _filtrosTodos.obras.clear();
+  }
+
+  // Chips usuarios
+  const contUsuarios = document.getElementById('chips-usuarios');
+  contUsuarios.innerHTML = '';
+  const chipTodosU = crearChip('Todos', true, () => {
+    _filtrosTodos.usuarios.clear();
+    actualizarChipsActivos('chips-usuarios', null);
+    aplicarFiltrosTodos();
+  });
+  chipTodosU.classList.add('chip-todos');
+  contUsuarios.appendChild(chipTodosU);
+
+  nombresMap.forEach((nombre, email) => {
+    const chip = crearChip(nombre, false, () => {
+      if (_filtrosTodos.usuarios.has(email)) {
+        _filtrosTodos.usuarios.delete(email);
+      } else {
+        _filtrosTodos.usuarios.add(email);
+      }
+      actualizarChipsActivos('chips-usuarios', _filtrosTodos.usuarios.size ? [..._filtrosTodos.usuarios] : null);
+      aplicarFiltrosTodos();
+    });
+    chip.dataset.val = email;
+    contUsuarios.appendChild(chip);
+  });
+
+  // Chips estados
+  const contEstados = document.getElementById('chips-estados');
+  contEstados.innerHTML = '';
+  const chipTodosE = crearChip('Todos', true, () => {
+    _filtrosTodos.estados.clear();
+    actualizarChipsActivos('chips-estados', null);
+    aplicarFiltrosTodos();
+  });
+  chipTodosE.classList.add('chip-todos');
+  contEstados.appendChild(chipTodosE);
+
+  TODOS_ESTADOS.forEach(estado => {
+    if (!APP.todosVales.some(v => v.estado === estado)) return;
+    const chip = crearChip(estado.replace('_',' '), false, () => {
+      if (_filtrosTodos.estados.has(estado)) {
+        _filtrosTodos.estados.delete(estado);
+      } else {
+        _filtrosTodos.estados.add(estado);
+      }
+      actualizarChipsActivos('chips-estados', _filtrosTodos.estados.size ? [..._filtrosTodos.estados] : null);
+      aplicarFiltrosTodos();
+    });
+    chip.dataset.val = estado;
+    contEstados.appendChild(chip);
+  });
+}
+
+function crearChip(label, activo, onClick) {
+  const el = document.createElement('button');
+  el.className = 'chip' + (activo ? ' active' : '');
+  el.textContent = label;
+  el.addEventListener('click', onClick);
+  return el;
+}
+
+function actualizarChipsActivos(contId, valoresActivos) {
+  const cont = document.getElementById(contId);
+  cont.querySelectorAll('.chip').forEach(chip => {
+    const val = chip.dataset.val;
+    if (!val) {
+      chip.classList.toggle('active', !valoresActivos || valoresActivos.length === 0);
+    } else {
+      chip.classList.toggle('active', valoresActivos && valoresActivos.includes(val));
+    }
+  });
+}
+
+// Aplicar filtros combinados sobre APP.todosVales
+function aplicarFiltrosTodos() {
+  const texto = _filtrosTodos.texto.toLowerCase();
+
+  const filtrado = APP.todosVales.filter(v => {
+    if (_filtrosTodos.obras.size    && !_filtrosTodos.obras.has(v.obra_codigo))    return false;
+    if (_filtrosTodos.usuarios.size && !_filtrosTodos.usuarios.has(v.usuario_email)) return false;
+    if (_filtrosTodos.estados.size  && !_filtrosTodos.estados.has(v.estado))       return false;
+    if (texto) {
+      const enTitulo    = (v.titulo || '').toLowerCase().includes(texto);
+      const enContenido = (v.contenido_html || '').replace(/<[^>]*>/g,'').toLowerCase().includes(texto);
+      if (!enTitulo && !enContenido) return false;
+    }
+    return true;
+  });
+
+  const info = document.getElementById('todos-resultado-info');
+  if (_filtrosTodos.obras.size || _filtrosTodos.usuarios.size || _filtrosTodos.estados.size || texto) {
+    info.textContent = filtrado.length + ' vale' + (filtrado.length !== 1 ? 's' : '') + ' encontrado' + (filtrado.length !== 1 ? 's' : '');
+    info.style.display = 'block';
+  } else {
+    info.style.display = 'none';
+  }
+
+  renderizarTodosVales(filtrado);
+}
+
+// Render
+function renderizarTodosVales(vales) {
+  const lista = document.getElementById('lista-todos-vales');
+  if (!vales || !vales.length) {
+    lista.innerHTML = '<div class="lista-vacia">No se encontraron vales.</div>';
+    return;
+  }
+  lista.innerHTML = vales.map(v => {
+    const titulo = v.titulo || '<em style="color:var(--gris-claro)">Sin titulo</em>';
+    const solicitante = v.solicitante_nombre || v.usuario_email;
+    const fecha = formatFecha(v.fecha_hora);
+    const estadoBadge = v.estado.replace('_',' ');
+    return '<div class="todos-vale-card" data-id="' + v.id_vale + '">'
+      + '<div class="todos-vale-info">'
+      + '<div class="todos-vale-titulo">' + titulo + '</div>'
+      + '<div class="todos-vale-sub">'
+      + '<span class="todos-vale-solicitante">' + solicitante + '</span>'
+      + '<span>' + fecha + '</span>'
+      + '<span>' + v.destino + '</span>'
+      + '</div></div>'
+      + '<span class="badge-estado badge-' + v.estado + '">' + estadoBadge + '</span>'
+      + '</div>';
+  }).join('');
+
+  lista.querySelectorAll('.todos-vale-card').forEach(el =>
+    el.addEventListener('click', () => abrirDetalleTodos(el.dataset.id))
+  );
+}
+
+// Detalle readonly
+function abrirDetalleTodos(id) {
+  const vale = APP.todosVales.find(v => v.id_vale === id);
+  if (!vale) return;
+  const body   = document.getElementById('modal-detalle-body');
+  const footer = document.getElementById('modal-detalle-footer');
+  const destinoLabel = vale.destino === 'ALMACEN' ? 'Almacen' : 'Panol';
+  const infoAprobacion = (vale.aprobado_por && ['APROBADO','RECHAZADO'].includes(vale.estado))
+    ? '<div class="detalle-aprobacion-info" style="margin-top:10px">'
+      + (vale.estado === 'APROBADO' ? 'Aprobado' : 'Rechazado') + ' por '
+      + '<strong>' + vale.aprobado_por + '</strong> &mdash; ' + formatFecha(vale.fecha_aprobacion)
+      + '</div>' : '';
+  const notaRechazo = (vale.estado === 'RECHAZADO' && vale.nota_cierre)
+    ? '<div class="detalle-rechazo" style="margin-top:10px">'
+      + '<div class="detalle-rechazo-label">Motivo de rechazo</div>'
+      + '<div class="detalle-rechazo-texto">' + vale.nota_cierre + '</div>'
+      + '</div>' : '';
+  const notaCierre = (vale.nota_cierre && vale.estado !== 'RECHAZADO')
+    ? '<div style="margin-top:10px;padding:10px 14px;background:var(--fondo);border:1px solid var(--gris-borde);border-radius:var(--radio-sm)">'
+      + '<div class="detalle-section-lbl">Nota de cierre</div>'
+      + '<div style="font-size:13px;margin-top:4px">' + vale.nota_cierre + '</div>'
+      + '</div>' : '';
+  body.innerHTML = '<div class="detalle-estado-row">'
+    + '<span class="badge-estado badge-' + vale.estado + '">' + vale.estado.replace('_',' ') + '</span>'
+    + '<span class="detalle-destino-badge">' + destinoLabel + '</span>'
+    + '</div>'
+    + '<div class="detalle-meta">'
+    + '<div class="detalle-meta-item"><span class="detalle-meta-lbl">Solicitante</span><span class="detalle-meta-val">' + (vale.solicitante_nombre || vale.usuario_email) + '</span></div>'
+    + '<div class="detalle-meta-item"><span class="detalle-meta-lbl">Fecha</span><span class="detalle-meta-val">' + formatFecha(vale.fecha_hora) + '</span></div>'
+    + '<div class="detalle-meta-item"><span class="detalle-meta-lbl">Obra</span><span class="detalle-meta-val">' + vale.obra_codigo + '</span></div>'
+    + '</div>'
+    + (vale.titulo ? '<div class="detalle-titulo-val">' + vale.titulo + '</div>' : '')
+    + '<div class="detalle-section-lbl">Detalle del pedido</div>'
+    + '<div class="detalle-contenido">' + (vale.contenido_html || '&mdash;') + '</div>'
+    + infoAprobacion + notaRechazo + notaCierre
+    + '<div class="timeline-wrap" id="timeline-todos">'    + '<div class="timeline-titulo">Historial del vale</div>'    + '<div class="tl-loading"><div class="spinner"></div> Cargando historial…</div>'    + '</div>';
+  footer.innerHTML = '';
+  cargarTimeline(vale.id_vale, 'timeline-todos');
+  openModal('modal-detalle');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// PIZARRÓN — panel de trabajo visual (solo desktop)
+// ════════════════════════════════════════════════════════════════
+
+const MAX_SLOTS = 4;
+// pizarronSlots[0..3] = id_vale | null
+const pizarronSlots  = [null, null, null, null]; // id_vale por slot
+const pizarronColors = [null, null, null, null]; // color elegido por slot
+const PIZARRON_COLORS = [
+  { id: 'amarillo', hex: '#f9e04b', label: 'Amarillo' },
+  { id: 'celeste',  hex: '#90caf9', label: 'Celeste'  },
+  { id: 'verde',    hex: '#81c784', label: 'Verde'    },
+  { id: 'rosa',     hex: '#f48fb1', label: 'Rosa'     },
+  { id: 'naranja',  hex: '#ffb74d', label: 'Naranja'  },
+  { id: 'lila',     hex: '#ce93d8', label: 'Lila'     },
+];
+let _dragValeId = null; // id_vale siendo arrastrado
+
+// ── Tabs Detalle / Pizarron ───────────────────────────────────────
+function initPizarronTabs() {
+  const btnDetalle  = document.getElementById('tab-btn-detalle-g');
+  const btnPizarron = document.getElementById('tab-btn-pizarron');
+  if (!btnDetalle || !btnPizarron) return;
+
+  btnDetalle.addEventListener('click', () => {
+    btnDetalle.classList.add('active');
+    btnPizarron.classList.remove('active');
+    document.getElementById('detalle-panel').style.display = '';
+    document.getElementById('pizarron-panel').classList.remove('visible');
+  });
+
+  btnPizarron.addEventListener('click', () => {
+    btnPizarron.classList.add('active');
+    btnDetalle.classList.remove('active');
+    document.getElementById('detalle-panel').style.display = 'none';
+    document.getElementById('pizarron-panel').classList.add('visible');
+    renderPizarron();
+  });
+}
+
+// ── Drag desde lista En preparacion ──────────────────────────────
+function habilitarDragGestionCard(el, valeId) {
+  el.setAttribute('draggable', 'true');
+  el.addEventListener('dragstart', e => {
+    _dragValeId = valeId;
+    e.dataTransfer.effectAllowed = 'copy';
+  });
+  el.addEventListener('dragend', () => { _dragValeId = null; });
+}
+
+// ── Drop en slots ─────────────────────────────────────────────────
+function initSlotsDrop() {
+  document.querySelectorAll('.pizarron-slot').forEach(slot => {
+    slot.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      slot.classList.add('drag-over');
+    });
+    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+    slot.addEventListener('drop', e => {
+      e.preventDefault();
+      slot.classList.remove('drag-over');
+      if (!_dragValeId) return;
+      const slotIdx = parseInt(slot.dataset.slot);
+      // Ya esta en el pizarron?
+      if (pizarronSlots.includes(_dragValeId)) {
+        toast('Este vale ya esta en el pizarron.', '');
+        return;
+      }
+      // Slot ocupado?
+      if (pizarronSlots[slotIdx] !== null) {
+        toast('Ese slot ya tiene un vale. Quita el actual primero.', '');
+        return;
+      }
+      pizarronSlots[slotIdx] = _dragValeId;
+      if (!pizarronColors[slotIdx]) pizarronColors[slotIdx] = PIZARRON_COLORS[0].id;
+      renderPizarronSlot(slotIdx);
+    });
+  });
+}
+
+// ── Render pizarron completo ──────────────────────────────────────
+function renderPizarron() {
+  for (let i = 0; i < MAX_SLOTS; i++) renderPizarronSlot(i);
+}
+
+function renderPizarronSlot(idx) {
+  const slot = document.getElementById('pslot-' + idx);
+  if (!slot) return;
+  const valeId = pizarronSlots[idx];
+
+  if (!valeId) {
+    slot.className = 'pizarron-slot';
+    slot.innerHTML = '<div class="pizarron-slot-empty">Arrastra un vale aqui</div>';
+    return;
+  }
+
+  const vale = APP.enPreparacion.find(v => v.id_vale === valeId);
+  if (!vale) {
+    // Vale ya no esta en preparacion (fue entregado/cancelado)
+    pizarronSlots[idx] = null;
+    slot.className = 'pizarron-slot';
+    slot.innerHTML = '<div class="pizarron-slot-empty">Arrastra un vale aqui</div>';
+    return;
+  }
+
+  const colorActual = pizarronColors[idx] || PIZARRON_COLORS[0].id;
+  slot.className = 'pizarron-slot ocupado';
+  slot.dataset.color = colorActual;
+
+  const solicitante = vale.solicitante_nombre || vale.usuario_email;
+  const fecha = formatFecha(vale.fecha_hora);
+  const titulo = vale.titulo || '<em>Sin titulo</em>';
+  const contenido = vale.contenido_html || '&mdash;';
+
+  // Picker de colores
+  const pickerHTML = '<div class="pizarron-color-picker">' +
+    PIZARRON_COLORS.map(c =>
+      '<button class="pcolor-dot' + (c.id === colorActual ? ' selected' : '') + '"' +
+      ' data-color="' + c.id + '" title="' + c.label + '"' +
+      ' style="background:' + c.hex + '"></button>'
+    ).join('') +
+    '</div>';
+
+  slot.innerHTML =
+    '<div class="pizarron-card">' +
+      '<button class="pizarron-card-close" title="Quitar del pizarron">&#x2715;</button>' +
+      '<div class="pizarron-card-titulo">' + titulo + '</div>' +
+      '<div class="pizarron-card-meta">' +
+        '<span>' + solicitante + '</span>' +
+        '<span>' + fecha + '</span>' +
+      '</div>' +
+      pickerHTML +
+      '<div class="pizarron-card-contenido">' + contenido + '</div>' +
+      '<div class="pizarron-card-btns">' +
+        '<button class="btn btn-danger pz-btn-cancelar">&#x2715; Cancelar</button>' +
+        '<button class="btn btn-danger pz-btn-parcial">&#x26A0; Parcial</button>' +
+        '<button class="btn btn-success pz-btn-entregar">&#x2713; Entregar</button>' +
+      '</div>' +
+    '</div>';
+
+  // Boton cerrar
+  slot.querySelector('.pizarron-card-close').addEventListener('click', () => {
+    pizarronSlots[idx] = null;
+    pizarronColors[idx] = null;
+    slot.removeAttribute('data-color');
+    renderPizarronSlot(idx);
+  });
+
+  // Picker de colores
+  slot.querySelectorAll('.pcolor-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const color = dot.dataset.color;
+      pizarronColors[idx] = color;
+      slot.dataset.color = color;
+      // Actualizar selected en los dots sin rerenderizar toda la tarjeta
+      slot.querySelectorAll('.pcolor-dot').forEach(d =>
+        d.classList.toggle('selected', d.dataset.color === color)
+      );
+    });
+  });
+
+  // Helper: deshabilitar/habilitar los 3 botones del slot del pizarrón
+  function setPzBtns(slotEl, disabled) {
+    ['pz-btn-entregar', 'pz-btn-parcial', 'pz-btn-cancelar'].forEach(cls => {
+      const btn = slotEl.querySelector('.' + cls);
+      if (btn) btn.disabled = disabled;
+    });
+  }
+
+  // Botones accion — reutilizan accionGestion
+  slot.querySelector('.pz-btn-entregar').addEventListener('click', () => {
+    setPzBtns(slot, true);
+    abrirNotaCierre('Nota de entrega', 'Podés agregar una nota opcional.', false, nota => {
+      accionGestion('entregarVale', vale, nota, true).then(() => {
+        pizarronSlots[idx] = null;
+        slot.removeAttribute('data-color');
+        renderPizarronSlot(idx);
+      });
+    }, () => setPzBtns(slot, false));
+  });
+
+  slot.querySelector('.pz-btn-parcial').addEventListener('click', () => {
+    setPzBtns(slot, true);
+    abrirNotaCierre('Entrega parcial', 'Describí qué se entregó y qué faltó.', true, nota => {
+      accionGestion('entregaParcialVale', vale, nota, true).then(() => {
+        pizarronSlots[idx] = null;
+        slot.removeAttribute('data-color');
+        renderPizarronSlot(idx);
+      });
+    }, () => setPzBtns(slot, false));
+  });
+
+  slot.querySelector('.pz-btn-cancelar').addEventListener('click', () => {
+    setPzBtns(slot, true);
+    abrirNotaCierre('Cancelar vale', 'Ingresá el motivo de la cancelación.', true, nota => {
+      accionGestion('cancelarVale', vale, nota, false).then(() => {
+        pizarronSlots[idx] = null;
+        slot.removeAttribute('data-color');
+        renderPizarronSlot(idx);
+      });
+    }, () => setPzBtns(slot, false));
+  });
+}
+
+// Limpiar pizarron al recargar gestion (nueva carga de datos)
+function resetPizarron() {
+  pizarronSlots.fill(null);
+  pizarronColors.fill(null);
+  // BUG #2 fix: limpiar data-color de todos los slots para que no
+  // quede el color de fondo al vaciarse
+  for (let i = 0; i < 4; i++) {
+    const slot = document.getElementById('pslot-' + i);
+    if (slot) slot.removeAttribute('data-color');
+  }
+  renderPizarron();
+}
+
+
+// Buscador por texto — filtrado local instantaneo
+document.getElementById('todos-buscar-btn').addEventListener('click', () => {
+  _filtrosTodos.texto = document.getElementById('todos-buscar-input').value.trim().toLowerCase();
+  aplicarFiltrosTodos();
+});
+document.getElementById('todos-buscar-input').addEventListener('input', () => {
+  _filtrosTodos.texto = document.getElementById('todos-buscar-input').value.trim().toLowerCase();
+  aplicarFiltrosTodos();
+});
+document.getElementById('todos-buscar-input').addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('todos-buscar-input').value = '';
+    _filtrosTodos.texto = '';
+    aplicarFiltrosTodos();
+  }
+});
+
+
+// ── LOGOUT (función compartida) ──────────────────────────────────
+async function doLogout() {
+  const ok = await confirmar('¿Cerrar sesión?', 'Vas a salir de Vale Digital.');
+  if (!ok) return;
+  detenerPollingNotificaciones(); // E5
+  google.accounts.id.disableAutoSelect();
+  APP.perfil     = null;
+  APP.vales      = [];
+  APP.pendientes = [];
+  APP.quill      = null;
+  LS.clearPerfil();
+  showScreen('screen-login');
+  toast('Sesión cerrada', '');
+}
+
+// ── ACTUALIZAR (función compartida) ─────────────────────────────
+async function doActualizar() {
+  cerrarMenu();
+  toast('Actualizando…', '');
+
+  // Forzar actualización del Service Worker si hay uno nuevo disponible
+  if (APP._swReg) {
+    try {
+      await APP._swReg.update(); // descarga nuevo SW si existe en el servidor
+
+      const activarSW = (sw) => {
+        sw.postMessage({ type: 'SKIP_WAITING' }); // activa inmediatamente
+        // controllerchange listener se encarga de recargar la página
+      };
+
+      if (APP._swReg.waiting) {
+        // Ya está esperando — activar directo
+        activarSW(APP._swReg.waiting);
+        return;
+      }
+
+      if (APP._swReg.installing) {
+        // Todavía instalando (común en mobile) — esperar a que termine
+        await new Promise((resolve) => {
+          const sw = APP._swReg.installing;
+          sw.addEventListener('statechange', function handler() {
+            if (sw.state === 'installed') {
+              sw.removeEventListener('statechange', handler);
+              activarSW(sw);
+              resolve();
+            } else if (sw.state === 'redundant') {
+              sw.removeEventListener('statechange', handler);
+              resolve(); // falló, continuar sin recargar
+            }
+          });
+        });
+        return;
+      }
+      // No hay SW nuevo — continuar con recarga de datos normal
+    } catch (_) {}
+  }
+
+  // Re-leer perfil desde GAS para refrescar rol/obra si cambió en el Sheet
+  if (APP.online && APP.perfil) {
+    try {
+      const res = await gasGet({ accion: 'login', email: APP.perfil.email });
+      if (res.ok) {
+        APP.perfil = res.data;
+        LS.setPerfil(res.data);
+        actualizarHeaderPerfil();
+        // Reinicializar tabs por si cambió el rol
+        inicializarTabs();
+      }
+    } catch (_) { /* sin red, continúa con perfil local */ }
+  }
+  // Una sola call trae todo: datos + notificaciones + badges
+  await recargarContexto({ esInicio: false });
+}
+
+// ── MENÚ MOBILE ──────────────────────────────────────────────────
+function abrirMenu() {
+  document.getElementById('menu-dropdown').classList.add('open');
+  document.getElementById('menu-backdrop').classList.add('open');
+}
+function cerrarMenu() {
+  document.getElementById('menu-dropdown').classList.remove('open');
+  document.getElementById('menu-backdrop').classList.remove('open');
+}
+
+document.getElementById('btn-menu').addEventListener('click', abrirMenu);
+document.getElementById('menu-backdrop').addEventListener('click', cerrarMenu);
+document.getElementById('menu-actualizar').addEventListener('click', doActualizar);
+document.getElementById('menu-instalar').addEventListener('click', async () => {
+  cerrarMenu();
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  const { outcome } = await deferredInstallPrompt.userChoice;
+  if (outcome === 'accepted') deferredInstallPrompt = null;
+});
+document.getElementById('menu-logout').addEventListener('click', () => {
+  cerrarMenu();
+  doLogout();
+});
+
+// Desktop
+document.getElementById('btn-logout').addEventListener('click', doLogout);
+
+// ── SERVICE WORKER ───────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw2.js')
+    .then(reg => {
+      APP._swReg = reg;
+      // Escuchar cuando hay un nuevo SW esperando
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // Nuevo SW instalado y esperando — notificar al usuario
+              toast('Nueva versión disponible. Tocá Actualizar para aplicarla.', '');
+            }
+          });
+        }
+      });
+    })
+    .catch(err => console.warn('SW no registrado:', err));
+
+  // Recargar cuando el SW nuevo toma el control
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) { refreshing = true; window.location.reload(); }
+  });
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  document.getElementById('login-version').textContent = CONFIG.VERSION_UI;
+  document.getElementById('hdr-version').textContent   = CONFIG.VERSION_UI;
+
+  // Botón Actualizar desktop
+  document.getElementById('btn-actualizar').addEventListener('click', doActualizar);
+
+  // Botón Instalar desktop
+  document.getElementById('btn-instalar-pwa').addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') deferredInstallPrompt = null;
+  });
+
+  // Restaurar sesión previa
+  const perfilGuardado = LS.getPerfil();
+  if (perfilGuardado) {
+    APP.perfil = perfilGuardado;
+    iniciarApp();
+    if (typeof google !== 'undefined') {
+      inicializarGoogle();
+    } else {
+      const interval = setInterval(() => {
+        if (typeof google !== 'undefined') { clearInterval(interval); inicializarGoogle(); }
+      }, 200);
+    }
+    return;
+  }
+
+  if (typeof google !== 'undefined') {
+    inicializarGoogle();
+  } else {
+    const interval = setInterval(() => {
+      if (typeof google !== 'undefined') { clearInterval(interval); inicializarGoogle(); }
+    }, 200);
+  }
+});
+
+
+// ════════════════════════════════════════════════════════════════
+// ETAPA 4 — PANEL ADMIN
+// ════════════════════════════════════════════════════════════════
+
+// Estado admin en memoria
+const _admin = {
+  usuarios    : [],
+  obras       : [],
+  subtabActual: 'usuarios',
+  modoForm    : null,   // 'crear-usuario' | 'editar-usuario' | 'crear-obra' | 'editar-obra'
+  itemEdit    : null    // objeto en edición
+};
+
+// ── Sub-tabs Admin ───────────────────────────────────────────────
+function initAdminSubtabs() {
+  document.querySelectorAll('.admin-subtab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const subtab = btn.dataset.subtab;
+      _admin.subtabActual = subtab;
+      document.querySelectorAll('.admin-subtab').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.admin-subpanel').forEach(p => p.classList.remove('active'));
+      document.getElementById('admin-panel-' + subtab).classList.add('active');
+      if (subtab === 'usuarios') renderAdminUsuarios();
+      else                       renderAdminObras();
+    });
+  });
+  document.getElementById('admin-fab').addEventListener('click', () => {
+    if (_admin.subtabActual === 'usuarios') abrirFormAdmin('crear-usuario');
+    else                                    abrirFormAdmin('crear-obra');
+  });
+}
+
+// ── Cargar datos ─────────────────────────────────────────────────
+async function cargarAdmin() {
+  if (!APP.online) {
+    document.getElementById('admin-lista-usuarios').innerHTML = '<div class="lista-vacia">Sin conexión.</div>';
+    document.getElementById('admin-lista-obras').innerHTML    = '<div class="lista-vacia">Sin conexión.</div>';
+    return;
+  }
+  initAdminSubtabs();
+  await Promise.all([cargarAdminUsuarios(), cargarAdminObras()]);
+}
+
+async function cargarAdminUsuarios() {
+  document.getElementById('admin-lista-usuarios').innerHTML =
+    '<div class="spinner-inline"><div class="spinner"></div>Cargando usuarios...</div>';
+  try {
+    const res = await gasGet({ accion: 'getUsuarios', email_admin: APP.perfil.email });
+    if (!res.ok) { document.getElementById('admin-lista-usuarios').innerHTML = `<div class="lista-vacia">${res.error}</div>`; return; }
+    _admin.usuarios = res.data || [];
+    renderAdminUsuarios();
+  } catch (_) {
+    document.getElementById('admin-lista-usuarios').innerHTML = '<div class="lista-vacia">Error al cargar.</div>';
+  }
+}
+
+async function cargarAdminObras() {
+  document.getElementById('admin-lista-obras').innerHTML =
+    '<div class="spinner-inline"><div class="spinner"></div>Cargando obras...</div>';
+  try {
+    const res = await gasGet({ accion: 'getObras', email_admin: APP.perfil.email });
+    if (!res.ok) { document.getElementById('admin-lista-obras').innerHTML = `<div class="lista-vacia">${res.error}</div>`; return; }
+    _admin.obras = res.data || [];
+    renderAdminObras();
+  } catch (_) {
+    document.getElementById('admin-lista-obras').innerHTML = '<div class="lista-vacia">Error al cargar.</div>';
+  }
+}
+
+// ── Render usuarios ──────────────────────────────────────────────
+function renderAdminUsuarios() {
+  const cont = document.getElementById('admin-lista-usuarios');
+  if (!_admin.usuarios.length) { cont.innerHTML = '<div class="lista-vacia">No hay usuarios.</div>'; return; }
+
+  // Agrupar por obra
+  const grupos = {};
+  _admin.usuarios.forEach(u => {
+    const k = u.obra_codigo || '—';
+    if (!grupos[k]) grupos[k] = [];
+    grupos[k].push(u);
+  });
+
+  let html = '';
+  Object.keys(grupos).sort().forEach(obra => {
+    html += `<div class="gestion-section" style="margin-bottom:4px;margin-top:16px">
+      <span style="font-size:12px;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.5px">${obra}</span>
+    </div>`;
+    grupos[obra].forEach(u => {
+      const idx   = _admin.usuarios.indexOf(u);
+      const activo = u.activo === true || u.activo === 'TRUE';
+      html += `<div class="admin-card" onclick="abrirFormAdmin('editar-usuario',${idx})">
+        <div class="admin-card-header">
+          <span class="admin-card-nombre">${escapeHtml(u.nombre)}</span>
+          <span class="admin-card-badge ${activo ? 'admin-badge-activo' : 'admin-badge-inactivo'}">${activo ? 'Activo' : 'Inactivo'}</span>
+        </div>
+        <div class="admin-card-meta">
+          <span>&#128100; ${u.rol}</span>
+          <span>&#9993; ${escapeHtml(u.email)}</span>
+          ${u.superior_email ? `<span>&#8593; ${escapeHtml(u.superior_email)}</span>` : ''}
+        </div>
+        <div class="admin-card-actions">
+          <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('usuario',${idx})">
+            ${activo ? 'Desactivar' : 'Activar'}
+          </button>
+        </div>
+      </div>`;
+    });
+  });
+  cont.innerHTML = html;
+}
+
+// ── Render obras ─────────────────────────────────────────────────
+function renderAdminObras() {
+  const cont = document.getElementById('admin-lista-obras');
+  if (!_admin.obras.length) { cont.innerHTML = '<div class="lista-vacia">No hay obras.</div>'; return; }
+
+  let html = '';
+  _admin.obras.forEach((o, idx) => {
+    const activa = o.activa === true || o.activa === 'TRUE';
+    html += `<div class="admin-card" onclick="abrirFormAdmin('editar-obra',${idx})">
+      <div class="admin-card-header">
+        <span class="admin-card-nombre">${escapeHtml(o.codigo)} — ${escapeHtml(o.descripcion)}</span>
+        <span class="admin-card-badge ${activa ? 'admin-badge-activo' : 'admin-badge-inactivo'}">${activa ? 'Activa' : 'Inactiva'}</span>
+      </div>
+      <div class="admin-card-meta">
+        ${o.email_almacen ? `<span>&#127981; Almacén: ${escapeHtml(o.email_almacen)}</span>` : ''}
+        ${o.email_panol   ? `<span>&#128295; Pañol: ${escapeHtml(o.email_panol)}</span>`   : ''}
+      </div>
+      <div class="admin-card-actions">
+        <button class="admin-toggle-btn" onclick="event.stopPropagation();toggleAdmin('obra',${idx})">
+          ${activa ? 'Desactivar' : 'Activar'}
+        </button>
+      </div>
+    </div>`;
+  });
+  cont.innerHTML = html;
+}
+
+// ── Toggle activo/activa ─────────────────────────────────────────
+async function toggleAdmin(tipo, idx) {
+  if (!APP.online) { toast('Sin conexión'); return; }
+  const item   = tipo === 'usuario' ? _admin.usuarios[idx] : _admin.obras[idx];
+  if (!item) { toast('Error: elemento no encontrado'); return; }
+  const params = tipo === 'usuario'
+    ? { accion: 'toggleUsuario', email_admin: APP.perfil.email, email_usuario: item.email }
+    : { accion: 'toggleObra',   email_admin: APP.perfil.email, codigo: item.codigo };
+  try {
+    const res = await gasGet(params);
+    if (!res.ok) { toast('Error: ' + res.error); return; }
+    if (tipo === 'usuario') {
+      item.activo = res.data.activo;
+      renderAdminUsuarios();
+      toast(res.data.activo ? 'Usuario activado' : 'Usuario desactivado');
+    } else {
+      item.activa = res.data.activa;
+      renderAdminObras();
+      toast(res.data.activa ? 'Obra activada' : 'Obra desactivada');
+    }
+  } catch (_) { toast('Error de red'); }
+}
+
+// ── Modal formulario ─────────────────────────────────────────────
+function abrirFormAdmin(modo, idx) {
+  _admin.modoForm = modo;
+  _admin.itemEdit = null;
+  const modal  = document.getElementById('modal-admin-form');
+  const titulo = document.getElementById('admin-form-titulo');
+  const body   = document.getElementById('admin-form-body');
+
+  if (modo === 'crear-usuario') {
+    titulo.textContent = 'Nuevo usuario';
+    body.innerHTML = htmlFormUsuario(null);
+  } else if (modo === 'editar-usuario') {
+    const u = _admin.usuarios[idx];
+    _admin.itemEdit = u;
+    titulo.textContent = 'Editar usuario';
+    body.innerHTML = htmlFormUsuario(u);
+  } else if (modo === 'crear-obra') {
+    titulo.textContent = 'Nueva obra';
+    body.innerHTML = htmlFormObra(null);
+  } else if (modo === 'editar-obra') {
+    const o = _admin.obras[idx];
+    _admin.itemEdit = o;
+    titulo.textContent = 'Editar obra';
+    body.innerHTML = htmlFormObra(o);
+  }
+
+  modal.style.display = 'flex';
+}
+
+function cerrarModalAdmin() {
+  document.getElementById('modal-admin-form').style.display = 'none';
+  _admin.modoForm = null;
+  _admin.itemEdit = null;
+}
+
+// ── HTML formularios ─────────────────────────────────────────────
+const ROLES_LISTA = ['CAPATAZ','SUPERVISOR','JEFE_OBRA','ALMACENERO','PAÑOLERO','ADMIN'];
+
+function htmlFormUsuario(u) {
+  const obras = _admin.obras.filter(o => o.activa === true || o.activa === 'TRUE');
+  const opObras = obras.map(o =>
+    `<option value="${o.codigo}" ${u && u.obra_codigo === o.codigo ? 'selected' : ''}>${o.codigo} — ${escapeHtml(o.descripcion)}</option>`
+  ).join('');
+  const opRoles = ROLES_LISTA.map(r =>
+    `<option value="${r}" ${u && u.rol === r ? 'selected' : ''}>${r}</option>`
+  ).join('');
+  const aprobadores = _admin.usuarios.filter(x => ['SUPERVISOR','JEFE_OBRA'].includes(x.rol));
+  const opSuperior = `<option value="">— Sin superior explícito —</option>` +
+    aprobadores.map(a =>
+      `<option value="${a.email}" ${u && u.superior_email === a.email ? 'selected' : ''}>${escapeHtml(a.nombre)} (${a.rol})</option>`
+    ).join('');
+
+  return `
+    ${u ? `<div class="admin-form-group">
+      <label class="admin-form-label">Email (no editable)</label>
+      <input class="admin-form-input" value="${escapeHtml(u.email)}" disabled style="opacity:.6">
+    </div>` : `<div class="admin-form-group">
+      <label class="admin-form-label">Email *</label>
+      <input class="admin-form-input" id="af-email" type="email" placeholder="usuario@gmail.com" value="">
+    </div>`}
+    <div class="admin-form-group">
+      <label class="admin-form-label">Nombre *</label>
+      <input class="admin-form-input" id="af-nombre" type="text" placeholder="Nombre completo" value="${u ? escapeHtml(u.nombre) : ''}">
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Rol *</label>
+      <select class="admin-form-select" id="af-rol">${opRoles}</select>
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Obra *</label>
+      <select class="admin-form-select" id="af-obra">${opObras}</select>
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Superior (opcional)</label>
+      <select class="admin-form-select" id="af-superior">${opSuperior}</select>
+    </div>`;
+}
+
+function htmlFormObra(o) {
+  return `
+    ${o ? `<div class="admin-form-group">
+      <label class="admin-form-label">Código (no editable)</label>
+      <input class="admin-form-input" value="${escapeHtml(o.codigo)}" disabled style="opacity:.6">
+    </div>` : `<div class="admin-form-group">
+      <label class="admin-form-label">Código *</label>
+      <input class="admin-form-input" id="af-codigo" type="text" placeholder="OB-003" maxlength="20" value="" style="text-transform:uppercase">
+    </div>`}
+    <div class="admin-form-group">
+      <label class="admin-form-label">Descripción *</label>
+      <input class="admin-form-input" id="af-descripcion" type="text" placeholder="Nombre de la obra" value="${o ? escapeHtml(o.descripcion) : ''}">
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Email Almacén</label>
+      <input class="admin-form-input" id="af-email-almacen" type="email" placeholder="almacen@empresa.com" value="${o ? escapeHtml(o.email_almacen || '') : ''}">
+    </div>
+    <div class="admin-form-group">
+      <label class="admin-form-label">Email Pañol</label>
+      <input class="admin-form-input" id="af-email-panol" type="email" placeholder="panol@empresa.com" value="${o ? escapeHtml(o.email_panol || '') : ''}">
+    </div>`;
+}
+
+// ── Guardar formulario ───────────────────────────────────────────
+async function guardarFormAdmin() {
+  if (!APP.online) { toast('Sin conexión'); return; }
+  const btn = document.getElementById('admin-form-btn-guardar');
+  const btnCancel = document.getElementById('admin-form-btn-cancelar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  if (btnCancel) btnCancel.disabled = true;
+
+  const resetBtn = () => {
+    btn.disabled = false;
+    btn.textContent = 'Guardar';
+    if (btnCancel) btnCancel.disabled = false;
+  };
+
+  try {
+    let params = {};
+    const modo = _admin.modoForm;
+
+    if (modo === 'crear-usuario') {
+      const email  = (document.getElementById('af-email')?.value  || '').trim();
+      const nombre = (document.getElementById('af-nombre')?.value || '').trim();
+      const rol    = document.getElementById('af-rol')?.value || '';
+      const obra   = document.getElementById('af-obra')?.value || '';
+      const sup    = document.getElementById('af-superior')?.value || '';
+      if (!email || !nombre || !rol || !obra) { toast('Completá los campos obligatorios'); resetBtn(); return; }
+      params = { accion: 'crearUsuario', email_admin: APP.perfil.email, email, nombre, rol, obra_codigo: obra, activo: 'TRUE', superior_email: sup };
+
+    } else if (modo === 'editar-usuario') {
+      const nombre = (document.getElementById('af-nombre')?.value || '').trim();
+      const rol    = document.getElementById('af-rol')?.value || '';
+      const obra   = document.getElementById('af-obra')?.value || '';
+      const sup    = document.getElementById('af-superior')?.value || '';
+      if (!nombre || !rol || !obra) { toast('Completá los campos obligatorios'); resetBtn(); return; }
+      params = { accion: 'editarUsuario', email_admin: APP.perfil.email, email_usuario: _admin.itemEdit.email, nombre, rol, obra_codigo: obra, superior_email: sup };
+
+    } else if (modo === 'crear-obra') {
+      const codigo  = (document.getElementById('af-codigo')?.value || '').trim().toUpperCase();
+      const desc    = (document.getElementById('af-descripcion')?.value || '').trim();
+      const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
+      const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
+      if (!codigo || !desc) { toast('Completá código y descripción'); resetBtn(); return; }
+      params = { accion: 'crearObra', email_admin: APP.perfil.email, codigo, descripcion: desc, email_almacen: almacen, email_panol: panol, activa: 'TRUE' };
+
+    } else if (modo === 'editar-obra') {
+      const desc    = (document.getElementById('af-descripcion')?.value || '').trim();
+      const almacen = (document.getElementById('af-email-almacen')?.value || '').trim();
+      const panol   = (document.getElementById('af-email-panol')?.value || '').trim();
+      if (!desc) { toast('La descripción es obligatoria'); resetBtn(); return; }
+      params = { accion: 'editarObra', email_admin: APP.perfil.email, codigo: _admin.itemEdit.codigo, descripcion: desc, email_almacen: almacen, email_panol: panol };
+    }
+
+    const res = await gasGet(params);
+    if (!res.ok) { toast('Error: ' + res.error); resetBtn(); return; }
+
+    // Actualizar caché local inmediatamente
+    if (modo === 'editar-usuario') {
+      const u = _admin.usuarios.find(x => x.email === _admin.itemEdit.email);
+      if (u) { u.nombre = params.nombre; u.rol = params.rol; u.obra_codigo = params.obra_codigo; u.superior_email = params.superior_email; }
+    } else if (modo === 'editar-obra') {
+      const o = _admin.obras.find(x => x.codigo === _admin.itemEdit.codigo);
+      if (o) { o.descripcion = params.descripcion; o.email_almacen = params.email_almacen; o.email_panol = params.email_panol; }
+    } else if (modo === 'crear-usuario') {
+      _admin.usuarios.push({ email: params.email, nombre: params.nombre, rol: params.rol,
+        obra_codigo: params.obra_codigo, activo: true, superior_email: params.superior_email || '' });
+    } else if (modo === 'crear-obra') {
+      _admin.obras.push({ codigo: params.codigo, descripcion: params.descripcion,
+        email_almacen: params.email_almacen || '', email_panol: params.email_panol || '', activa: true });
+    }
+
+    // Restaurar botón ANTES de cerrar el modal (evita operar sobre nodo eliminado del DOM)
+    resetBtn();
+    cerrarModalAdmin();
+    toast(modo.includes('crear') ? 'Creado correctamente ✓' : 'Guardado ✓');
+
+    // Re-render inmediato + sync GAS en background
+    if (modo.includes('usuario')) { renderAdminUsuarios(); cargarAdminUsuarios().catch(() => {}); }
+    else                          { renderAdminObras();    cargarAdminObras().catch(() => {}); }
+
+  } catch (err) {
+    console.error('guardarFormAdmin error:', err);
+    toast('Error inesperado: ' + (err.message || err));
+    resetBtn();
+  }
+}
+
+// ── Helper escapeHtml (si no existe ya) ─────────────────────────
+if (typeof escapeHtml === 'undefined') {
+  function escapeHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// ETAPA 5 — NOTIFICACIONES
+// ════════════════════════════════════════════════════════════════
+
+const _notif = {
+  intervalo  : null,   // handle del setInterval
+  noLeidas   : [],     // array de notificaciones no leídas
+  POLL_MS    : 5 * 60 * 1000  // 5 minutos
+};
+
+// ── Actualizar badge en header ───────────────────────────────────
+function actualizarBadgeNotif(cantidad) {
+  const btn   = document.getElementById('btn-notif');
+  const badge = document.getElementById('notif-badge-hdr');
+  if (!btn || !badge) return;
+  badge.textContent = cantidad > 9 ? '9+' : String(cantidad);
+  btn.classList.toggle('visible', cantidad > 0);
+}
+
+// ── Construir mensaje contextual para el toast ───────────────────
+function mensajeContextualNotif(notifs) {
+  if (!notifs.length) return null;
+
+  // Agrupar por tipo de acción inferida del mensaje
+  const parAprobar  = notifs.filter(n => n.mensaje.includes('pendiente de aprobación'));
+  const parGestionar = notifs.filter(n => n.mensaje.includes('para gestionar'));
+  const aprobados   = notifs.filter(n => n.mensaje.includes('fue aprobado'));
+  const rechazados  = notifs.filter(n => n.mensaje.includes('fue rechazado'));
+  const entregados  = notifs.filter(n =>
+    n.mensaje.includes('entregado') || n.mensaje.includes('entrega parcial') || n.mensaje.includes('cancelado')
+  );
+
+  const partes = [];
+  if (parAprobar.length)   partes.push(`${parAprobar.length} vale${parAprobar.length > 1 ? 's' : ''} para aprobar`);
+  if (parGestionar.length) partes.push(`${parGestionar.length} vale${parGestionar.length > 1 ? 's' : ''} para gestionar`);
+  if (aprobados.length)    partes.push(`${aprobados.length} aprobado${aprobados.length > 1 ? 's' : ''}`);
+  if (rechazados.length)   partes.push(`${rechazados.length} rechazado${rechazados.length > 1 ? 's' : ''}`);
+  if (entregados.length)   partes.push(`${entregados.length} con novedad de entrega`);
+
+  if (!partes.length) {
+    return notifs.length === 1
+      ? notifs[0].mensaje
+      : `${notifs.length} notificaciones nuevas`;
+  }
+  return '🔔 ' + partes.join(' · ');
+}
+
+// ── Polling: refresca todo el contexto (datos + notificaciones) ──
+// v13: en lugar de solo getNotificaciones, llama recargarContexto
+// para que cada 5 min se actualicen también las listas y badges.
+async function pollNotificaciones() {
+  if (!APP.online || !APP.perfil) return;
+  await recargarContexto({ esInicio: false });
+}
+
+// ── Renderizar panel de notificaciones ──────────────────────────
+function renderPanelNotif() {
+  const lista = document.getElementById('notif-panel-lista');
+  if (!_notif.noLeidas.length) {
+    lista.innerHTML = '<div class="notif-vacia">Sin notificaciones nuevas.</div>';
+    return;
+  }
+  lista.innerHTML = _notif.noLeidas.map(n => {
+    const fecha = n.fecha ? new Date(n.fecha).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+    return `<div class="notif-item">
+      <div class="notif-item-msg">${n.mensaje}</div>
+      <div class="notif-item-fecha">${fecha}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Abrir/cerrar panel ───────────────────────────────────────────
+function abrirPanelNotif() {
+  renderPanelNotif();
+  document.getElementById('modal-notif').classList.add('open');
+}
+
+function cerrarPanelNotif() {
+  document.getElementById('modal-notif').classList.remove('open');
+}
+
+// ── Marcar todas como leídas ─────────────────────────────────────
+async function marcarTodasLeidas() {
+  cerrarPanelNotif();
+  actualizarBadgeNotif(0);
+  _notif.noLeidas = [];
+  gasGet({ accion: 'marcarLeidas', email: APP.perfil.email }).catch(() => {});
+}
+
+// ── Click en el badge: abrir panel ──────────────────────────────
+function onClickNotif() {
+  if (_notif.noLeidas.length > 0) {
+    abrirPanelNotif();
+  }
+}
+
+// ── Iniciar polling al login ──────────────────────────────────────
+function iniciarPollingNotificaciones() {
+  // Limpiar intervalo previo si existía (por si se llama dos veces)
+  if (_notif.intervalo) clearInterval(_notif.intervalo);
+  // Primera consulta inmediata
+  pollNotificaciones();
+  // Polling cada 5 min
+  _notif.intervalo = setInterval(pollNotificaciones, _notif.POLL_MS);
+  // Listener del botón de notificaciones — abre el panel
+  const btn = document.getElementById('btn-notif');
+  if (btn) btn.addEventListener('click', onClickNotif);
+  // Cerrar panel al tocar el backdrop
+  const modalNotif = document.getElementById('modal-notif');
+  if (modalNotif) modalNotif.addEventListener('click', e => {
+    if (e.target === modalNotif) cerrarPanelNotif();
+  });
+}
+
+// ── Detener polling al logout ────────────────────────────────────
+function detenerPollingNotificaciones() {
+  if (_notif.intervalo) {
+    clearInterval(_notif.intervalo);
+    _notif.intervalo = null;
+  }
+  _notif.noLeidas = [];
+  actualizarBadgeNotif(0);
+}
+
+// ════════════════════════════════════════════════════════════════
+// v13 — TIMELINE DE ESTADOS
+// ════════════════════════════════════════════════════════════════
+
+// Colores por estado (para el dot)
+const TL_COLOR = {
+  BORRADOR       : 'BORRADOR',
+  ENVIADO        : 'ENVIADO',
+  APROBADO       : 'APROBADO',
+  RECHAZADO      : 'RECHAZADO',
+  PENDIENTE      : 'PENDIENTE',
+  ENTREGADO      : 'ENTREGADO',
+  ENTREGA_PARCIAL: 'ENTREGA_PARCIAL',
+  CANCELADO      : 'CANCELADO',
+  ELIMINADO      : 'ELIMINADO'
+};
+
+// Labels legibles por estado
+const TL_LABEL = {
+  BORRADOR       : 'Creado como borrador',
+  ENVIADO        : 'Enviado para aprobación',
+  APROBADO       : 'Aprobado',
+  RECHAZADO      : 'Rechazado',
+  PENDIENTE      : 'Preparación iniciada',
+  ENTREGADO      : 'Entregado',
+  ENTREGA_PARCIAL: 'Entrega parcial',
+  CANCELADO      : 'Cancelado',
+  ELIMINADO      : 'Eliminado'
+};
+
+// Formatear duración entre dos fechas ISO en texto legible
+function formatDuracion(fechaDesde, fechaHasta) {
+  if (!fechaDesde || !fechaHasta) return null;
+  const ms = new Date(fechaHasta) - new Date(fechaDesde);
+  if (isNaN(ms) || ms < 0) return null;
+  const min  = Math.floor(ms / 60000);
+  const hs   = Math.floor(min / 60);
+  const dias = Math.floor(hs / 24);
+  if (dias > 0)  return dias  + 'd ' + (hs % 24)  + 'h';
+  if (hs > 0)    return hs    + 'h ' + (min % 60) + 'min';
+  if (min > 0)   return min   + ' min';
+  return 'menos de 1 min';
+}
+
+// Cargar y renderizar el historial de un vale en el contenedor indicado
+async function cargarTimeline(id_vale, contenedorId) {
+  const cont = document.getElementById(contenedorId);
+  if (!cont) return;
+
+  if (!APP.online) {
+    cont.innerHTML =
+      '<div class="timeline-titulo">Historial del vale</div>' +
+      '<div class="tl-loading" style="color:var(--gris-claro)">Sin conexión — historial no disponible.</div>';
+    return;
+  }
+
+  try {
+    const res = await gasGet({ accion: 'getHistorialVale', id_vale });
+    if (!res.ok || !res.data || res.data.length === 0) {
+      cont.innerHTML =
+        '<div class="timeline-titulo">Historial del vale</div>' +
+        '<div style="font-size:12px;color:var(--gris-claro);padding:6px 0">Sin historial registrado (vale previo a v13).</div>';
+      return;
+    }
+
+    const items = res.data; // ya ordenados ASC por fecha desde el GAS
+
+    let html = '<div class="timeline-titulo">Historial del vale</div><div class="timeline">';
+
+    items.forEach((item, idx) => {
+      const estado   = item.estado_nuevo || '';
+      const label    = TL_LABEL[estado] || estado.replace('_', ' ');
+      const dotClass = TL_COLOR[estado] || '';
+      const fecha    = item.fecha ? formatFecha(item.fecha) : '—';
+      const actor    = item.usuario_nombre || item.usuario_email || '';
+
+      // Duración desde el item anterior
+      let durHtml = '';
+      if (idx > 0) {
+        const dur = formatDuracion(items[idx - 1].fecha, item.fecha);
+        if (dur) durHtml = '<span class="tl-duracion">⏱ ' + dur + '</span>';
+      }
+
+      // Nota (rechazo o cierre)
+      const notaHtml = item.nota
+        ? '<div class="tl-nota">📝 ' + escapeHtml(String(item.nota)) + '</div>'
+        : '';
+
+      html +=
+        '<div class="tl-item">' +
+          '<div class="tl-dot ' + dotClass + '"></div>' +
+          '<div class="tl-estado">' + escapeHtml(label) + '</div>' +
+          '<div class="tl-actor">' + escapeHtml(actor) + '</div>' +
+          '<div class="tl-fecha">' + fecha + '</div>' +
+          durHtml +
+          notaHtml +
+        '</div>';
+    });
+
+    html += '</div>'; // cierre .timeline
+    cont.innerHTML = html;
+
+  } catch (e) {
+    cont.innerHTML =
+      '<div class="timeline-titulo">Historial del vale</div>' +
+      '<div style="font-size:12px;color:var(--gris-claro)">Error al cargar historial.</div>';
+  }
+}
+</script>
+</body>
+</html>
