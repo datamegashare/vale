@@ -246,6 +246,23 @@ input, textarea, select { font-family: inherit; }
 }
 .btn-hdr-action:hover  { background: rgba(255,255,255,.18); }
 .btn-hdr-action:active { transform: scale(.95); }
+.btn-nuevo-vale {
+  display: none;
+  align-items: center; gap: 5px;
+  background: #F5A623;
+  border: none;
+  border-radius: 8px;
+  color: #1a1a2e;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: var(--trans);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.btn-nuevo-vale:hover  { background: #e09520; }
+.btn-nuevo-vale:active { transform: scale(.95); }
 
 /* Botón 3 puntos — solo mobile */
 .btn-menu {
@@ -356,6 +373,7 @@ input, textarea, select { font-family: inherit; }
   .badge-conexion-txt { display: inline; }
   .header-info        { display: flex; }
   .btn-hdr-action     { display: flex; }
+  .btn-nuevo-vale.visible { display: flex; }
   .btn-menu           { display: none; }
   .btn-logout         { display: flex; }
 }
@@ -2024,6 +2042,7 @@ input, textarea, select { font-family: inherit; }
       🔔
       <span class="notif-badge" id="notif-badge-hdr">0</span>
     </button>
+    <button id="btn-nuevo-vale" class="btn-nuevo-vale" title="Nuevo vale">+ Nuevo Vale</button>
     <button id="btn-actualizar" class="btn-hdr-action" title="Actualizar datos">🔄 Actualizar</button>
     <button id="btn-instalar-pwa" class="btn-hdr-action" style="display:none" title="Instalar app">📲 Instalar</button>
     <button class="btn-logout" id="btn-logout" title="Cerrar sesión">
@@ -2470,7 +2489,7 @@ input, textarea, select { font-family: inherit; }
 const CONFIG = {
   CLIENT_ID  : '174536806740-aus6npjphhdcn5nkgtt1ejl0tcj16ou7.apps.googleusercontent.com',
   GAS_URL    : 'https://script.google.com/macros/s/AKfycbyMeo4ebB9qlt6rJVM_2N0ENvqsmnKPbb6CsGo9Fc-49MLv8ei0IcCR_NtvhQgmLRo9uw/exec',
-  VERSION_UI : 'v14.2'
+  VERSION_UI : 'v14.4'
 };
 
 // Roles que pueden aprobar vales
@@ -2626,9 +2645,10 @@ function inicializarTabs() {
   document.getElementById('tab-btn-todos').style.display     = puedeVerTodos()  ? 'flex' : 'none';
   document.getElementById('tab-btn-admin').style.display     = esAdmin()        ? 'flex' : 'none';
 
-  // FAB: ocultar si es gestor puro o admin
-  document.getElementById('fab-nuevo').style.display =
-    (puedeGestionar() && !puedeAprobar()) || esAdmin() ? 'none' : 'flex';
+  // FAB + btn header nuevo vale: ocultar si es gestor puro o admin
+  const _puedeCrear = !((puedeGestionar() && !puedeAprobar()) || esAdmin());
+  document.getElementById('fab-nuevo').style.display = _puedeCrear ? 'flex' : 'none';
+  document.getElementById('btn-nuevo-vale').classList.toggle('visible', _puedeCrear);
 
   // Re-adjuntar listeners sin duplicar (clonar cada boton)
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -2653,25 +2673,32 @@ function cambiarTab(tabId, forzar = false) {
   const fab = document.getElementById('fab-nuevo');
   if (tabId === 'por-aprobar') {
     fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
     // Recargar solo si no hay datos o si se forzó
     if (forzar || !APP.pendientes.length) cargarPendientes();
     else renderizarPendientes();
   } else if (tabId === 'por-gestionar') {
     fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
     cargarGestion(); // siempre fresco (estado cambia frecuentemente)
   } else if (tabId === 'todos-vales') {
     fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
     if (forzar || !APP.todosVales.length) cargarTodosVales();
     else { construirChips(); aplicarFiltrosTodos(); }
   } else if (tabId === 'admin') {
     fab.style.display = 'none';
+    document.getElementById('btn-nuevo-vale').classList.remove('visible');
     document.getElementById('admin-fab').classList.add('visible');
     if (forzar || (!_admin.usuarios.length && !_admin.obras.length)) cargarAdmin();
     else { renderAdminUsuarios(); renderAdminObras(); }
   } else {
     // mis-vales — FAB solo si no es gestor puro ni admin
     document.getElementById('admin-fab').classList.remove('visible');
-    if (!puedeGestionar() || puedeAprobar()) fab.style.display = 'flex';
+    if (!puedeGestionar() || puedeAprobar()) {
+      fab.style.display = 'flex';
+      document.getElementById('btn-nuevo-vale').classList.add('visible');
+    }
     if (forzar || !APP.vales.length) cargarVales();
     else { actualizarDashboard(APP.vales); renderizarLista(APP.vales); }
   }
@@ -3150,6 +3177,7 @@ async function quitarPendiente(id) {
 
 // ── MODAL NUEVO VALE ─────────────────────────────────────────────
 document.getElementById('fab-nuevo').addEventListener('click', abrirNuevoVale);
+document.getElementById('btn-nuevo-vale').addEventListener('click', abrirNuevoVale);
 
 function abrirNuevoVale() {
   APP.valeEdit = null;
